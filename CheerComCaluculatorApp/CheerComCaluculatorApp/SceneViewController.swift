@@ -48,11 +48,14 @@ class SceneViewController: UIViewController {
         
         print("📷 Scene view frame: \(view.bounds)")
         
-        // Add camera
+        // Add camera pointing at the character
         let cameraNode = SCNNode()
         cameraNode.camera = SCNCamera()
         cameraNode.position = SCNVector3(x: 0, y: 100, z: 300)
+        cameraNode.look(at: SCNVector3(x: 0, y: 100, z: 0))  // Look at character center
         scene.rootNode.addChildNode(cameraNode)
+        
+        print("📷 Camera positioned at (0, 100, 300) looking at (0, 100, 0)")
         
         // Add lights - brighter setup
         let ambientLight = SCNNode()
@@ -102,12 +105,23 @@ class SceneViewController: UIViewController {
         print("Bounding box: min(\(min.x), \(min.y), \(min.z)) max(\(max.x), \(max.y), \(max.z))")
         print("Position: \(characterNode.position)")
         print("Scale: \(characterNode.scale)")
+        
+        // Add a visual helper - ground plane
+        let ground = SCNFloor()
+        ground.firstMaterial?.diffuse.contents = UIColor.darkGray
+        ground.firstMaterial?.lightingModel = .constant
+        let groundNode = SCNNode(geometry: ground)
+        groundNode.position = SCNVector3(x: 0, y: 0, z: 0)
+        scene.rootNode.addChildNode(groundNode)
+        print("🟫 Ground plane added at y=0")
+        
         print("======================")
         
-        // Print all bone names for mapping
-        print("=== BONE NAMES ===")
-        printBones(characterNode)
-        print("==================")
+        // Print all bone names for mapping (commented out to reduce console spam)
+        // Uncomment if you need to see bones again
+        // print("=== BONE NAMES ===")
+        // printBones(characterNode)
+        // print("==================")
     }
     
     func printBones(_ node: SCNNode, indent: Int = 0) {
