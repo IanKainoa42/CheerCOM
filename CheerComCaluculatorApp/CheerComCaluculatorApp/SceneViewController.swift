@@ -39,25 +39,23 @@ class SceneViewController: UIViewController {
         scene = SCNScene()
         sceneView.scene = scene
         
-        // Enable camera controls (FREE orbit/zoom/pan!)
+        // Enable camera controls (FREE orbit/zoom/pan with touch!)
         sceneView.allowsCameraControl = true
-        sceneView.backgroundColor = .black
+        sceneView.backgroundColor = UIColor(white: 0.15, alpha: 1.0)  // Dark gray background
         
-        // Show statistics for debugging
+        // Show statistics (FPS, etc)
         sceneView.showsStatistics = true
         
         print("📷 Scene view frame: \(view.bounds)")
         
-        // Add camera - positioned to see character at ~100 units tall
+        // Add camera - positioned to see full character nicely framed
         let cameraNode = SCNNode()
         cameraNode.camera = SCNCamera()
-        cameraNode.position = SCNVector3(x: 0, y: 100, z: 250)  // Back and at character height
-        cameraNode.look(at: SCNVector3(x: 0, y: 100, z: 0))
+        cameraNode.position = SCNVector3(x: 0, y: 90, z: 220)  // Back and slightly elevated
+        cameraNode.look(at: SCNVector3(x: 0, y: 90, z: 0))  // Look at character's center of mass area
         scene.rootNode.addChildNode(cameraNode)
         
-        // Set this camera as the point of view
-        sceneView.pointOfView = cameraNode
-        print("📷 Camera at (0, 100, 250) looking at character")
+        print("📷 Camera positioned")
         
         // Add lights - brighter setup
         let ambientLight = SCNNode()
@@ -82,6 +80,14 @@ class SceneViewController: UIViewController {
         sideLight.light!.intensity = 800
         sideLight.position = SCNVector3(x: -100, y: 50, z: 50)
         scene.rootNode.addChildNode(sideLight)
+        
+        // Add a subtle ground plane for visual reference
+        let ground = SCNFloor()
+        ground.firstMaterial?.diffuse.contents = UIColor(white: 0.2, alpha: 1.0)
+        ground.reflectivity = 0.1
+        let groundNode = SCNNode(geometry: ground)
+        groundNode.position = SCNVector3(x: 0, y: 0, z: 0)
+        scene.rootNode.addChildNode(groundNode)
     }
     
     func loadCharacter() {
@@ -92,11 +98,11 @@ class SceneViewController: UIViewController {
             return
         }
         
-        characterNode = modelScene.rootNode.childNodes.first
-        
-        if characterNode == nil {
-            // Try to find the skeleton deeper in the hierarchy
-            characterNode = modelScene.rootNode
+        // Use the entire root node to get BOTH the mesh AND the skeleton
+        // In COLLADA files, they are typically separate sibling nodes
+        characterNode = SCNNode()
+        for child in modelScene.rootNode.childNodes {
+            characterNode.addChildNode(child)
         }
         
         scene.rootNode.addChildNode(characterNode)
@@ -120,16 +126,16 @@ class SceneViewController: UIViewController {
     }
     
     func setupCOMMarker() {
-        // Create red sphere for COM visualization
-        let sphere = SCNSphere(radius: 10)
+        // Create red sphere for COM visualization - bright and always visible
+        let sphere = SCNSphere(radius: 8)
         sphere.firstMaterial?.diffuse.contents = UIColor.red
-        sphere.firstMaterial?.emission.contents = UIColor.red  // Make it glow
-        sphere.firstMaterial?.lightingModel = .constant  // Always visible
+        sphere.firstMaterial?.emission.contents = UIColor.red.withAlphaComponent(0.5)
+        sphere.firstMaterial?.lightingModel = .constant  // Always visible, no lighting needed
         
         comMarker = SCNNode(geometry: sphere)
         scene.rootNode.addChildNode(comMarker)
         
-        print("🔴 COM marker created (radius 10)")
+        print("🔴 COM marker created")
     }
     
     func updateCOM() {
