@@ -14,6 +14,7 @@ class SceneViewController: UIViewController {
     var xLabel: UILabel!
     var yLabel: UILabel!
     var zLabel: UILabel!
+    var viewLabel: UILabel!  // Shows current camera view
     
     // COM Trail
     var comTrailNode: SCNNode!
@@ -38,6 +39,21 @@ class SceneViewController: UIViewController {
         
         setupScene()
         loadCharacter()
+        
+        // Automatically frame the character after it's loaded.
+        // This ensures that models of any size are correctly framed.
+        let (min, max) = characterNode.boundingBox
+        let center = SCNVector3((min.x + max.x) / 2, (min.y + max.y) / 2, (min.z + max.z) / 2)
+        let characterHeight = max.y - min.y
+        
+        // Position the camera to see the whole character based on its height.
+        // The distance is set to 1.5 times the character's height for good framing.
+        if let cameraNode = sceneView.pointOfView {
+            cameraNode.position = SCNVector3(center.x, center.y, center.z + Float(characterHeight) * 1.5)
+            cameraNode.look(at: center)
+            print("✅ Character automatically framed.")
+        }
+
         applyBodyPartColors()
         setupCOMMarker()
         setupCOMTrail()
@@ -47,12 +63,10 @@ class SceneViewController: UIViewController {
         // Initialize calculator (52.2 kg = 115 lbs)
         calculator = COMCalculator(bodyMass: 52.2)
         
-        print("✅ Scene setup complete")
+        // Initialize COM in default pose
+        updateCOM()
         
-        // Test liberty pose after 2 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.applyLiberty()
-        }
+        print("✅ Scene setup complete")
     }
     
     func setupScene() {
@@ -172,10 +186,10 @@ class SceneViewController: UIViewController {
     }
     
     func setupUI() {
-        // Background panel
-        let panel = UIView(frame: CGRect(x: 20, y: 60, width: 200, height: 140))
-        panel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
-        panel.layer.cornerRadius = 10
+        // Top-left: COM coordinate panel
+        let comPanel = UIView(frame: CGRect(x: 20, y: 60, width: 200, height: 140))
+        comPanel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+        comPanel.layer.cornerRadius = 10
         
         // COM header label
         comLabel = UILabel(frame: CGRect(x: 10, y: 10, width: 180, height: 25))
@@ -183,31 +197,96 @@ class SceneViewController: UIViewController {
         comLabel.textColor = .white
         comLabel.font = .boldSystemFont(ofSize: 16)
         comLabel.textAlignment = .center
-        panel.addSubview(comLabel)
+        comPanel.addSubview(comLabel)
         
         // X coordinate label
         xLabel = UILabel(frame: CGRect(x: 10, y: 40, width: 180, height: 25))
         xLabel.text = "X: 0.00 cm"
         xLabel.textColor = .white
         xLabel.font = .monospacedSystemFont(ofSize: 14, weight: .regular)
-        panel.addSubview(xLabel)
+        comPanel.addSubview(xLabel)
         
         // Y coordinate label
         yLabel = UILabel(frame: CGRect(x: 10, y: 70, width: 180, height: 25))
         yLabel.text = "Y: 0.00 cm"
         yLabel.textColor = .white
         yLabel.font = .monospacedSystemFont(ofSize: 14, weight: .regular)
-        panel.addSubview(yLabel)
+        comPanel.addSubview(yLabel)
         
         // Z coordinate label
         zLabel = UILabel(frame: CGRect(x: 10, y: 100, width: 180, height: 25))
         zLabel.text = "Z: 0.00 cm"
         zLabel.textColor = .white
         zLabel.font = .monospacedSystemFont(ofSize: 14, weight: .regular)
-        panel.addSubview(zLabel)
+        comPanel.addSubview(zLabel)
         
-        view.addSubview(panel)
-        print("📊 UI panel created")
+        view.addSubview(comPanel)
+        
+        // Top-right: Camera view label
+        viewLabel = UILabel(frame: CGRect(x: view.bounds.width - 120, y: 60, width: 100, height: 40))
+        viewLabel.text = "Front"
+        viewLabel.textColor = .white
+        viewLabel.font = .boldSystemFont(ofSize: 18)
+        viewLabel.textAlignment = .center
+        viewLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+        viewLabel.layer.cornerRadius = 10
+        viewLabel.layer.masksToBounds = true
+        viewLabel.autoresizingMask = [.flexibleLeftMargin]
+        view.addSubview(viewLabel)
+        
+        // Bottom: Control panel
+        let controlHeight: CGFloat = 120
+        let controlPanel = UIView(frame: CGRect(x: 0, y: view.bounds.height - controlHeight, width: view.bounds.width, height: controlHeight))
+        controlPanel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        controlPanel.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
+        view.addSubview(controlPanel)
+        
+        // Pose buttons
+        let buttonWidth: CGFloat = 80
+        let buttonHeight: CGFloat = 40
+        let buttonSpacing: CGFloat = 10
+        let topRowY: CGFloat = 15
+        let bottomRowY: CGFloat = 60
+        
+        // Top row: Pose buttons
+        let libertyBtn = createButton(title: "Liberty", x: 20, y: topRowY, width: buttonWidth, height: buttonHeight, action: #selector(applyLiberty))
+        controlPanel.addSubview(libertyBtn)
+        
+        let scaleBtn = createButton(title: "Scale", x: 20 + buttonWidth + buttonSpacing, y: topRowY, width: buttonWidth, height: buttonHeight, action: #selector(applyScale))
+        controlPanel.addSubview(scaleBtn)
+        
+        let arabesqueBtn = createButton(title: "Arabesque", x: 20 + (buttonWidth + buttonSpacing) * 2, y: topRowY, width: buttonWidth, height: buttonHeight, action: #selector(applyArabesque))
+        controlPanel.addSubview(arabesqueBtn)
+        
+        let resetBtn = createButton(title: "Reset", x: view.bounds.width - 100, y: topRowY, width: buttonWidth, height: buttonHeight, action: #selector(resetPose))
+        resetBtn.backgroundColor = UIColor.systemRed.withAlphaComponent(0.8)
+        resetBtn.autoresizingMask = [.flexibleLeftMargin]
+        controlPanel.addSubview(resetBtn)
+        
+        // Bottom row: View controls
+        let prevBtn = createButton(title: "◀", x: 20, y: bottomRowY, width: 50, height: buttonHeight, action: #selector(previousView))
+        controlPanel.addSubview(prevBtn)
+        
+        let nextBtn = createButton(title: "▶", x: 80, y: bottomRowY, width: 50, height: buttonHeight, action: #selector(nextView))
+        controlPanel.addSubview(nextBtn)
+        
+        let fitBtn = createButton(title: "Fit View", x: view.bounds.width/2 - 50, y: bottomRowY, width: 100, height: buttonHeight, action: #selector(fitToView))
+        fitBtn.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.8)
+        fitBtn.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin]
+        controlPanel.addSubview(fitBtn)
+        
+        print("📊 UI controls created")
+    }
+    
+    func createButton(title: String, x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat, action: Selector) -> UIButton {
+        let button = UIButton(frame: CGRect(x: x, y: y, width: width, height: height))
+        button.setTitle(title, for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = .boldSystemFont(ofSize: 14)
+        button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.8)
+        button.layer.cornerRadius = 8
+        button.addTarget(self, action: action, for: .touchUpInside)
+        return button
     }
     
     func applyBodyPartColors() {
@@ -278,7 +357,25 @@ class SceneViewController: UIViewController {
         
         SCNTransaction.commit()
         
+        // Update view label
+        viewLabel.text = newPos.name
+        
         print("📷 Switched to: \(newPos.name)")
+    }
+    
+    @objc func previousView() {
+        currentCameraIndex = (currentCameraIndex - 1 + cameraPositions.count) % cameraPositions.count
+        switchToCamera(index: currentCameraIndex)
+    }
+    
+    @objc func nextView() {
+        currentCameraIndex = (currentCameraIndex + 1) % cameraPositions.count
+        switchToCamera(index: currentCameraIndex)
+    }
+    
+    @objc func fitToView() {
+        // Reset to current camera position (smooth re-center)
+        switchToCamera(index: currentCameraIndex)
     }
     
     func updateCOM() {
@@ -360,6 +457,28 @@ class SceneViewController: UIViewController {
         }
         if let leftUpLeg = findBone(named: "mixamorig_LeftUpLeg") {
             leftUpLeg.eulerAngles.z = .pi / 2
+        }
+        
+        updateCOM()
+    }
+    
+    @objc func applyArabesque() {
+        print("Applying Arabesque pose...")
+        
+        // Right leg back and up
+        if let rightUpLeg = findBone(named: "mixamorig_RightUpLeg") {
+            rightUpLeg.eulerAngles.x = .pi / 3  // 60 degrees back
+            print("✓ Right leg extended back")
+        } else {
+            print("⚠️ Warning: Bone 'mixamorig_RightUpLeg' not found")
+        }
+        
+        // Arms extended (optional - can adjust for more dramatic pose)
+        if let rightArm = findBone(named: "mixamorig_RightArm") {
+            rightArm.eulerAngles.z = -.pi / 4  // Arm raised
+        }
+        if let leftArm = findBone(named: "mixamorig_LeftArm") {
+            leftArm.eulerAngles.z = .pi / 4  // Arm raised
         }
         
         updateCOM()
