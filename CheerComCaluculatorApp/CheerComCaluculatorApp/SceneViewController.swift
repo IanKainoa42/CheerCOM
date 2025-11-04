@@ -48,14 +48,16 @@ class SceneViewController: UIViewController {
         
         print("📷 Scene view frame: \(view.bounds)")
         
-        // Add camera pointing at the character
+        // Add camera - positioned to see character at ~100 units tall
         let cameraNode = SCNNode()
         cameraNode.camera = SCNCamera()
-        cameraNode.position = SCNVector3(x: 0, y: 100, z: 300)
-        cameraNode.look(at: SCNVector3(x: 0, y: 100, z: 0))  // Look at character center
+        cameraNode.position = SCNVector3(x: 0, y: 100, z: 250)  // Back and at character height
+        cameraNode.look(at: SCNVector3(x: 0, y: 100, z: 0))
         scene.rootNode.addChildNode(cameraNode)
         
-        print("📷 Camera positioned at (0, 100, 300) looking at (0, 100, 0)")
+        // Set this camera as the point of view
+        sceneView.pointOfView = cameraNode
+        print("📷 Camera at (0, 100, 250) looking at character")
         
         // Add lights - brighter setup
         let ambientLight = SCNNode()
@@ -105,23 +107,8 @@ class SceneViewController: UIViewController {
         print("Bounding box: min(\(min.x), \(min.y), \(min.z)) max(\(max.x), \(max.y), \(max.z))")
         print("Position: \(characterNode.position)")
         print("Scale: \(characterNode.scale)")
-        
-        // Add a visual helper - ground plane
-        let ground = SCNFloor()
-        ground.firstMaterial?.diffuse.contents = UIColor.darkGray
-        ground.firstMaterial?.lightingModel = .constant
-        let groundNode = SCNNode(geometry: ground)
-        groundNode.position = SCNVector3(x: 0, y: 0, z: 0)
-        scene.rootNode.addChildNode(groundNode)
-        print("🟫 Ground plane added at y=0")
-        
+        print("✅ Character loaded successfully")
         print("======================")
-        
-        // Print all bone names for mapping (commented out to reduce console spam)
-        // Uncomment if you need to see bones again
-        // print("=== BONE NAMES ===")
-        // printBones(characterNode)
-        // print("==================")
     }
     
     func printBones(_ node: SCNNode, indent: Int = 0) {
@@ -134,7 +121,7 @@ class SceneViewController: UIViewController {
     
     func setupCOMMarker() {
         // Create red sphere for COM visualization
-        let sphere = SCNSphere(radius: 10)  // Bigger sphere
+        let sphere = SCNSphere(radius: 10)
         sphere.firstMaterial?.diffuse.contents = UIColor.red
         sphere.firstMaterial?.emission.contents = UIColor.red  // Make it glow
         sphere.firstMaterial?.lightingModel = .constant  // Always visible
@@ -142,7 +129,7 @@ class SceneViewController: UIViewController {
         comMarker = SCNNode(geometry: sphere)
         scene.rootNode.addChildNode(comMarker)
         
-        print("🔴 COM marker created at origin")
+        print("🔴 COM marker created (radius 10)")
     }
     
     func updateCOM() {
