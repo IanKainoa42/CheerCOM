@@ -20,6 +20,17 @@ class SceneViewController: UIViewController {
     var trailPositions: [SCNVector3] = []
     let maxTrailPoints = 50
     
+    // Camera views
+    var cameraNode: SCNNode!
+    var currentCameraIndex = 0
+    let cameraPositions: [(position: SCNVector3, lookAt: SCNVector3, name: String)] = [
+        (SCNVector3(x: 0, y: 100, z: 300), SCNVector3(x: 0, y: 100, z: 0), "Front"),
+        (SCNVector3(x: 220, y: 90, z: 0), SCNVector3(x: 0, y: 90, z: 0), "Right"),
+        (SCNVector3(x: 0, y: 90, z: -220), SCNVector3(x: 0, y: 90, z: 0), "Back"),
+        (SCNVector3(x: -220, y: 90, z: 0), SCNVector3(x: 0, y: 90, z: 0), "Left"),
+        (SCNVector3(x: 0, y: 300, z: 0), SCNVector3(x: 0, y: 0, z: 0), "Top")
+    ]
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -31,6 +42,7 @@ class SceneViewController: UIViewController {
         setupCOMMarker()
         setupCOMTrail()
         setupUI()
+        setupGestures()
         
         // Initialize calculator (52.2 kg = 115 lbs)
         calculator = COMCalculator(bodyMass: 52.2)
@@ -53,8 +65,8 @@ class SceneViewController: UIViewController {
         scene = SCNScene()
         sceneView.scene = scene
         
-        // Enable camera controls (FREE orbit/zoom/pan with touch!)
-        sceneView.allowsCameraControl = true
+        // Disable free camera controls - we'll use fixed positions
+        sceneView.allowsCameraControl = false
         sceneView.backgroundColor = UIColor(white: 0.15, alpha: 1.0)  // Dark gray background
         
         // Show statistics (FPS, etc)
@@ -62,14 +74,15 @@ class SceneViewController: UIViewController {
         
         print("📷 Scene view frame: \(view.bounds)")
         
-        // Add camera - positioned to see full character nicely framed
-        let cameraNode = SCNNode()
+        // Add camera with fixed positions
+        cameraNode = SCNNode()
         cameraNode.camera = SCNCamera()
-        cameraNode.position = SCNVector3(x: 0, y: 90, z: 220)  // Back and slightly elevated
-        cameraNode.look(at: SCNVector3(x: 0, y: 90, z: 0))  // Look at character's center of mass area
+        let initialPos = cameraPositions[0]
+        cameraNode.position = initialPos.position
+        cameraNode.look(at: initialPos.lookAt)
         scene.rootNode.addChildNode(cameraNode)
         
-        print("📷 Camera positioned")
+        print("📷 Camera positioned at: \(initialPos.name)")
         
         // Add lights - brighter setup
         let ambientLight = SCNNode()
@@ -224,6 +237,48 @@ class SceneViewController: UIViewController {
             }
         }
         print("🎨 Body part colors applied")
+    }
+    
+    func setupGestures() {
+        // Left swipe - next camera view
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        swipeLeft.direction = .left
+        view.addGestureRecognizer(swipeLeft)
+        
+        // Right swipe - previous camera view
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        swipeRight.direction = .right
+        view.addGestureRecognizer(swipeRight)
+        
+        print("👆 Swipe gestures enabled")
+    }
+    
+    @objc func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
+        if gesture.direction == .left {
+            // Next camera view
+            currentCameraIndex = (currentCameraIndex + 1) % cameraPositions.count
+        } else if gesture.direction == .right {
+            // Previous camera view
+            currentCameraIndex = (currentCameraIndex - 1 + cameraPositions.count) % cameraPositions.count
+        }
+        
+        switchToCamera(index: currentCameraIndex)
+    }
+    
+    func switchToCamera(index: Int) {
+        let newPos = cameraPositions[index]
+        
+        // Animate camera transition
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = 0.5
+        SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        
+        cameraNode.position = newPos.position
+        cameraNode.look(at: newPos.lookAt)
+        
+        SCNTransaction.commit()
+        
+        print("📷 Switched to: \(newPos.name)")
     }
     
     func updateCOM() {
