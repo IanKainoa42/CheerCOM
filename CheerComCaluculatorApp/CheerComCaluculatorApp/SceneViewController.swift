@@ -91,6 +91,11 @@ class SceneViewController: UIViewController {
         // Add camera with fixed positions
         cameraNode = SCNNode()
         cameraNode.camera = SCNCamera()
+        
+        // Adjust clipping planes to prevent model clipping
+        cameraNode.camera!.zNear = 1.0   // Very close objects visible
+        cameraNode.camera!.zFar = 1000.0  // Far objects visible
+        
         let initialPos = cameraPositions[0]
         cameraNode.position = initialPos.position
         cameraNode.look(at: initialPos.lookAt)
