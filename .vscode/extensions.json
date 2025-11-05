@@ -1,0 +1,26 @@
+{
+  "recommendations": [
+    // Gemini Code Assist
+    "googlecloudtools.cloudcode",
+    
+    // Swift Development
+    "sswg.swift-lang",
+    "vknabel.vscode-swift-development-environment",
+    
+    // iOS/Xcode Support
+    "tinaciousdesign.theme-xcode-one-dark",
+    
+    // Git Integration
+    "eamodio.gitlens",
+    
+    // Code Quality
+    "streetsidesoftware.code-spell-checker",
+    "editorconfig.editorconfig",
+    
+    // Utilities
+    "ms-vscode.live-server",
+    "wayou.vscode-todo-highlight"
+  ]
+}
+
+

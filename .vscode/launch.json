@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug iOS App",
+      "program": "${workspaceFolder}/CheerComCaluculatorApp/build/Debug-iphonesimulator/CheerComCaluculatorApp.app",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "swift: Build Debug"
+    },
+    {
+      "type": "lldb",
+      "request": "attach",
+      "name": "Attach to Running App",
+      "waitFor": true
+    }
+  ]
+}
+
+
