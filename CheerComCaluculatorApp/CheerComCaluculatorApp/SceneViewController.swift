@@ -51,6 +51,8 @@ class SceneViewController: UIViewController {
 
         // 2. Setup Calculator
         calculator = COMCalculator(bodyMass: 52.2)
+        // Bind calculator to scene nodes for optimized access
+        calculator.bind(jointNodes: sceneManager.cachedBoneNodes)
 
         // 3. Setup UI
         setupUI()
@@ -132,14 +134,8 @@ class SceneViewController: UIViewController {
     private let uiUpdateInterval = 10  // Update UI every 10 frames
 
     func performCOMUpdate() {
-        // Gather positions
-        var jointPositions: [String: SCNVector3] = [:]
-        for (name, node) in sceneManager.cachedBoneNodes {
-            jointPositions[name] = node.worldPosition
-        }
-
-        // Calculate COM
-        let com = calculator.calculateBodyCOM(jointPositions: jointPositions)
+        // Calculate COM directly using bound nodes
+        let com = calculator.calculateBodyCOM()
 
         // Update Visuals
         visualizationsManager.updateCOM(position: com)

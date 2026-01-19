@@ -14,6 +14,12 @@ class VisualizationsManager {
 
     weak var sceneManager: CheerCOMSceneManager?
 
+    // Cache for BOS nodes to avoid repeated lookups
+    private var leftFootNode: SCNNode?
+    private var rightFootNode: SCNNode?
+    private var leftToeNode: SCNNode?
+    private var rightToeNode: SCNNode?
+
     init(scene: SCNScene, sceneManager: CheerCOMSceneManager) {
         self.sceneManager = sceneManager
         setupVisuals(in: scene)
@@ -157,11 +163,19 @@ class VisualizationsManager {
     }
 
     private func getBOSPoints() -> [CGPoint]? {
-        guard let sceneManager = sceneManager,
-            let leftFoot = sceneManager.findBone(named: "mixamorig_LeftFoot"),
-            let rightFoot = sceneManager.findBone(named: "mixamorig_RightFoot"),
-            let leftToe = sceneManager.findBone(named: "mixamorig_LeftToeBase"),
-            let rightToe = sceneManager.findBone(named: "mixamorig_RightToeBase")
+        // Initialize cache if needed
+        if leftFootNode == nil {
+            guard let sceneManager = sceneManager else { return nil }
+            leftFootNode = sceneManager.findBone(named: "mixamorig_LeftFoot")
+            rightFootNode = sceneManager.findBone(named: "mixamorig_RightFoot")
+            leftToeNode = sceneManager.findBone(named: "mixamorig_LeftToeBase")
+            rightToeNode = sceneManager.findBone(named: "mixamorig_RightToeBase")
+        }
+
+        guard let leftFoot = leftFootNode,
+            let rightFoot = rightFootNode,
+            let leftToe = leftToeNode,
+            let rightToe = rightToeNode
         else {
             return nil
         }
@@ -299,9 +313,8 @@ class VisualizationsManager {
         var maxDotProduct: Float = -Float.greatestFiniteMagnitude
         var mostUnstableNode: SCNNode?
 
-        for (name, node) in sceneManager.cachedBoneNodes {
-            // Skip feet as they are the base
-            if name.contains("Foot") || name.contains("Toe") { continue }
+        for (_, node) in sceneManager.cachedBoneNodes {
+            if sceneManager.feetAndToes.contains(node) { continue }
 
             let nodePos = CGPoint(
                 x: CGFloat(node.worldPosition.x), y: CGFloat(node.worldPosition.z))
