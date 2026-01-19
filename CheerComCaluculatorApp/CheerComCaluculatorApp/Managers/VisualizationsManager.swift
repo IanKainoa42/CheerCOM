@@ -299,9 +299,8 @@ class VisualizationsManager {
         var maxDotProduct: Float = -Float.greatestFiniteMagnitude
         var mostUnstableNode: SCNNode?
 
-        for (name, node) in sceneManager.cachedBoneNodes {
-            // Skip feet as they are the base
-            if name.contains("Foot") || name.contains("Toe") { continue }
+        for (_, node) in sceneManager.cachedBoneNodes {
+            if sceneManager.feetAndToes.contains(node) { continue }
 
             let nodePos = CGPoint(
                 x: CGFloat(node.worldPosition.x), y: CGFloat(node.worldPosition.z))
