@@ -132,14 +132,8 @@ class SceneViewController: UIViewController {
     private let uiUpdateInterval = 10  // Update UI every 10 frames
 
     func performCOMUpdate() {
-        // Gather positions
-        var jointPositions: [String: SCNVector3] = [:]
-        for (name, node) in sceneManager.cachedBoneNodes {
-            jointPositions[name] = node.worldPosition
-        }
-
         // Calculate COM
-        let com = calculator.calculateBodyCOM(jointPositions: jointPositions)
+        let com = calculator.calculateBodyCOM(jointNodes: sceneManager.cachedBoneNodes)
 
         // Update Visuals
         visualizationsManager.updateCOM(position: com)

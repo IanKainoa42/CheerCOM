@@ -27,16 +27,19 @@ class COMCalculator {
         self.bodyMass = bodyMass
     }
     
-    func calculateBodyCOM(jointPositions: [String: SCNVector3]) -> SCNVector3 {
+    func calculateBodyCOM(jointNodes: [String: SCNNode]) -> SCNVector3 {
         var totalWeighted = SCNVector3Zero
         var totalMass: Double = 0
         
         for segment in segments {
-            guard let proxPos = jointPositions[segment.prox],
-                  let distPos = jointPositions[segment.dist] else {
+            guard let proxNode = jointNodes[segment.prox],
+                  let distNode = jointNodes[segment.dist] else {
                 print("⚠️ Missing joint: \(segment.prox) or \(segment.dist)")
                 continue
             }
+
+            let proxPos = proxNode.worldPosition
+            let distPos = distNode.worldPosition
             
             // COM = proximal + (distal - proximal) * %
             let segCOM = proxPos + ((distPos - proxPos) * Float(segment.com))
