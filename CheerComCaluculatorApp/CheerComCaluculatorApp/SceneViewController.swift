@@ -383,9 +383,81 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         // TODO: Implement pose mirroring
     }
 
+    func didSelectSavedPose(_ pose: SavedPose) {
+        print("💾 Applying saved pose: \(pose.name)")
+        applySavedPose(pose)
+    }
+
+    func didDeleteSavedPose(_ pose: SavedPose) {
+        let alert = UIAlertController(
+            title: "Delete Pose",
+            message: "Are you sure you want to delete '\(pose.name)'?",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            PoseStorageManager.shared.deletePose(id: pose.id)
+            self?.poseLibraryPanel.refreshPoses()
+            print("🗑️ Deleted pose: \(pose.name)")
+        })
+
+        present(alert, animated: true)
+    }
+
     func didTapSavePose() {
-        print("💾 Save pose functionality coming soon")
-        // TODO: Implement pose saving
+        let alert = UIAlertController(title: "Save Pose", message: "Enter a name for this pose", preferredStyle: .alert)
+
+        alert.addTextField { textField in
+            textField.placeholder = "Pose Name"
+        }
+
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+
+        let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
+
+            self.saveCurrentPose(name: name)
+        }
+        saveAction.isEnabled = false // Initially disabled
+
+        alert.addAction(cancelAction)
+        alert.addAction(saveAction)
+
+        present(alert, animated: true)
+
+        // Add observer to enable button only when text is present
+        NotificationCenter.default.addObserver(forName: UITextField.textDidChangeNotification, object: alert.textFields?.first, queue: OperationQueue.main) { notification in
+            if let textField = notification.object as? UITextField,
+               let text = textField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !text.isEmpty {
+                saveAction.isEnabled = true
+            } else {
+                saveAction.isEnabled = false
+            }
+        }
+    }
+
+    private func saveCurrentPose(name: String) {
+        var jointPositions: [String: SCNVector3] = [:]
+
+        // Iterate through all controllable joints and capture their Euler angles
+        for jointName in sceneManager.controllableJoints {
+            if let joint = sceneManager.cachedBoneNodes[jointName] {
+                jointPositions[jointName] = joint.eulerAngles
+            }
+        }
+
+        PoseStorageManager.shared.savePose(name: name, jointPositions: jointPositions)
+        print("💾 Saved pose '\(name)' with \(jointPositions.count) joints")
+
+        // Refresh library if it's showing saved poses
+        poseLibraryPanel.refreshPoses()
+
+        // Show confirmation
+        let feedback = UINotificationFeedbackGenerator()
+        feedback.notificationOccurred(.success)
     }
 
     func didTapClosePoseLibrary() {
@@ -395,12 +467,25 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 
     private func applyPose(_ pose: PoseType) {
         let poseDefinition = PosePresets.shared.getPose(pose)
+        applyJointAngles(poseDefinition.jointAngles, name: poseDefinition.name)
+    }
 
+    private func applySavedPose(_ pose: SavedPose) {
+        var jointAngles: [String: SCNVector3] = [:]
+        for (name, _) in pose.jointAngles {
+            if let vector = pose.getVector(for: name) {
+                jointAngles[name] = vector
+            }
+        }
+        applyJointAngles(jointAngles, name: pose.name)
+    }
+
+    private func applyJointAngles(_ jointAngles: [String: SCNVector3], name: String) {
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.3
 
-        // Apply joint angles from the pose definition
-        for (jointName, angles) in poseDefinition.jointAngles {
+        // Apply joint angles
+        for (jointName, angles) in jointAngles {
             if let bone = sceneManager.findBone(named: jointName) {
                 bone.eulerAngles = angles
             }
@@ -408,7 +493,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 
         SCNTransaction.completionBlock = { [weak self] in
             self?.scheduleUpdateCOM()
-            print("✅ Applied \(poseDefinition.name)")
+            print("✅ Applied \(name)")
         }
         SCNTransaction.commit()
     }

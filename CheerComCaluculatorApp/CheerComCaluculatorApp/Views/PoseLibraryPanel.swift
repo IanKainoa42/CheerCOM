@@ -3,6 +3,8 @@ import UIKit
 
 protocol PoseLibraryPanelDelegate: AnyObject {
     func didSelectPose(_ pose: PoseType)
+    func didSelectSavedPose(_ pose: SavedPose)
+    func didDeleteSavedPose(_ pose: SavedPose)
     func didTapMirrorPose()
     func didTapSavePose()
     func didTapClosePoseLibrary()
@@ -84,7 +86,7 @@ class PoseLibraryPanel: UIVisualEffectView {
 
         // Category tabs
         let categoryY = headerHeight + 5
-        let categories = ["Full Body", "Arms", "Legs"]
+        let categories = ["Full Body", "Arms", "Legs", "Saved"]
         categorySegmentedControl = UISegmentedControl(items: categories)
         categorySegmentedControl.frame = CGRect(
             x: 20,
@@ -143,8 +145,14 @@ class PoseLibraryPanel: UIVisualEffectView {
         case 0: loadPosesForCategory(.fullBody)
         case 1: loadPosesForCategory(.armsOnly)
         case 2: loadPosesForCategory(.legsOnly)
+        case 3: loadPosesForCategory(.saved)
         default: break
         }
+    }
+
+    // Public method to refresh the list (e.g., after saving)
+    func refreshPoses() {
+        loadPosesForCategory(currentCategory)
     }
 
     private func loadPosesForCategory(_ category: PoseCategory) {
@@ -155,34 +163,57 @@ class PoseLibraryPanel: UIVisualEffectView {
             subview.removeFromSuperview()
         }
 
-        // Get poses for category
-        let poses = PosePresets.shared.getPoses(for: category)
-
         // Calculate layout
         let totalWidth = scrollView.frame.width
-        let padding: CGFloat = 20
-        let availableWidth = totalWidth - (padding * 2)
         let totalButtonWidth = CGFloat(buttonsPerRow) * buttonSize
         let totalSpacing = CGFloat(buttonsPerRow - 1) * buttonSpacing
         let startX = (totalWidth - totalButtonWidth - totalSpacing) / 2
 
-        // Create buttons
-        for (index, pose) in poses.enumerated() {
-            let row = index / buttonsPerRow
-            let col = index % buttonsPerRow
+        var itemCount = 0
 
-            let x = startX + CGFloat(col) * (buttonSize + buttonSpacing)
-            let y = 10 + CGFloat(row) * (buttonSize + buttonSpacing + 20)
+        if category == .saved {
+            let savedPoses = PoseStorageManager.shared.loadPoses()
+            itemCount = savedPoses.count
 
-            let poseButton = createPoseButton(pose: pose, x: x, y: y)
-            poseButtonContainer.addSubview(poseButton)
+            if itemCount == 0 {
+                let emptyLabel = UILabel(frame: CGRect(x: 0, y: 50, width: totalWidth, height: 30))
+                emptyLabel.text = "No saved poses yet"
+                emptyLabel.textColor = UIColor.white.withAlphaComponent(0.6)
+                emptyLabel.textAlignment = .center
+                poseButtonContainer.addSubview(emptyLabel)
+            }
+
+            for (index, pose) in savedPoses.enumerated() {
+                let row = index / buttonsPerRow
+                let col = index % buttonsPerRow
+
+                let x = startX + CGFloat(col) * (buttonSize + buttonSpacing)
+                let y = 10 + CGFloat(row) * (buttonSize + buttonSpacing + 20)
+
+                let poseButton = createSavedPoseButton(pose: pose, x: x, y: y)
+                poseButtonContainer.addSubview(poseButton)
+            }
+        } else {
+            let poses = PosePresets.shared.getPoses(for: category)
+            itemCount = poses.count
+
+            for (index, pose) in poses.enumerated() {
+                let row = index / buttonsPerRow
+                let col = index % buttonsPerRow
+
+                let x = startX + CGFloat(col) * (buttonSize + buttonSpacing)
+                let y = 10 + CGFloat(row) * (buttonSize + buttonSpacing + 20)
+
+                let poseButton = createPoseButton(pose: pose, x: x, y: y)
+                poseButtonContainer.addSubview(poseButton)
+            }
         }
 
         // Update scroll view content size
-        let rows = (poses.count + buttonsPerRow - 1) / buttonsPerRow
+        let rows = (itemCount + buttonsPerRow - 1) / buttonsPerRow
         let contentHeight = 20 + CGFloat(rows) * (buttonSize + buttonSpacing + 20)
-        poseButtonContainer.frame.size.height = contentHeight
-        scrollView.contentSize = CGSize(width: scrollView.frame.width, height: contentHeight)
+        poseButtonContainer.frame.size.height = max(contentHeight, 100)
+        scrollView.contentSize = CGSize(width: scrollView.frame.width, height: poseButtonContainer.frame.size.height)
     }
 
     private func createPoseButton(pose: PoseType, x: CGFloat, y: CGFloat) -> UIView {
@@ -216,6 +247,41 @@ class PoseLibraryPanel: UIVisualEffectView {
         return container
     }
 
+    private func createSavedPoseButton(pose: SavedPose, x: CGFloat, y: CGFloat) -> UIView {
+        let container = UIView(
+            frame: CGRect(x: x, y: y, width: buttonSize, height: buttonSize + 20))
+
+        // Button
+        let button = UIButton(frame: CGRect(x: 0, y: 0, width: buttonSize, height: buttonSize))
+        button.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.8) // Green for saved
+        button.layer.cornerRadius = 12
+        button.setTitle("💾", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 32)
+        button.addTarget(self, action: #selector(savedPoseTapped(_:)), for: .touchUpInside)
+
+        // Add long press to delete
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(savedPoseLongPressed(_:)))
+        button.addGestureRecognizer(longPress)
+
+        container.addSubview(button)
+
+        // Label
+        let label = UILabel(frame: CGRect(x: 0, y: buttonSize + 2, width: buttonSize, height: 18))
+        label.text = pose.name
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 10)
+        label.textAlignment = .center
+        label.numberOfLines = 1
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.7
+        container.addSubview(label)
+
+        // Store pose reference
+        button.accessibilityIdentifier = "saved:\(pose.id.uuidString)"
+
+        return container
+    }
+
     @objc private func poseTapped(_ sender: UIButton) {
         // Find pose from accessibility identifier
         guard let poseString = sender.accessibilityIdentifier,
@@ -224,20 +290,50 @@ class PoseLibraryPanel: UIVisualEffectView {
             return
         }
 
-        // Animate button
+        animateButton(sender)
+        delegate?.didSelectPose(pose)
+        print("🎭 Selected pose: \(pose.displayName)")
+    }
+
+    @objc private func savedPoseTapped(_ sender: UIButton) {
+        guard let idString = sender.accessibilityIdentifier?.replacingOccurrences(of: "saved:", with: ""),
+              let uuid = UUID(uuidString: idString) else { return }
+
+        let savedPoses = PoseStorageManager.shared.loadPoses()
+        if let pose = savedPoses.first(where: { $0.id == uuid }) {
+            animateButton(sender)
+            delegate?.didSelectSavedPose(pose)
+            print("💾 Selected saved pose: \(pose.name)")
+        }
+    }
+
+    @objc private func savedPoseLongPressed(_ gesture: UILongPressGestureRecognizer) {
+        if gesture.state == .began, let sender = gesture.view as? UIButton {
+            guard let idString = sender.accessibilityIdentifier?.replacingOccurrences(of: "saved:", with: ""),
+                  let uuid = UUID(uuidString: idString) else { return }
+
+            let savedPoses = PoseStorageManager.shared.loadPoses()
+            if let pose = savedPoses.first(where: { $0.id == uuid }) {
+                 // Feedback
+                 let generator = UINotificationFeedbackGenerator()
+                 generator.notificationOccurred(.warning)
+
+                delegate?.didDeleteSavedPose(pose)
+            }
+        }
+    }
+
+    private func animateButton(_ button: UIButton) {
         UIView.animate(
             withDuration: 0.1,
             animations: {
-                sender.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
+                button.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
             }
         ) { _ in
             UIView.animate(withDuration: 0.1) {
-                sender.transform = .identity
+                button.transform = .identity
             }
         }
-
-        delegate?.didSelectPose(pose)
-        print("🎭 Selected pose: \(pose.displayName)")
     }
 
     @objc private func mirrorTapped() {
