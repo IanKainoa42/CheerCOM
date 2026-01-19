@@ -6,6 +6,7 @@ class CheerCOMSceneManager {
     var scene: SCNScene!
     var characterNode: SCNNode!
     var cachedBoneNodes: [String: SCNNode] = [:]
+    var feetAndToes = Set<SCNNode>()
 
     // List of controllable joints (in order from root to extremities)
     let controllableJoints = [
@@ -177,6 +178,12 @@ class CheerCOMSceneManager {
         characterNode.enumerateChildNodes { [weak self] (node, _) in
             if let name = node.name {
                 self?.cachedBoneNodes[name] = node
+            }
+        }
+
+        for (name, node) in cachedBoneNodes {
+            if name.contains("Foot") || name.contains("Toe") {
+                feetAndToes.insert(node)
             }
         }
 
