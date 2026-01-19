@@ -147,21 +147,6 @@ class CheerCOMSceneManager {
     }
 
     func cacheBoneNodes() {
-        // Debug: Print ALL node names to identify bone structure
-        print("🔍 === DEBUGGING: All nodes in character model ===")
-        var allNodeNames: [String] = []
-        characterNode.enumerateChildNodes { (node, _) in
-            if let name = node.name, !name.isEmpty {
-                allNodeNames.append(name)
-            }
-        }
-        // Sort and print for easier reading
-        allNodeNames.sort()
-        for name in allNodeNames {
-            print("   - \(name)")
-        }
-        print("🔍 === Total nodes found: \(allNodeNames.count) ===\n")
-
         // Cache all the joints we'll be accessing frequently
         let allJoints =
             controllableJoints + [
