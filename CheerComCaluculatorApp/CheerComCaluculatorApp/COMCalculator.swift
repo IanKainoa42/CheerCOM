@@ -23,10 +23,80 @@ class COMCalculator {
         ("mixamorig_LeftFoot", "mixamorig_LeftToeBase", 0.0145, 0.50)    // L foot
     ]
     
+    // MARK: - Optimization
+    private struct BoundSegment {
+        let prox: SCNNode
+        let dist: SCNNode
+        let massRatio: Double
+        let comRatio: Double
+    }
+
+    private var boundSegments: [BoundSegment] = []
+
     init(bodyMass: Double) {
         self.bodyMass = bodyMass
     }
     
+    /// Binds the calculator to the specific SCNNodes for direct access.
+    /// Call this once during setup or when the character model changes.
+    func bind(jointNodes: [String: SCNNode]) {
+        boundSegments.removeAll()
+        var missingCount = 0
+
+        for segment in segments {
+            guard let proxNode = jointNodes[segment.prox],
+                  let distNode = jointNodes[segment.dist] else {
+                print("⚠️ Missing joint for binding: \(segment.prox) or \(segment.dist)")
+                missingCount += 1
+                continue
+            }
+
+            boundSegments.append(BoundSegment(
+                prox: proxNode,
+                dist: distNode,
+                massRatio: segment.mass,
+                comRatio: segment.com
+            ))
+        }
+
+        if missingCount == 0 {
+            print("✅ COMCalculator bound to \(boundSegments.count) segments")
+        }
+    }
+
+    /// Optimized calculation using bound nodes directly.
+    func calculateBodyCOM() -> SCNVector3 {
+        // Fallback or warning if not bound?
+        if boundSegments.isEmpty {
+            // Check if we should warn, but return zero is safe
+             print("⚠️ COMCalculator: No segments bound. Did you call bind(jointNodes:)?")
+             return SCNVector3Zero
+        }
+
+        var totalWeighted = SCNVector3Zero
+        var totalMass: Double = 0
+
+        for segment in boundSegments {
+            // Direct property access is faster than dictionary lookup
+            let proxPos = segment.prox.worldPosition
+            let distPos = segment.dist.worldPosition
+
+            // COM = proximal + (distal - proximal) * %
+            let segCOM = proxPos + ((distPos - proxPos) * Float(segment.comRatio))
+            let segMass = bodyMass * segment.massRatio
+
+            totalWeighted = totalWeighted + (segCOM * Float(segMass))
+            totalMass += segMass
+        }
+
+        if totalMass > 0 {
+            return totalWeighted * Float(1.0 / totalMass)
+        } else {
+            return SCNVector3Zero
+        }
+    }
+
+    // Legacy method - kept for compatibility but should be avoided in loops
     func calculateBodyCOM(jointPositions: [String: SCNVector3]) -> SCNVector3 {
         var totalWeighted = SCNVector3Zero
         var totalMass: Double = 0
@@ -70,4 +140,3 @@ extension SCNVector3 {
         return SCNVector3(v.x * s, v.y * s, v.z * s)
     }
 }
-
