@@ -7,6 +7,7 @@ class VisualizationsManager {
     var gravityLineNode: SCNNode!
     var bosNode: SCNNode!
     var gridNode: SCNNode!
+    var segmentCOMNodes: SCNNode!
 
     var showAdvancedVisualizations = false
     var trailPositions: [SCNVector3] = []
@@ -21,6 +22,7 @@ class VisualizationsManager {
 
     private func setupVisuals(in scene: SCNScene) {
         setupCOMMarker(in: scene)
+        setupSegmentMarkers(in: scene)
         setupCOMTrail(in: scene)
         setupVisualAids(in: scene)
     }
@@ -35,6 +37,11 @@ class VisualizationsManager {
         scene.rootNode.addChildNode(comMarker)
 
         print("🔴 COM marker created")
+    }
+
+    private func setupSegmentMarkers(in scene: SCNScene) {
+        segmentCOMNodes = SCNNode()
+        scene.rootNode.addChildNode(segmentCOMNodes)
     }
 
     private func setupCOMTrail(in scene: SCNScene) {
@@ -75,8 +82,12 @@ class VisualizationsManager {
         scene.rootNode.addChildNode(gridNode)
     }
 
-    func updateCOM(position: SCNVector3) {
+    func updateCOM(result: CalculationResult) {
+        let position = result.totalCOM
         comMarker.position = position
+
+        // Update Segment COMs
+        updateSegmentVisuals(segmentResults: result.segmentCOMs)
 
         // Update trail
         trailPositions.append(position)
@@ -102,12 +113,49 @@ class VisualizationsManager {
         }
     }
 
+    private func updateSegmentVisuals(segmentResults: [SegmentResult]) {
+        // Clear existing nodes if count mismatch (simple approach) or update them
+        // For performance, we should reuse nodes.
+
+        let currentNodes = segmentCOMNodes.childNodes
+
+        // Ensure we have enough nodes
+        if currentNodes.count < segmentResults.count {
+            for _ in currentNodes.count..<segmentResults.count {
+                let sphere = SCNSphere(radius: 3) // Smaller than main COM
+                sphere.firstMaterial?.diffuse.contents = UIColor.cyan.withAlphaComponent(0.8)
+                sphere.firstMaterial?.lightingModel = .constant
+                let node = SCNNode(geometry: sphere)
+                segmentCOMNodes.addChildNode(node)
+            }
+        }
+
+        // Update positions
+        for (index, result) in segmentResults.enumerated() {
+            if index < segmentCOMNodes.childNodes.count {
+                let node = segmentCOMNodes.childNodes[index]
+                node.position = result.position
+                node.isHidden = !showAdvancedVisualizations // Only show in advanced mode?
+            }
+        }
+
+        // Hide extra nodes if any
+        if segmentCOMNodes.childNodes.count > segmentResults.count {
+            for index in segmentResults.count..<segmentCOMNodes.childNodes.count {
+                segmentCOMNodes.childNodes[index].isHidden = true
+            }
+        }
+    }
+
     func toggleVisualizations() {
         showAdvancedVisualizations.toggle()
 
         gravityLineNode.isHidden = !showAdvancedVisualizations
         bosNode.isHidden = !showAdvancedVisualizations
         gridNode.isHidden = !showAdvancedVisualizations
+
+        // Toggle segment COMs visibility
+        segmentCOMNodes.isHidden = !showAdvancedVisualizations
 
         // Update visualizations if turning on
         if showAdvancedVisualizations {
