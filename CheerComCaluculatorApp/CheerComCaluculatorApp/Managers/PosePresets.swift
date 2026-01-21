@@ -242,6 +242,34 @@ class PosePresets {
                 description: "Squat position with high V arms"
             )
 
+        case .pike:
+            return PoseDefinition(
+                name: "Pike",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-180)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(180)),
+                    "mixamorig_RightUpLeg": SCNVector3(deg(-90), deg(0), deg(0)),
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(-90), deg(0), deg(0)),
+                ],
+                description: "Full body pike with arms overhead"
+            )
+
+        case .layout:
+            return PoseDefinition(
+                name: "Layout",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-180)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(180)),
+                    "mixamorig_RightUpLeg": SCNVector3Zero,
+                    "mixamorig_LeftUpLeg": SCNVector3Zero,
+                    "mixamorig_RightLeg": SCNVector3Zero,
+                    "mixamorig_LeftLeg": SCNVector3Zero,
+                ],
+                description: "Straight body layout with arms overhead"
+            )
+
         // MARK: - Arms Only Poses
 
         case .armsHighV:
@@ -493,7 +521,7 @@ class PosePresets {
         let allPoses: [PoseType] = [
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition,
+            .bridge, .backbend, .standingSplit, .prepPosition, .pike, .layout,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,

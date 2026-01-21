@@ -9,7 +9,9 @@ class CoMValidationHarness {
     private let posesToValidate: [PoseType] = [
         .tPose,
         .highV,
-        .legsSquat,
+        .prepPosition, // Full Body Squat
+        .pike,
+        .layout,
         .bridge
     ]
 
@@ -58,6 +60,13 @@ class CoMValidationHarness {
 
             completion?()
             return
+        }
+
+        // Ensure deterministic start state by resetting to T-Pose first
+        if index > 0 { // Skip for first one as it might be T-Pose or we want to see transition from T-Pose
+             applyPose(.tPose, sceneManager: sceneManager)
+             // Force update
+             sceneManager.characterNode.updateTransform()
         }
 
         let poseType = posesToValidate[index]
