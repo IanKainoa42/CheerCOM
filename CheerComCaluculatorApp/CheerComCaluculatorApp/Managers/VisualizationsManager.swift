@@ -2,6 +2,49 @@ import SceneKit
 import UIKit
 
 class VisualizationsManager {
+    struct CircularVector3Buffer: RandomAccessCollection {
+        private var buffer: [SCNVector3]
+        private var head: Int = 0
+        let capacity: Int
+
+        init(capacity: Int) {
+            self.capacity = capacity
+            self.buffer = []
+            self.buffer.reserveCapacity(capacity)
+        }
+
+        var startIndex: Int { 0 }
+        var endIndex: Int { buffer.count }
+
+        var count: Int {
+            return buffer.count
+        }
+
+        mutating func append(_ element: SCNVector3) {
+            if buffer.count < capacity {
+                buffer.append(element)
+            } else {
+                buffer[head] = element
+                head = (head + 1) % capacity
+            }
+        }
+
+        subscript(index: Int) -> SCNVector3 {
+            if buffer.count < capacity {
+                return buffer[index]
+            }
+            return buffer[(head + index) % capacity]
+        }
+
+        func index(after i: Int) -> Int {
+            return i + 1
+        }
+
+        func index(before i: Int) -> Int {
+            return i - 1
+        }
+    }
+
     var comMarker: SCNNode!
     var comTrailNode: SCNNode!
     var gravityLineNode: SCNNode!
@@ -9,8 +52,8 @@ class VisualizationsManager {
     var gridNode: SCNNode!
 
     var showAdvancedVisualizations = false
-    var trailPositions: [SCNVector3] = []
-    let maxTrailPoints = 50
+    static let maxTrailPoints = 50
+    var trailPositions = CircularVector3Buffer(capacity: VisualizationsManager.maxTrailPoints)
 
     weak var sceneManager: CheerCOMSceneManager?
 
@@ -86,9 +129,6 @@ class VisualizationsManager {
 
         // Update trail
         trailPositions.append(position)
-        if trailPositions.count > maxTrailPoints {
-            trailPositions.removeFirst()
-        }
         updateTrailVisualizationOptimized()
 
         // Update advanced visualizations if needed
