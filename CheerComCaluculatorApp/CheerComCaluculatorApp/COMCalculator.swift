@@ -1,5 +1,16 @@
 import SceneKit
 
+struct SegmentResult {
+    let name: String
+    let position: SCNVector3
+    let mass: Double
+}
+
+struct CalculationResult {
+    let totalCOM: SCNVector3
+    let segmentCOMs: [SegmentResult]
+}
+
 class COMCalculator {
     var bodyMass: Double  // kg
     
@@ -25,6 +36,7 @@ class COMCalculator {
     
     // MARK: - Optimization
     private struct BoundSegment {
+        let name: String
         let prox: SCNNode
         let dist: SCNNode
         let massRatio: Double
@@ -52,6 +64,7 @@ class COMCalculator {
             }
 
             boundSegments.append(BoundSegment(
+                name: segment.prox, // Use proximal joint name as segment ID
                 prox: proxNode,
                 dist: distNode,
                 massRatio: segment.mass,
@@ -66,15 +79,21 @@ class COMCalculator {
 
     /// Optimized calculation using bound nodes directly.
     func calculateBodyCOM() -> SCNVector3 {
+        let result = calculateDetailedBodyCOM()
+        return result.totalCOM
+    }
+
+    /// Detailed calculation returning segment data.
+    func calculateDetailedBodyCOM() -> CalculationResult {
         // Fallback or warning if not bound?
         if boundSegments.isEmpty {
-            // Check if we should warn, but return zero is safe
              print("⚠️ COMCalculator: No segments bound. Did you call bind(jointNodes:)?")
-             return SCNVector3Zero
+             return CalculationResult(totalCOM: SCNVector3Zero, segmentCOMs: [])
         }
 
         var totalWeighted = SCNVector3Zero
         var totalMass: Double = 0
+        var segmentResults: [SegmentResult] = []
 
         for segment in boundSegments {
             // Direct property access is faster than dictionary lookup
@@ -87,13 +106,16 @@ class COMCalculator {
 
             totalWeighted = totalWeighted + (segCOM * Float(segMass))
             totalMass += segMass
+
+            segmentResults.append(SegmentResult(
+                name: segment.name,
+                position: segCOM,
+                mass: segMass
+            ))
         }
 
-        if totalMass > 0 {
-            return totalWeighted * Float(1.0 / totalMass)
-        } else {
-            return SCNVector3Zero
-        }
+        let totalCOM = totalMass > 0 ? (totalWeighted * Float(1.0 / totalMass)) : SCNVector3Zero
+        return CalculationResult(totalCOM: totalCOM, segmentCOMs: segmentResults)
     }
 
     // Legacy method - kept for compatibility but should be avoided in loops

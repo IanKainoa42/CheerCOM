@@ -21,6 +21,9 @@ class SceneViewController: UIViewController {
     private var needsCOMUpdate = false
     private let updateInterval: TimeInterval = 0.033  // ~30 FPS
 
+    // Validation
+    private var validationHarness: CoMValidationHarness?
+
     // Transform State
     var currentTransformMode: TransformMode = .position
     var transformStep: Float = 5.0
@@ -102,6 +105,31 @@ class SceneViewController: UIViewController {
         transformControlPanel = TransformControlPanel(width: view.bounds.width)
         transformControlPanel.delegate = self
         view.addSubview(transformControlPanel)
+
+        // Validation Button
+        let validationBtn = UIButton(type: .system)
+        validationBtn.frame = CGRect(x: view.bounds.width - 160, y: 60, width: 140, height: 40)
+        validationBtn.backgroundColor = UIColor.white.withAlphaComponent(0.2)
+        validationBtn.setTitle("Run Diagnostics", for: .normal)
+        validationBtn.setTitleColor(.white, for: .normal)
+        validationBtn.layer.cornerRadius = 10
+        validationBtn.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
+        view.addSubview(validationBtn)
+    }
+
+    @objc func didTapRunDiagnostics() {
+        if validationHarness != nil { return } // Already running
+
+        print("▶️ Starting Diagnostics...")
+        validationHarness = CoMValidationHarness()
+        validationHarness?.runValidation(
+            sceneManager: sceneManager,
+            calculator: calculator,
+            visualizationsManager: visualizationsManager
+        ) { [weak self] in
+            print("🏁 Diagnostics Finished")
+            self?.validationHarness = nil
+        }
     }
 
     // MARK: - Update Loop
