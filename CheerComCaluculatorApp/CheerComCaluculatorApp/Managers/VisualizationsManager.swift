@@ -2,6 +2,49 @@ import SceneKit
 import UIKit
 
 class VisualizationsManager {
+    struct CircularVector3Buffer: RandomAccessCollection {
+        private var buffer: [SCNVector3]
+        private var head: Int = 0
+        let capacity: Int
+
+        init(capacity: Int) {
+            self.capacity = capacity
+            self.buffer = []
+            self.buffer.reserveCapacity(capacity)
+        }
+
+        var startIndex: Int { 0 }
+        var endIndex: Int { buffer.count }
+
+        var count: Int {
+            return buffer.count
+        }
+
+        mutating func append(_ element: SCNVector3) {
+            if buffer.count < capacity {
+                buffer.append(element)
+            } else {
+                buffer[head] = element
+                head = (head + 1) % capacity
+            }
+        }
+
+        subscript(index: Int) -> SCNVector3 {
+            if buffer.count < capacity {
+                return buffer[index]
+            }
+            return buffer[(head + index) % capacity]
+        }
+
+        func index(after i: Int) -> Int {
+            return i + 1
+        }
+
+        func index(before i: Int) -> Int {
+            return i - 1
+        }
+    }
+
     var comMarker: SCNNode!
     var comTrailNode: SCNNode!
     var gravityLineNode: SCNNode!
@@ -10,10 +53,16 @@ class VisualizationsManager {
     var segmentCOMNodes: SCNNode!
 
     var showAdvancedVisualizations = false
-    var trailPositions: [SCNVector3] = []
-    let maxTrailPoints = 50
+    static let maxTrailPoints = 50
+    var trailPositions = CircularVector3Buffer(capacity: VisualizationsManager.maxTrailPoints)
 
     weak var sceneManager: CheerCOMSceneManager?
+
+    // Cache for BOS nodes to avoid repeated lookups
+    private var leftFootNode: SCNNode?
+    private var rightFootNode: SCNNode?
+    private var leftToeNode: SCNNode?
+    private var rightToeNode: SCNNode?
 
     init(scene: SCNScene, sceneManager: CheerCOMSceneManager) {
         self.sceneManager = sceneManager
@@ -91,9 +140,6 @@ class VisualizationsManager {
 
         // Update trail
         trailPositions.append(position)
-        if trailPositions.count > maxTrailPoints {
-            trailPositions.removeFirst()
-        }
         updateTrailVisualizationOptimized()
 
         // Update advanced visualizations if needed
@@ -205,11 +251,19 @@ class VisualizationsManager {
     }
 
     private func getBOSPoints() -> [CGPoint]? {
-        guard let sceneManager = sceneManager,
-            let leftFoot = sceneManager.findBone(named: "mixamorig_LeftFoot"),
-            let rightFoot = sceneManager.findBone(named: "mixamorig_RightFoot"),
-            let leftToe = sceneManager.findBone(named: "mixamorig_LeftToeBase"),
-            let rightToe = sceneManager.findBone(named: "mixamorig_RightToeBase")
+        // Initialize cache if needed
+        if leftFootNode == nil {
+            guard let sceneManager = sceneManager else { return nil }
+            leftFootNode = sceneManager.findBone(named: "mixamorig_LeftFoot")
+            rightFootNode = sceneManager.findBone(named: "mixamorig_RightFoot")
+            leftToeNode = sceneManager.findBone(named: "mixamorig_LeftToeBase")
+            rightToeNode = sceneManager.findBone(named: "mixamorig_RightToeBase")
+        }
+
+        guard let leftFoot = leftFootNode,
+            let rightFoot = rightFootNode,
+            let leftToe = leftToeNode,
+            let rightToe = rightToeNode
         else {
             return nil
         }
@@ -347,9 +401,8 @@ class VisualizationsManager {
         var maxDotProduct: Float = -Float.greatestFiniteMagnitude
         var mostUnstableNode: SCNNode?
 
-        for (name, node) in sceneManager.cachedBoneNodes {
-            // Skip feet as they are the base
-            if name.contains("Foot") || name.contains("Toe") { continue }
+        for (_, node) in sceneManager.cachedBoneNodes {
+            if sceneManager.feetAndToes.contains(node) { continue }
 
             let nodePos = CGPoint(
                 x: CGFloat(node.worldPosition.x), y: CGFloat(node.worldPosition.z))

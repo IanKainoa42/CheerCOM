@@ -34,21 +34,105 @@ class COMCalculator {
         ("L Foot", "mixamorig_LeftFoot", "mixamorig_LeftToeBase", 0.0145, 0.50)
     ]
     
+    // MARK: - Optimization
+    private struct BoundSegment {
+        let name: String
+        let prox: SCNNode
+        let dist: SCNNode
+        let massRatio: Double
+        let comRatio: Double
+    }
+
+    private var boundSegments: [BoundSegment] = []
+
     init(bodyMass: Double) {
         self.bodyMass = bodyMass
     }
     
-    func calculateBodyCOM(jointPositions: [String: SCNVector3]) -> CalculationResult {
+    /// Binds the calculator to the specific SCNNodes for direct access.
+    /// Call this once during setup or when the character model changes.
+    func bind(jointNodes: [String: SCNNode]) {
+        boundSegments.removeAll()
+        var missingCount = 0
+
+        for segment in segments {
+            guard let proxNode = jointNodes[segment.prox],
+                  let distNode = jointNodes[segment.dist] else {
+                print("⚠️ Missing joint for binding: \(segment.prox) or \(segment.dist)")
+                missingCount += 1
+                continue
+            }
+
+            boundSegments.append(BoundSegment(
+                name: segment.prox, // Use proximal joint name as segment ID
+                prox: proxNode,
+                dist: distNode,
+                massRatio: segment.mass,
+                comRatio: segment.com
+            ))
+        }
+
+        if missingCount == 0 {
+            print("✅ COMCalculator bound to \(boundSegments.count) segments")
+        }
+    }
+
+    /// Optimized calculation using bound nodes directly.
+    func calculateBodyCOM() -> SCNVector3 {
+        let result = calculateDetailedBodyCOM()
+        return result.totalCOM
+    }
+
+    /// Detailed calculation returning segment data.
+    func calculateDetailedBodyCOM() -> CalculationResult {
+        // Fallback or warning if not bound?
+        if boundSegments.isEmpty {
+             print("⚠️ COMCalculator: No segments bound. Did you call bind(jointNodes:)?")
+             return CalculationResult(totalCOM: SCNVector3Zero, segmentCOMs: [])
+        }
+
+        var totalWeighted = SCNVector3Zero
+        var totalMass: Double = 0
+        var segmentResults: [SegmentResult] = []
+
+        for segment in boundSegments {
+            // Direct property access is faster than dictionary lookup
+            let proxPos = segment.prox.worldPosition
+            let distPos = segment.dist.worldPosition
+
+            // COM = proximal + (distal - proximal) * %
+            let segCOM = proxPos + ((distPos - proxPos) * Float(segment.comRatio))
+            let segMass = bodyMass * segment.massRatio
+
+            totalWeighted = totalWeighted + (segCOM * Float(segMass))
+            totalMass += segMass
+
+            segmentResults.append(SegmentResult(
+                name: segment.name,
+                position: segCOM,
+                mass: segMass
+            ))
+        }
+
+        let totalCOM = totalMass > 0 ? (totalWeighted * Float(1.0 / totalMass)) : SCNVector3Zero
+        return CalculationResult(totalCOM: totalCOM, segmentCOMs: segmentResults)
+    }
+
+    // Legacy method - kept for compatibility but should be avoided in loops
+    func calculateBodyCOM(jointPositions: [String: SCNVector3]) -> SCNVector3 {
         var totalWeighted = SCNVector3Zero
         var totalMass: Double = 0
         var segmentResults: [SegmentResult] = []
         
         for segment in segments {
-            guard let proxPos = jointPositions[segment.prox],
-                  let distPos = jointPositions[segment.dist] else {
+            guard let proxNode = jointNodes[segment.prox],
+                  let distNode = jointNodes[segment.dist] else {
                 print("⚠️ Missing joint: \(segment.prox) or \(segment.dist)")
                 continue
             }
+
+            let proxPos = proxNode.worldPosition
+            let distPos = distNode.worldPosition
             
             // COM = proximal + (distal - proximal) * %
             let segCOM = proxPos + ((distPos - proxPos) * Float(segment.com))

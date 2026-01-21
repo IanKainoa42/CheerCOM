@@ -1,60 +1,68 @@
-# CoM Model Documentation
+# Center of Mass (CoM) Model
+
+This document describes the current implementation of the Center of Mass calculation in the CheerComCalculatorApp.
 
 ## Overview
 
-This application calculates the Center of Mass (CoM) of a 3D human character model. The calculation is based on the **segmental method**, which sums the weighted CoM of individual body segments.
+The CoM is calculated using a segmental method. The body is divided into 14 segments, each with a defined mass percentage of the total body mass and a Center of Mass location relative to its proximal and distal joints.
 
-## Body Segments
+## Coordinate System
 
-The model uses 14 body segments. The mass percentages and segment CoM locations are based on anthropometric data from **Winter (2009)** and **de Leva (1996)**.
+- **World Space**: The CoM is calculated in World Space coordinates.
+- **Units**: SceneKit units (meters by default, but the app displays labels in cm).
+- **Axes**:
+    - **Y**: Up/Down (Gravity acts along negative Y).
+    - **X**: Left/Right.
+    - **Z**: Forward/Backward.
 
-| Segment Name | Proximal Joint | Distal Joint | Mass % (of Total Body) | CoM % (from Proximal) |
+## Anthropometric Data
+
+The model uses data derived from Winter (2009) and de Leva (1996).
+
+Total Body Mass Assumption: **52.2 kg** (Default, configurable).
+
+### Segments Table
+
+| Segment Name | Proximal Joint | Distal Joint | Mass % | CoM % (from Proximal) |
 | :--- | :--- | :--- | :--- | :--- |
 | Trunk | Hips | Spine | 49.7% | 50% |
 | Head/Neck | Spine2 | Head | 8.1% | 50% |
-| R Upper Arm | R Shoulder | R Arm | 2.8% | 44% |
-| R Forearm | R Arm | R ForeArm | 1.6% | 43% |
-| R Hand | R ForeArm | R Hand | 0.6% | 50% |
-| L Upper Arm | L Shoulder | L Arm | 2.8% | 44% |
-| L Forearm | L Arm | L ForeArm | 1.6% | 43% |
-| L Hand | L ForeArm | L Hand | 0.6% | 50% |
-| R Thigh | R UpLeg | R Leg | 10.0% | 43% |
-| R Shank | R Leg | R Foot | 4.65% | 43% |
-| R Foot | R Foot | R ToeBase | 1.45% | 50% |
-| L Thigh | L UpLeg | L Leg | 10.0% | 43% |
-| L Shank | L Leg | L Foot | 4.65% | 43% |
-| L Foot | L Foot | L ToeBase | 1.45% | 50% |
+| R Upper Arm | RightShoulder | RightArm | 2.8% | 44% |
+| R Forearm | RightArm | RightForeArm | 1.6% | 43% |
+| R Hand | RightForeArm | RightHand | 0.6% | 50% |
+| L Upper Arm | LeftShoulder | LeftArm | 2.8% | 44% |
+| L Forearm | LeftArm | LeftForeArm | 1.6% | 43% |
+| L Hand | LeftForeArm | LeftHand | 0.6% | 50% |
+| R Thigh | RightUpLeg | RightLeg | 10.0% | 43% |
+| R Shank | RightLeg | RightFoot | 4.65% | 43% |
+| R Foot | RightFoot | RightToeBase | 1.45% | 50% |
+| L Thigh | LeftUpLeg | LeftLeg | 10.0% | 43% |
+| L Shank | LeftLeg | LeftFoot | 4.65% | 43% |
+| L Foot | LeftFoot | LeftToeBase | 1.45% | 50% |
 
-## Coordinate Space
+*Note: Joint names in the code are prefixed with `mixamorig_`.*
 
-*   **World Space**: All calculations are performed in the SceneKit world coordinate system (Y-up).
-*   **Units**: SceneKit units (implicitly meters or centimeters depending on scale, but mass ratios are unitless). The application assumes the model is scaled appropriately.
+## Calculation Method
 
-## CoM Calculation Logic
+For each segment:
+1.  **Position**: `SegmentCOM = ProximalPosition + (DistalPosition - ProximalPosition) * CoMRatio`
+2.  **Mass**: `SegmentMass = TotalBodyMass * MassRatio`
+3.  **Weighted Sum**: `TotalWeightedPosition += SegmentCOM * SegmentMass`
+4.  **Final CoM**: `TotalWeightedPosition / TotalBodyMass`
 
-1.  **Joint Positions**: The world position of each joint defining a segment is retrieved from the SceneKit node hierarchy.
-2.  **Segment CoM**: For each segment, the CoM is calculated using linear interpolation:
-    $$ CoM_{segment} = P_{proximal} + (P_{distal} - P_{proximal}) \times \%_{length} $$
-3.  **Total CoM**: The total body CoM is the weighted sum of all segment CoMs:
-    $$ CoM_{body} = \frac{\sum (CoM_{segment} \times Mass_{segment})}{\sum Mass_{segment}} $$
+## Assumptions & Limitations
 
-## Verification and Validation
+- The segments are treated as rigid bodies.
+- The CoM location within a segment is a fixed percentage along the line connecting the proximal and distal joints.
+- The mass distribution is constant and does not account for muscle displacement during movement.
+- The "Trunk" segment is simplified as Hips to Spine, which might not accurately represent the entire torso's complexity.
 
-### Validation Harness
+## Verification
 
-A `CoMValidationHarness` class is included to run baseline checks on startup. It performs the following:
+To verify the CoM calculation, run the **CoM Validation Harness** (accessible via "Run Diagnostics" in the app). This will cycle through standard poses and output the calculated values.
 
-1.  Applies a set of deterministic poses (T-Pose, High V, Liberty, Bridge).
-2.  Forces a transform update.
-3.  Calculates the CoM for each pose.
-4.  Logs the individual segment CoMs and the total CoM to the console.
+### Expected Baselines
 
-To run the validation manually or check the output, look for logs starting with `🔎 === Starting CoM Validation Harness ===` in the debug console.
-
-### Visual Debugging
-
-*   **Total CoM**: Represented by a large **Green Sphere**.
-*   **Segment CoMs**: Represented by smaller **Cyan Spheres**.
-*   **Stability**: The CoM color changes to Yellow (warning) or Red (unstable) based on its relationship to the Base of Support (BoS).
-
-To enable visual debugging, toggle "Visualizations" in the app UI.
+- **T-Pose**: CoM should be roughly central, slightly above the hips.
+- **High V**: CoM should shift upwards.
+- **Squat**: CoM should shift downwards.

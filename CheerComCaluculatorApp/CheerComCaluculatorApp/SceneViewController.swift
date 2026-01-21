@@ -22,6 +22,9 @@ class SceneViewController: UIViewController {
     private var needsCOMUpdate = false
     private let updateInterval: TimeInterval = 0.033  // ~30 FPS
 
+    // Validation
+    private var validationHarness: CoMValidationHarness?
+
     // Transform State
     var currentTransformMode: TransformMode = .position
     var transformStep: Float = 5.0
@@ -52,6 +55,8 @@ class SceneViewController: UIViewController {
 
         // 2. Setup Calculator
         calculator = COMCalculator(bodyMass: 52.2)
+        // Bind calculator to scene nodes for optimized access
+        calculator.bind(jointNodes: sceneManager.cachedBoneNodes)
 
         // 3. Setup UI
         setupUI()
@@ -108,6 +113,31 @@ class SceneViewController: UIViewController {
         transformControlPanel = TransformControlPanel(width: view.bounds.width)
         transformControlPanel.delegate = self
         view.addSubview(transformControlPanel)
+
+        // Validation Button
+        let validationBtn = UIButton(type: .system)
+        validationBtn.frame = CGRect(x: view.bounds.width - 160, y: 60, width: 140, height: 40)
+        validationBtn.backgroundColor = UIColor.white.withAlphaComponent(0.2)
+        validationBtn.setTitle("Run Diagnostics", for: .normal)
+        validationBtn.setTitleColor(.white, for: .normal)
+        validationBtn.layer.cornerRadius = 10
+        validationBtn.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
+        view.addSubview(validationBtn)
+    }
+
+    @objc func didTapRunDiagnostics() {
+        if validationHarness != nil { return } // Already running
+
+        print("▶️ Starting Diagnostics...")
+        validationHarness = CoMValidationHarness()
+        validationHarness?.runValidation(
+            sceneManager: sceneManager,
+            calculator: calculator,
+            visualizationsManager: visualizationsManager
+        ) { [weak self] in
+            print("🏁 Diagnostics Finished")
+            self?.validationHarness = nil
+        }
     }
 
     // MARK: - Update Loop
@@ -140,14 +170,8 @@ class SceneViewController: UIViewController {
     private let uiUpdateInterval = 10  // Update UI every 10 frames
 
     func performCOMUpdate() {
-        // Gather positions
-        var jointPositions: [String: SCNVector3] = [:]
-        for (name, node) in sceneManager.cachedBoneNodes {
-            jointPositions[name] = node.worldPosition
-        }
-
-        // Calculate COM
-        let result = calculator.calculateBodyCOM(jointPositions: jointPositions)
+        // Calculate COM directly using bound nodes
+        let com = calculator.calculateBodyCOM()
 
         // Update Visuals
         visualizationsManager.updateCOM(result: result)
@@ -395,9 +419,81 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         // TODO: Implement pose mirroring
     }
 
+    func didSelectSavedPose(_ pose: SavedPose) {
+        print("💾 Applying saved pose: \(pose.name)")
+        applySavedPose(pose)
+    }
+
+    func didDeleteSavedPose(_ pose: SavedPose) {
+        let alert = UIAlertController(
+            title: "Delete Pose",
+            message: "Are you sure you want to delete '\(pose.name)'?",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            PoseStorageManager.shared.deletePose(id: pose.id)
+            self?.poseLibraryPanel.refreshPoses()
+            print("🗑️ Deleted pose: \(pose.name)")
+        })
+
+        present(alert, animated: true)
+    }
+
     func didTapSavePose() {
-        print("💾 Save pose functionality coming soon")
-        // TODO: Implement pose saving
+        let alert = UIAlertController(title: "Save Pose", message: "Enter a name for this pose", preferredStyle: .alert)
+
+        alert.addTextField { textField in
+            textField.placeholder = "Pose Name"
+        }
+
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+
+        let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
+
+            self.saveCurrentPose(name: name)
+        }
+        saveAction.isEnabled = false // Initially disabled
+
+        alert.addAction(cancelAction)
+        alert.addAction(saveAction)
+
+        present(alert, animated: true)
+
+        // Add observer to enable button only when text is present
+        NotificationCenter.default.addObserver(forName: UITextField.textDidChangeNotification, object: alert.textFields?.first, queue: OperationQueue.main) { notification in
+            if let textField = notification.object as? UITextField,
+               let text = textField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !text.isEmpty {
+                saveAction.isEnabled = true
+            } else {
+                saveAction.isEnabled = false
+            }
+        }
+    }
+
+    private func saveCurrentPose(name: String) {
+        var jointPositions: [String: SCNVector3] = [:]
+
+        // Iterate through all controllable joints and capture their Euler angles
+        for jointName in sceneManager.controllableJoints {
+            if let joint = sceneManager.cachedBoneNodes[jointName] {
+                jointPositions[jointName] = joint.eulerAngles
+            }
+        }
+
+        PoseStorageManager.shared.savePose(name: name, jointPositions: jointPositions)
+        print("💾 Saved pose '\(name)' with \(jointPositions.count) joints")
+
+        // Refresh library if it's showing saved poses
+        poseLibraryPanel.refreshPoses()
+
+        // Show confirmation
+        let feedback = UINotificationFeedbackGenerator()
+        feedback.notificationOccurred(.success)
     }
 
     func didTapClosePoseLibrary() {
@@ -407,12 +503,25 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 
     private func applyPose(_ pose: PoseType) {
         let poseDefinition = PosePresets.shared.getPose(pose)
+        applyJointAngles(poseDefinition.jointAngles, name: poseDefinition.name)
+    }
 
+    private func applySavedPose(_ pose: SavedPose) {
+        var jointAngles: [String: SCNVector3] = [:]
+        for (name, _) in pose.jointAngles {
+            if let vector = pose.getVector(for: name) {
+                jointAngles[name] = vector
+            }
+        }
+        applyJointAngles(jointAngles, name: pose.name)
+    }
+
+    private func applyJointAngles(_ jointAngles: [String: SCNVector3], name: String) {
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.3
 
-        // Apply joint angles from the pose definition
-        for (jointName, angles) in poseDefinition.jointAngles {
+        // Apply joint angles
+        for (jointName, angles) in jointAngles {
             if let bone = sceneManager.findBone(named: jointName) {
                 bone.eulerAngles = angles
             }
@@ -420,7 +529,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 
         SCNTransaction.completionBlock = { [weak self] in
             self?.scheduleUpdateCOM()
-            print("✅ Applied \(poseDefinition.name)")
+            print("✅ Applied \(name)")
         }
         SCNTransaction.commit()
     }

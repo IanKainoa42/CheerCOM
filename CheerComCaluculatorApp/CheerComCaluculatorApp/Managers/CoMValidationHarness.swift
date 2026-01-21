@@ -1,74 +1,146 @@
 import SceneKit
-import UIKit
+import Foundation
 
 class CoMValidationHarness {
-    private weak var sceneManager: CheerCOMSceneManager?
-    private weak var calculator: COMCalculator?
 
-    init(sceneManager: CheerCOMSceneManager, calculator: COMCalculator) {
-        self.sceneManager = sceneManager
-        self.calculator = calculator
+    // MARK: - Validation Config
+
+    // Poses to validate
+    private let posesToValidate: [PoseType] = [
+        .tPose,
+        .highV,
+        .legsSquat,
+        .bridge
+    ]
+
+    // MARK: - Main Execution
+
+    /// Runs a full validation suite, cycling through deterministic poses and printing CoM data.
+    /// Runs asynchronously to allow visual verification.
+    func runValidation(sceneManager: CheerCOMSceneManager,
+                       calculator: COMCalculator,
+                       visualizationsManager: VisualizationsManager,
+                       completion: (() -> Void)? = nil) {
+
+        print("\n==========================================")
+        print("🧪 STARTING CoM VALIDATION HARNESS")
+        print("==========================================\n")
+
+        // 1. Log System Info
+        logSystemInfo(calculator: calculator)
+
+        // 2. Iterate Poses recursively
+        runNextPose(index: 0,
+                    sceneManager: sceneManager,
+                    calculator: calculator,
+                    visualizationsManager: visualizationsManager,
+                    completion: completion)
     }
 
-    func runValidation() {
-        print("\n🔎 === Starting CoM Validation Harness ===")
+    private func runNextPose(index: Int,
+                             sceneManager: CheerCOMSceneManager,
+                             calculator: COMCalculator,
+                             visualizationsManager: VisualizationsManager,
+                             completion: (() -> Void)?) {
 
-        guard let sceneManager = sceneManager, let calculator = calculator else {
-            print("❌ Validation failed: Missing scene manager or calculator")
+        // Check if done
+        if index >= posesToValidate.count {
+            print("\n==========================================")
+            print("✅ CoM VALIDATION COMPLETE")
+            print("==========================================\n")
+
+            // Reset to T-Pose
+            applyPose(.tPose, sceneManager: sceneManager)
+            // Update visuals one last time
+            sceneManager.characterNode.updateTransform()
+            let com = calculator.calculateBodyCOM()
+            visualizationsManager.updateCOM(position: com)
+
+            completion?()
             return
         }
 
-        let testPoses: [PoseType] = [.tPose, .highV, .liberty, .bridge]
+        let poseType = posesToValidate[index]
+        validatePose(poseType, sceneManager: sceneManager, calculator: calculator, visualizationsManager: visualizationsManager)
 
-        for poseType in testPoses {
-            print("\n🧪 Testing Pose: \(poseType.displayName)")
+        // Schedule next pose
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            self?.runNextPose(index: index + 1,
+                              sceneManager: sceneManager,
+                              calculator: calculator,
+                              visualizationsManager: visualizationsManager,
+                              completion: completion)
+        }
+    }
 
-            // 1. Apply Pose
-            let poseDefinition = PosePresets.shared.getPose(poseType)
+    // MARK: - Helper Methods
 
-            SCNTransaction.begin()
-            SCNTransaction.animationDuration = 0
+    private func logSystemInfo(calculator: COMCalculator) {
+        print("--- System Info ---")
+        print("Total Body Mass: \(calculator.bodyMass) kg")
+        print("Number of Segments: \(calculator.segments.count)")
+        print("-------------------\n")
+    }
 
-            for (jointName, angles) in poseDefinition.jointAngles {
-                if let bone = sceneManager.findBone(named: jointName) {
-                    bone.eulerAngles = angles
-                }
-            }
+    private func validatePose(_ poseType: PoseType,
+                              sceneManager: CheerCOMSceneManager,
+                              calculator: COMCalculator,
+                              visualizationsManager: VisualizationsManager) {
+        print("📍 Validating Pose: \(poseType.displayName)")
 
-            SCNTransaction.commit()
+        // Apply Pose
+        applyPose(poseType, sceneManager: sceneManager)
 
-            // Force SceneKit to update transforms (if needed, sometimes checking worldPosition forces update)
-            // In a real run loop this happens automatically, but here we might need to rely on the fact that accessing worldPosition triggers an update of the node hierarchy if dirty.
+        // Force Scene Update
+        sceneManager.characterNode.updateTransform()
 
-            // 2. Gather Positions
-            var jointPositions: [String: SCNVector3] = [:]
-            for (name, node) in sceneManager.cachedBoneNodes {
-                jointPositions[name] = node.worldPosition
-            }
+        // Calculate CoM
+        let result = calculator.calculateDetailedBodyCOM()
+        let com = result.totalCOM
 
-            // 3. Calculate CoM
-            let result = calculator.calculateBodyCOM(jointPositions: jointPositions)
+        // Update Visuals immediately
+        visualizationsManager.updateCOM(position: com)
 
-            // 4. Output Results
-            print("   📍 Total CoM: \(formatVector(result.totalCOM))")
-            print("   📊 Segment CoMs:")
-            for segment in result.segmentCOMs {
-                print("      - \(segment.name.padding(toLength: 15, withPad: " ", startingAt: 0)): \(formatVector(segment.position)) (Mass: \(String(format: "%.2f", segment.mass)) kg)")
-            }
+        // Log Results
+        print("   -> Calculated CoM: \(formatVector(com))")
+
+        // Log Segment Details for T-Pose to verify offsets
+        if poseType == .tPose {
+            logDetailedSegments(result: result)
         }
 
-        print("\n✅ Validation Complete\n")
+        print("") // New line
+    }
 
-        // Restore T-Pose
-        let tPose = PosePresets.shared.getPose(.tPose)
-        for (jointName, angles) in tPose.jointAngles {
+    private func applyPose(_ poseType: PoseType, sceneManager: CheerCOMSceneManager) {
+        let poseDef = PosePresets.shared.getPose(poseType)
+
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = 0.5 // Add some animation for visual clarity
+
+        for (jointName, angles) in poseDef.jointAngles {
             if let bone = sceneManager.findBone(named: jointName) {
                 bone.eulerAngles = angles
             }
         }
+
+        SCNTransaction.commit()
+    }
+
+    private func logDetailedSegments(result: CalculationResult) {
+        print("   --- Segment Details (T-Pose) ---")
+        print("   Name                           | Mass (kg) | CoM Position")
+        print("   -------------------------------|-----------|-------------------------")
+        for segment in result.segmentCOMs {
+            let namePadding = String(repeating: " ", count: max(0, 30 - segment.name.count))
+            let massString = String(format: "%.3f", segment.mass)
+            let massPadding = String(repeating: " ", count: max(0, 9 - massString.count))
+            print("   \(segment.name)\(namePadding) | \(massString)\(massPadding) | \(formatVector(segment.position))")
+        }
+        print("   ---------------------------------------------------------------------")
     }
 
     private func formatVector(_ v: SCNVector3) -> String {
-        return String(format: "(x: %.2f, y: %.2f, z: %.2f)", v.x, v.y, v.z)
+        return String(format: "[x: %.3f, y: %.3f, z: %.3f]", v.x, v.y, v.z)
     }
 }
