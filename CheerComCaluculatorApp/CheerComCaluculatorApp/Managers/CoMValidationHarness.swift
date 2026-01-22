@@ -8,9 +8,10 @@ class CoMValidationHarness {
     // Poses to validate
     private let posesToValidate: [PoseType] = [
         .tPose,
-        .highV,
+        .touchdown,
         .legsSquat,
-        .bridge
+        .pike,
+        .layout
     ]
 
     // MARK: - Main Execution
@@ -87,6 +88,11 @@ class CoMValidationHarness {
                               calculator: COMCalculator,
                               visualizationsManager: VisualizationsManager) {
         print("📍 Validating Pose: \(poseType.displayName)")
+
+        // Enforce determinism: Reset to T-Pose first if the new pose isn't T-Pose
+        if poseType != .tPose {
+             applyPose(.tPose, sceneManager: sceneManager)
+        }
 
         // Apply Pose
         applyPose(poseType, sceneManager: sceneManager)
