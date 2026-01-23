@@ -242,6 +242,54 @@ class PosePresets {
                 description: "Squat position with high V arms"
             )
 
+        case .squat:
+            return PoseDefinition(
+                name: "Squat",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-90)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(90)),
+                    "mixamorig_RightUpLeg": SCNVector3(deg(45), deg(0), deg(0)),
+                    "mixamorig_RightLeg": SCNVector3(deg(-90), deg(0), deg(0)),
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(45), deg(0), deg(0)),
+                    "mixamorig_LeftLeg": SCNVector3(deg(-90), deg(0), deg(0)),
+                ],
+                description: "Squat position with T arms"
+            )
+
+        case .pike:
+            return PoseDefinition(
+                name: "Pike",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-180)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(180)),
+                    "mixamorig_RightUpLeg": SCNVector3(deg(-90), deg(0), deg(0)),
+                    "mixamorig_RightLeg": SCNVector3Zero,
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(-90), deg(0), deg(0)),
+                    "mixamorig_LeftLeg": SCNVector3Zero,
+                ],
+                description: "Pike position with arms overhead"
+            )
+
+        case .layout:
+            return PoseDefinition(
+                name: "Layout",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-180)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(180)),
+                    "mixamorig_RightUpLeg": SCNVector3Zero,
+                    "mixamorig_RightLeg": SCNVector3Zero,
+                    "mixamorig_LeftUpLeg": SCNVector3Zero,
+                    "mixamorig_LeftLeg": SCNVector3Zero,
+                    "mixamorig_Spine": SCNVector3Zero,
+                    "mixamorig_Spine1": SCNVector3Zero,
+                    "mixamorig_Spine2": SCNVector3Zero,
+                ],
+                description: "Fully extended straight body position"
+            )
+
         // MARK: - Arms Only Poses
 
         case .armsHighV:
@@ -493,7 +541,7 @@ class PosePresets {
         let allPoses: [PoseType] = [
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition,
+            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
