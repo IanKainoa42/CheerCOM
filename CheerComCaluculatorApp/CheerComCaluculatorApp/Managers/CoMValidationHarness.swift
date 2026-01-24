@@ -61,6 +61,13 @@ class CoMValidationHarness {
             return
         }
 
+        // Ensure deterministic start state by resetting to T-Pose first
+        if index > 0 { // Skip for first one as it might be T-Pose or we want to see transition from T-Pose
+             applyPose(.tPose, sceneManager: sceneManager)
+             // Force update
+             sceneManager.characterNode.updateTransform()
+        }
+
         let poseType = posesToValidate[index]
         validatePose(poseType, sceneManager: sceneManager, calculator: calculator, visualizationsManager: visualizationsManager)
 
