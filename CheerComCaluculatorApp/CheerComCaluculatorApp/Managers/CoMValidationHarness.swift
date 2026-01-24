@@ -8,9 +8,10 @@ class CoMValidationHarness {
     // Poses to validate
     private let posesToValidate: [PoseType] = [
         .tPose,
-        .highV,
-        .legsSquat,
-        .bridge
+        .touchdown,
+        .squat,
+        .pike,
+        .layout
     ]
 
     // MARK: - Main Execution
@@ -88,6 +89,10 @@ class CoMValidationHarness {
                               visualizationsManager: VisualizationsManager) {
         print("📍 Validating Pose: \(poseType.displayName)")
 
+        // Reset to T-Pose first (instant) to ensure deterministic start state
+        // This clears any modifications from previous poses (e.g. spine bends)
+        applyPose(.tPose, sceneManager: sceneManager, duration: 0.0)
+
         // Apply Pose
         applyPose(poseType, sceneManager: sceneManager)
 
@@ -112,11 +117,11 @@ class CoMValidationHarness {
         print("") // New line
     }
 
-    private func applyPose(_ poseType: PoseType, sceneManager: CheerCOMSceneManager) {
+    private func applyPose(_ poseType: PoseType, sceneManager: CheerCOMSceneManager, duration: TimeInterval = 0.5) {
         let poseDef = PosePresets.shared.getPose(poseType)
 
         SCNTransaction.begin()
-        SCNTransaction.animationDuration = 0.5 // Add some animation for visual clarity
+        SCNTransaction.animationDuration = duration
 
         for (jointName, angles) in poseDef.jointAngles {
             if let bone = sceneManager.findBone(named: jointName) {
