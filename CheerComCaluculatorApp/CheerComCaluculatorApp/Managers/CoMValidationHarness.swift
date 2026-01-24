@@ -27,6 +27,9 @@ class CoMValidationHarness {
         print("🧪 STARTING CoM VALIDATION HARNESS")
         print("==========================================\n")
 
+        // Enable visualizations
+        visualizationsManager.showAdvancedVisualizations = true
+
         // 1. Log System Info
         logSystemInfo(calculator: calculator)
 
@@ -54,8 +57,8 @@ class CoMValidationHarness {
             applyPose(.tPose, sceneManager: sceneManager)
             // Update visuals one last time
             sceneManager.characterNode.updateTransform()
-            let com = calculator.calculateBodyCOM()
-            visualizationsManager.updateCOM(position: com)
+            let result = calculator.calculateDetailedBodyCOM()
+            visualizationsManager.updateCOM(result: result)
 
             completion?()
             return
@@ -111,15 +114,13 @@ class CoMValidationHarness {
         let com = result.totalCOM
 
         // Update Visuals immediately
-        visualizationsManager.updateCOM(position: com)
+        visualizationsManager.updateCOM(result: result)
 
         // Log Results
         print("   -> Calculated CoM: \(formatVector(com))")
 
-        // Log Segment Details for T-Pose to verify offsets
-        if poseType == .tPose {
-            logDetailedSegments(result: result)
-        }
+        // Log Segment Details for all poses to aid debugging
+        logDetailedSegments(result: result)
 
         print("") // New line
     }
@@ -140,7 +141,7 @@ class CoMValidationHarness {
     }
 
     private func logDetailedSegments(result: CalculationResult) {
-        print("   --- Segment Details (T-Pose) ---")
+        print("   --- Segment Details ---")
         print("   Name                           | Mass (kg) | CoM Position")
         print("   -------------------------------|-----------|-------------------------")
         for segment in result.segmentCOMs {

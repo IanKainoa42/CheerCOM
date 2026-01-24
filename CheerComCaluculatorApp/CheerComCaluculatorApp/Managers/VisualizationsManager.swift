@@ -52,7 +52,22 @@ class VisualizationsManager {
     var gridNode: SCNNode!
     var segmentCOMNodes: SCNNode!
 
-    var showAdvancedVisualizations = false
+    var showAdvancedVisualizations = false {
+        didSet {
+            // Update visibility of nodes when property changes
+            gravityLineNode.isHidden = !showAdvancedVisualizations
+            bosNode.isHidden = !showAdvancedVisualizations
+            gridNode.isHidden = !showAdvancedVisualizations
+            segmentCOMNodes.isHidden = !showAdvancedVisualizations
+
+            if showAdvancedVisualizations {
+                updateGravityLine()
+                updateBOS()
+            } else {
+                resetSegmentHighlights()
+            }
+        }
+    }
     static let maxTrailPoints = 50
     var trailPositions = CircularVector3Buffer(capacity: VisualizationsManager.maxTrailPoints)
 
@@ -195,21 +210,6 @@ class VisualizationsManager {
 
     func toggleVisualizations() {
         showAdvancedVisualizations.toggle()
-
-        gravityLineNode.isHidden = !showAdvancedVisualizations
-        bosNode.isHidden = !showAdvancedVisualizations
-        gridNode.isHidden = !showAdvancedVisualizations
-
-        // Toggle segment COMs visibility
-        segmentCOMNodes.isHidden = !showAdvancedVisualizations
-
-        // Update visualizations if turning on
-        if showAdvancedVisualizations {
-            updateGravityLine()
-            updateBOS()
-        } else {
-            resetSegmentHighlights()
-        }
     }
 
     private func updateGravityLine() {

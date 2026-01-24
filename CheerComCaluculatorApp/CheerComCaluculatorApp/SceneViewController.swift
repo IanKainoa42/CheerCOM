@@ -171,7 +171,7 @@ class SceneViewController: UIViewController {
 
     func performCOMUpdate() {
         // Calculate COM directly using bound nodes
-        let com = calculator.calculateBodyCOM()
+        let result = calculator.calculateDetailedBodyCOM()
 
         // Update Visuals
         visualizationsManager.updateCOM(result: result)
