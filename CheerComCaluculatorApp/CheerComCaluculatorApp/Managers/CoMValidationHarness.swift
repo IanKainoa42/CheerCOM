@@ -27,6 +27,9 @@ class CoMValidationHarness {
         print("🧪 STARTING CoM VALIDATION HARNESS")
         print("==========================================\n")
 
+        // Ensure advanced visualizations are enabled to show segments
+        visualizationsManager.showAdvancedVisualizations = true
+
         // 1. Log System Info
         logSystemInfo(calculator: calculator)
 
@@ -54,8 +57,8 @@ class CoMValidationHarness {
             applyPose(.tPose, sceneManager: sceneManager)
             // Update visuals one last time
             sceneManager.characterNode.updateTransform()
-            let com = calculator.calculateBodyCOM()
-            visualizationsManager.updateCOM(position: com)
+            let result = calculator.calculateDetailedBodyCOM()
+            visualizationsManager.updateCOM(result: result)
 
             completion?()
             return
@@ -111,7 +114,7 @@ class CoMValidationHarness {
         let com = result.totalCOM
 
         // Update Visuals immediately
-        visualizationsManager.updateCOM(position: com)
+        visualizationsManager.updateCOM(result: result)
 
         // Log Results
         print("   -> Calculated CoM: \(formatVector(com))")

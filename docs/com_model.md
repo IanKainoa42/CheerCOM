@@ -19,8 +19,10 @@ The body is modeled as a system of 14 rigid segments. The mass of each segment i
 
 *\* CoM Location is measured from the proximal joint towards the distal joint.*
 
-**Note on "Trunk":**
-The current implementation defines the "Trunk" segment from `mixamorig_Hips` to `mixamorig_Spine`. This is a simplified representation that aggregates the mass of the pelvis, abdomen, and thorax.
+**Assumptions & Limitations:**
+*   **Trunk Definition:** The "Trunk" segment is defined from `mixamorig_Hips` to `mixamorig_Spine`. This excludes the upper torso (Spine1, Spine2) and likely underestimates the height of the Trunk CoM.
+*   **Rigid Bodies:** Segments are treated as rigid bodies; soft tissue deformation is not modeled.
+*   **Joint Linearity:** Segment CoM is assumed to lie on the straight line connecting the proximal and distal joints.
 
 ## 2. Coordinate System
 
@@ -60,12 +62,16 @@ A **CoM Validation Harness** is included to verify the stability and accuracy of
     *   **Layout** (Straight body)
 
 ### Verification Criteria
+*   **Visual Output**:
+    *   The Green Sphere indicates the Total Body CoM.
+    *   Cyan Spheres indicate the individual CoM for each segment.
+    *   A cyan trail shows the history of the CoM position.
 *   **T-Pose**: CoM should be approximately at the navel/hips level.
 *   **Touchdown**: CoM should rise significantly compared to T-Pose.
 *   **Squat**: CoM should lower significantly.
-*   **Symmetry**: Poses like T-Pose and Touchdown should have a CoM X-coordinate near 0.0 (assuming the character is centered).
+*   **Symmetry**: Poses like T-Pose and Touchdown should have a CoM X-coordinate near 0.0.
 
 ### Debug Output
-The harness outputs detailed logs to the console, including:
+The harness outputs detailed logs to the console (View > Debug Area > Activate Console in Xcode), including:
 *   Total calculated CoM (x, y, z) for each pose.
 *   Per-segment mass and position details (for T-Pose).
