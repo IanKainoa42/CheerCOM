@@ -119,10 +119,8 @@ class CoMValidationHarness {
         // Log Results
         print("- **Calculated CoM**: `\(formatVector(com))`")
 
-        // Log Segment Details for T-Pose to verify offsets
-        if poseType == .tPose {
-            logDetailedSegments(result: result)
-        }
+        // Log Segment Details for all poses to aid debugging
+        logDetailedSegments(result: result)
 
         print("") // New line
     }

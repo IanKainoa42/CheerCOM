@@ -1,10 +1,10 @@
 # Center of Mass (CoM) Model
 
-This document describes the biomechanical model used to calculate the Center of Mass (CoM) in the CheerComCalculatorApp.
+This document describes the human body model and Center of Mass calculation logic used in the CheerComCalculatorApp.
 
-## 1. Segment Model
+## Model Overview
 
-The body is modeled as a system of 14 rigid segments. The mass of each segment is calculated as a percentage of the total body mass, based on anthropometric data derived from **Winter (2009)** and **de Leva (1996)**.
+The CoM calculation is based on a 14-segment model using anthropometric data from Winter (2009) and de Leva (1996). The total body Center of Mass is calculated as the weighted average of the CoM of individual body segments.
 
 | Segment Name | Proximal Joint | Distal Joint | Mass Fraction | CoM Location (%)* |
 |--------------|----------------|--------------|---------------|-------------------|
@@ -40,26 +40,28 @@ The total Body CoM is calculated using the weighted average of all segment CoMs:
 $$ CoM_{body} = \frac{\sum (m_i \cdot p_i)}{\sum m_i} $$
 
 Where:
-*   $m_i$ is the mass of segment $i$ ($Mass_{body} \times Ratio_i$)
-*   $p_i$ is the world position of the CoM of segment $i$
+- $m_i$ is the mass of segment $i$
+- $p_i$ is the position of the CoM of segment $i$
+- $M_{total}$ is the total body mass
 
-Segment CoM ($p_i$) is interpolated between the proximal ($J_{prox}$) and distal ($J_{dist}$) joints:
+## Body Segments
 
-$$ p_i = J_{prox} + (J_{dist} - J_{prox}) \times Ratio_{com} $$
+The model defines 14 segments. Mass percentages and CoM locations (as a percentage of segment length from the proximal joint) are defined as follows:
 
-## 4. Validation
+| Segment Name | Proximal Joint | Distal Joint | Mass % | CoM % (from Proximal) |
+| :--- | :--- | :--- | :--- | :--- |
+| Trunk | Hips | Spine | 49.7% | 50% |
+| Head | Spine2 | Head | 8.1% | 50% |
+| Upper Arm (R/L) | Shoulder | Arm | 2.8% | 44% |
+| Forearm (R/L) | Arm | ForeArm | 1.6% | 43% |
+| Hand (R/L) | ForeArm | Hand | 0.6% | 50% |
+| Thigh (R/L) | UpLeg | Leg | 10.0% | 43% |
+| Shank (R/L) | Leg | Foot | 4.65% | 43% |
+| Foot (R/L) | Foot | ToeBase | 1.45% | 50% |
 
-A **CoM Validation Harness** is included to verify the stability and accuracy of the model across deterministic poses.
+**Note**: Joint names correspond to the Mixamo rig convention (e.g., `mixamorig_Hips`).
 
-### How to Run Validation
-1.  Launch the App.
-2.  Tap the **"Run Diagnostics"** button in the top-right corner.
-3.  The character will cycle through the following poses:
-    *   **T-Pose** (Baseline)
-    *   **Touchdown** (Arms overhead)
-    *   **Squat** (Lowered CoM)
-    *   **Pike** (Hips flexed, legs horizontal)
-    *   **Layout** (Straight body)
+## Coordinate Space
 
 ### Verification Criteria
 *   **Visual Output**:
