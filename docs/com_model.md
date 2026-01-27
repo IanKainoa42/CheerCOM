@@ -71,7 +71,13 @@ A **CoM Validation Harness** is included to verify the stability and accuracy of
 *   **Squat**: CoM should lower significantly.
 *   **Symmetry**: Poses like T-Pose and Touchdown should have a CoM X-coordinate near 0.0.
 
-### Debug Output
-The harness outputs detailed logs to the console (View > Debug Area > Activate Console in Xcode), including:
-*   Total calculated CoM (x, y, z) for each pose.
-*   Per-segment mass and position details (for T-Pose).
+### Validation Report
+The "Run Diagnostics" tool outputs a detailed Markdown-formatted report to the Xcode console (View > Debug Area > Activate Console). This report includes:
+
+*   **Calculated CoM** for each pose (T-Pose, Touchdown, Squat, Pike, Layout).
+*   **Segment Details Table** (for T-Pose), listing:
+    *   Segment Name
+    *   Mass (kg)
+    *   CoM Position (x, y, z)
+
+You can copy and paste this output into Pull Request descriptions or issue trackers to provide evidence of correctness.

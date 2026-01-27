@@ -125,14 +125,11 @@ class COMCalculator {
         var segmentResults: [SegmentResult] = []
         
         for segment in segments {
-            guard let proxNode = jointNodes[segment.prox],
-                  let distNode = jointNodes[segment.dist] else {
+            guard let proxPos = jointPositions[segment.prox],
+                  let distPos = jointPositions[segment.dist] else {
                 print("⚠️ Missing joint: \(segment.prox) or \(segment.dist)")
                 continue
             }
-
-            let proxPos = proxNode.worldPosition
-            let distPos = distNode.worldPosition
             
             // COM = proximal + (distal - proximal) * %
             let segCOM = proxPos + ((distPos - proxPos) * Float(segment.com))
@@ -152,7 +149,7 @@ class COMCalculator {
             totalCOM = SCNVector3Zero
         }
 
-        return CalculationResult(totalCOM: totalCOM, segmentCOMs: segmentResults)
+        return totalCOM
     }
 }
 

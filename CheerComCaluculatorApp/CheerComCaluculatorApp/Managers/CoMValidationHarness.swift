@@ -97,7 +97,7 @@ class CoMValidationHarness {
                               sceneManager: CheerCOMSceneManager,
                               calculator: COMCalculator,
                               visualizationsManager: VisualizationsManager) {
-        print("📍 Validating Pose: \(poseType.displayName)")
+        print("\n## Validating Pose: \(poseType.displayName)")
 
         // Reset to T-Pose first (instant) to ensure deterministic start state
         // This clears any modifications from previous poses (e.g. spine bends)
@@ -117,7 +117,7 @@ class CoMValidationHarness {
         visualizationsManager.updateCOM(result: result)
 
         // Log Results
-        print("   -> Calculated CoM: \(formatVector(com))")
+        print("- **Calculated CoM**: `\(formatVector(com))`")
 
         // Log Segment Details for T-Pose to verify offsets
         if poseType == .tPose {
@@ -143,19 +143,17 @@ class CoMValidationHarness {
     }
 
     private func logDetailedSegments(result: CalculationResult) {
-        print("   --- Segment Details (T-Pose) ---")
-        print("   Name                           | Mass (kg) | CoM Position")
-        print("   -------------------------------|-----------|-------------------------")
+        print("\n### Segment Details (T-Pose)")
+        print("| Segment Name | Mass (kg) | CoM Position (x, y, z) |")
+        print("| :--- | :---: | :--- |")
         for segment in result.segmentCOMs {
-            let namePadding = String(repeating: " ", count: max(0, 30 - segment.name.count))
             let massString = String(format: "%.3f", segment.mass)
-            let massPadding = String(repeating: " ", count: max(0, 9 - massString.count))
-            print("   \(segment.name)\(namePadding) | \(massString)\(massPadding) | \(formatVector(segment.position))")
+            print("| \(segment.name) | \(massString) | \(formatVector(segment.position)) |")
         }
-        print("   ---------------------------------------------------------------------")
+        print("")
     }
 
     private func formatVector(_ v: SCNVector3) -> String {
-        return String(format: "[x: %.3f, y: %.3f, z: %.3f]", v.x, v.y, v.z)
+        return String(format: "(%.2f, %.2f, %.2f)", v.x, v.y, v.z)
     }
 }
