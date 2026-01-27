@@ -14,6 +14,8 @@ class CoMValidationHarness {
         .layout
     ]
 
+    private var validationResults: [(pose: String, com: SCNVector3)] = []
+
     // MARK: - Main Execution
 
     /// Runs a full validation suite, cycling through deterministic poses and printing CoM data.
@@ -26,6 +28,8 @@ class CoMValidationHarness {
         print("\n==========================================")
         print("🧪 STARTING CoM VALIDATION HARNESS")
         print("==========================================\n")
+
+        validationResults.removeAll()
 
         // Ensure advanced visualizations are enabled to show segments
         visualizationsManager.showAdvancedVisualizations = true
@@ -52,6 +56,8 @@ class CoMValidationHarness {
             print("\n==========================================")
             print("✅ CoM VALIDATION COMPLETE")
             print("==========================================\n")
+
+            logValidationSummary()
 
             // Reset to T-Pose
             applyPose(.tPose, sceneManager: sceneManager)
@@ -119,6 +125,9 @@ class CoMValidationHarness {
         // Log Results
         print("- **Calculated CoM**: `\(formatVector(com))`")
 
+        // Store for summary
+        validationResults.append((pose: poseType.displayName, com: com))
+
         // Log Segment Details for all poses to aid debugging
         logDetailedSegments(result: result)
 
@@ -141,12 +150,22 @@ class CoMValidationHarness {
     }
 
     private func logDetailedSegments(result: CalculationResult) {
-        print("\n### Segment Details (T-Pose)")
+        print("\n### Segment Details")
         print("| Segment Name | Mass (kg) | CoM Position (x, y, z) |")
         print("| :--- | :---: | :--- |")
         for segment in result.segmentCOMs {
             let massString = String(format: "%.3f", segment.mass)
             print("| \(segment.name) | \(massString) | \(formatVector(segment.position)) |")
+        }
+        print("")
+    }
+
+    private func logValidationSummary() {
+        print("### Validation Summary")
+        print("| Pose | Final CoM (x, y, z) |")
+        print("| :--- | :--- |")
+        for res in validationResults {
+            print("| \(res.pose) | \(formatVector(res.com)) |")
         }
         print("")
     }
