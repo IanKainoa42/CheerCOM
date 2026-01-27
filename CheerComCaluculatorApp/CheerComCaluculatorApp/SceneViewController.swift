@@ -8,7 +8,6 @@ class SceneViewController: UIViewController {
     var cameraManager: CameraManager!
     var visualizationsManager: VisualizationsManager!
     var calculator: COMCalculator!
-    var comValidationHarness: CoMValidationHarness!
 
     // Views
     var comInfoPanel: COMInfoPanel!
@@ -64,14 +63,7 @@ class SceneViewController: UIViewController {
         // 4. Frame Character
         sceneManager.frameCharacter()
 
-        // 5. Run Validation Baseline
-        comValidationHarness = CoMValidationHarness(sceneManager: sceneManager, calculator: calculator)
-        // Delay slightly to ensure scene is ready? Not strictly necessary for unit logic but good for safety
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.comValidationHarness.runValidation()
-        }
-
-        // 6. Start Loop
+        // 5. Start Loop
         startUpdateTimer()
         scheduleUpdateCOM()
 
