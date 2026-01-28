@@ -14,7 +14,15 @@ class CoMValidationHarness {
         .layout
     ]
 
-    private var validationResults: [(pose: String, com: SCNVector3)] = []
+    private struct ValidationOutcome {
+        let pose: String
+        let com: SCNVector3
+        let passed: Bool
+        let message: String
+    }
+
+    private var validationResults: [ValidationOutcome] = []
+    private var tPoseBaseline: SCNVector3?
 
     // MARK: - Main Execution
 
@@ -30,6 +38,7 @@ class CoMValidationHarness {
         print("==========================================\n")
 
         validationResults.removeAll()
+        tPoseBaseline = nil
 
         // Ensure advanced visualizations are enabled to show segments
         visualizationsManager.showAdvancedVisualizations = true
@@ -125,13 +134,75 @@ class CoMValidationHarness {
         // Log Results
         print("- **Calculated CoM**: `\(formatVector(com))`")
 
+        // Verify Criteria
+        let (passed, message) = verifyPoseCriteria(poseType, com: com)
+        let statusIcon = passed ? "✅" : "❌"
+        print("- **Validation**: \(statusIcon) \(message)")
+
         // Store for summary
-        validationResults.append((pose: poseType.displayName, com: com))
+        validationResults.append(ValidationOutcome(pose: poseType.displayName, com: com, passed: passed, message: message))
 
         // Log Segment Details for all poses to aid debugging
         logDetailedSegments(result: result)
 
         print("") // New line
+    }
+
+    private func verifyPoseCriteria(_ poseType: PoseType, com: SCNVector3) -> (Bool, String) {
+        // T-Pose is baseline
+        if poseType == .tPose {
+            tPoseBaseline = com
+            // Check symmetry (X should be close to 0)
+            if abs(com.x) < 2.0 {
+                return (true, "Center X is symmetric (< 2.0)")
+            } else {
+                return (false, "Center X deviation: \(com.x)")
+            }
+        }
+
+        guard let baseline = tPoseBaseline else {
+            return (false, "Missing T-Pose baseline")
+        }
+
+        switch poseType {
+        case .touchdown:
+            // Y should be significantly higher than T-Pose
+            let diff = com.y - baseline.y
+            if diff > 5.0 {
+                return (true, "CoM rose by \(String(format: "%.1f", diff)) units")
+            }
+            return (false, "CoM failed to rise significantly (diff: \(diff))")
+
+        case .squat:
+            // Y should be significantly lower than T-Pose
+            let diff = baseline.y - com.y
+            if diff > 10.0 {
+                return (true, "CoM lowered by \(String(format: "%.1f", diff)) units")
+            }
+            return (false, "CoM failed to lower significantly (diff: \(diff))")
+
+        case .pike:
+            // Z should move forward (assuming negative Z is forward in this scene, or check diff magnitude)
+            // Pike (legs forward) -> CoM moves forward (Z changes)
+            // Check absolute change in Z
+            let diff = abs(com.z - baseline.z)
+            if diff > 5.0 {
+                return (true, "CoM Z-shift detected (\(String(format: "%.1f", diff)) units)")
+            }
+            return (false, "CoM Z-axis did not shift significantly")
+
+        case .layout:
+            // Layout is straight body, similar to T-Pose but arms up?
+            // "Fully extended straight body position" - arms up.
+            // Should be higher than T-Pose, similar to Touchdown
+            if com.y > baseline.y + 2.0 {
+                return (true, "CoM higher than T-Pose")
+            }
+            return (false, "CoM not higher than T-Pose")
+
+        default:
+            return (true, "No specific criteria")
+        }
     }
 
     private func applyPose(_ poseType: PoseType, sceneManager: CheerCOMSceneManager, duration: TimeInterval = 0.5) {
@@ -162,10 +233,11 @@ class CoMValidationHarness {
 
     private func logValidationSummary() {
         print("### Validation Summary")
-        print("| Pose | Final CoM (x, y, z) |")
-        print("| :--- | :--- |")
+        print("| Pose | Final CoM (x, y, z) | Result | Note |")
+        print("| :--- | :--- | :---: | :--- |")
         for res in validationResults {
-            print("| \(res.pose) | \(formatVector(res.com)) |")
+            let icon = res.passed ? "✅" : "❌"
+            print("| \(res.pose) | \(formatVector(res.com)) | \(icon) | \(res.message) |")
         }
         print("")
     }
