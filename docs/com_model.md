@@ -50,7 +50,7 @@ The application includes a built-in **CoM Validation Harness** to verify calcula
     *   Squat
     *   Pike
     *   Layout
-4.  View the console logs for a detailed Markdown report of segment masses and CoM positions.
+4.  View the **on-screen Diagnostics Overlay** (or console logs) for a detailed Markdown report of segment masses and CoM positions.
 5.  Visual markers (Green sphere) will show the calculated CoM in the 3D scene.
 
 ### Verification Criteria

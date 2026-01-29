@@ -23,6 +23,7 @@ class CoMValidationHarness {
 
     private var validationResults: [ValidationOutcome] = []
     private var tPoseBaseline: SCNVector3?
+    private var logger: ((String) -> Void)?
 
     // MARK: - Main Execution
 
@@ -31,11 +32,14 @@ class CoMValidationHarness {
     func runValidation(sceneManager: CheerCOMSceneManager,
                        calculator: COMCalculator,
                        visualizationsManager: VisualizationsManager,
+                       logger: ((String) -> Void)? = nil,
                        completion: (() -> Void)? = nil) {
 
-        print("\n==========================================")
-        print("🧪 STARTING CoM VALIDATION HARNESS")
-        print("==========================================\n")
+        self.logger = logger
+
+        log("\n==========================================")
+        log("🧪 STARTING CoM VALIDATION HARNESS")
+        log("==========================================\n")
 
         validationResults.removeAll()
         tPoseBaseline = nil
@@ -62,9 +66,9 @@ class CoMValidationHarness {
 
         // Check if done
         if index >= posesToValidate.count {
-            print("\n==========================================")
-            print("✅ CoM VALIDATION COMPLETE")
-            print("==========================================\n")
+            log("\n==========================================")
+            log("✅ CoM VALIDATION COMPLETE")
+            log("==========================================\n")
 
             logValidationSummary()
 
@@ -101,18 +105,23 @@ class CoMValidationHarness {
 
     // MARK: - Helper Methods
 
+    private func log(_ message: String) {
+        print(message)
+        logger?(message)
+    }
+
     private func logSystemInfo(calculator: COMCalculator) {
-        print("--- System Info ---")
-        print("Total Body Mass: \(calculator.bodyMass) kg")
-        print("Number of Segments: \(calculator.segments.count)")
-        print("-------------------\n")
+        log("--- System Info ---")
+        log("Total Body Mass: \(calculator.bodyMass) kg")
+        log("Number of Segments: \(calculator.segments.count)")
+        log("-------------------\n")
     }
 
     private func validatePose(_ poseType: PoseType,
                               sceneManager: CheerCOMSceneManager,
                               calculator: COMCalculator,
                               visualizationsManager: VisualizationsManager) {
-        print("\n## Validating Pose: \(poseType.displayName)")
+        log("\n## Validating Pose: \(poseType.displayName)")
 
         // Reset to T-Pose first (instant) to ensure deterministic start state
         // This clears any modifications from previous poses (e.g. spine bends)
@@ -132,12 +141,12 @@ class CoMValidationHarness {
         visualizationsManager.updateCOM(result: result)
 
         // Log Results
-        print("- **Calculated CoM**: `\(formatVector(com))`")
+        log("- **Calculated CoM**: `\(formatVector(com))`")
 
         // Verify Criteria
         let (passed, message) = verifyPoseCriteria(poseType, com: com)
         let statusIcon = passed ? "✅" : "❌"
-        print("- **Validation**: \(statusIcon) \(message)")
+        log("- **Validation**: \(statusIcon) \(message)")
 
         // Store for summary
         validationResults.append(ValidationOutcome(pose: poseType.displayName, com: com, passed: passed, message: message))
@@ -145,7 +154,7 @@ class CoMValidationHarness {
         // Log Segment Details for all poses to aid debugging
         logDetailedSegments(result: result)
 
-        print("") // New line
+        log("") // New line
     }
 
     private func verifyPoseCriteria(_ poseType: PoseType, com: SCNVector3) -> (Bool, String) {
@@ -221,25 +230,25 @@ class CoMValidationHarness {
     }
 
     private func logDetailedSegments(result: CalculationResult) {
-        print("\n### Segment Details")
-        print("| Segment Name | Mass (kg) | CoM Position (x, y, z) |")
-        print("| :--- | :---: | :--- |")
+        log("\n### Segment Details")
+        log("| Segment Name | Mass (kg) | CoM Position (x, y, z) |")
+        log("| :--- | :---: | :--- |")
         for segment in result.segmentCOMs {
             let massString = String(format: "%.3f", segment.mass)
-            print("| \(segment.name) | \(massString) | \(formatVector(segment.position)) |")
+            log("| \(segment.name) | \(massString) | \(formatVector(segment.position)) |")
         }
-        print("")
+        log("")
     }
 
     private func logValidationSummary() {
-        print("### Validation Summary")
-        print("| Pose | Final CoM (x, y, z) | Result | Note |")
-        print("| :--- | :--- | :---: | :--- |")
+        log("### Validation Summary")
+        log("| Pose | Final CoM (x, y, z) | Result | Note |")
+        log("| :--- | :--- | :---: | :--- |")
         for res in validationResults {
             let icon = res.passed ? "✅" : "❌"
-            print("| \(res.pose) | \(formatVector(res.com)) | \(icon) | \(res.message) |")
+            log("| \(res.pose) | \(formatVector(res.com)) | \(icon) | \(res.message) |")
         }
-        print("")
+        log("")
     }
 
     private func formatVector(_ v: SCNVector3) -> String {

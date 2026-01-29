@@ -14,6 +14,7 @@ class SceneViewController: UIViewController {
     var jointControlPanel: JointControlPanel!
     var transformControlPanel: TransformControlPanel!
     var poseLibraryPanel: PoseLibraryPanel!
+    var diagnosticsOverlay: DiagnosticsOverlay!
     var viewLabel: UILabel!
 
     // State
@@ -106,6 +107,11 @@ class SceneViewController: UIViewController {
         transformControlPanel.delegate = self
         view.addSubview(transformControlPanel)
 
+        // Diagnostics Overlay
+        diagnosticsOverlay = DiagnosticsOverlay(frame: CGRect(x: 20, y: 120, width: 300, height: 400))
+        diagnosticsOverlay.isHidden = true
+        view.addSubview(diagnosticsOverlay)
+
         // Validation Button
         let validationBtn = UIButton(type: .system)
         validationBtn.frame = CGRect(x: view.bounds.width - 160, y: 60, width: 140, height: 40)
@@ -121,13 +127,20 @@ class SceneViewController: UIViewController {
         if validationHarness != nil { return } // Already running
 
         print("▶️ Starting Diagnostics...")
+        diagnosticsOverlay.show()
+        diagnosticsOverlay.clear()
+
         validationHarness = CoMValidationHarness()
         validationHarness?.runValidation(
             sceneManager: sceneManager,
             calculator: calculator,
-            visualizationsManager: visualizationsManager
+            visualizationsManager: visualizationsManager,
+            logger: { [weak self] message in
+                self?.diagnosticsOverlay.log(message)
+            }
         ) { [weak self] in
             print("🏁 Diagnostics Finished")
+            self?.diagnosticsOverlay.log("🏁 Diagnostics Finished")
             self?.validationHarness = nil
         }
     }
