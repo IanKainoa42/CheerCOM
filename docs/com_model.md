@@ -54,9 +54,16 @@ The application includes a built-in **CoM Validation Harness** to verify calcula
 5.  Visual markers (Green sphere) will show the calculated CoM in the 3D scene.
 
 ### Verification Criteria
-*   **Symmetry**: For symmetrical poses (T-Pose, Squat), the CoM X-coordinate should be approximately 0.
-*   **Consistency**: Repeated runs should yield identical results.
-*   **Realism**:
-    *   *Arms Up* should raise the CoM.
-    *   *Squat* should lower the CoM.
-    *   *Pike* should move the CoM forward.
+
+The harness automatically checks the following criteria and reports **PASS/FAIL**:
+
+*   **T-Pose (Baseline)**:
+    *   X-coordinate must be symmetric (approx. 0, tolerance < 2.0 units).
+*   **Touchdown**:
+    *   CoM Y must rise significantly (> 5.0 units) compared to T-Pose.
+*   **Squat**:
+    *   CoM Y must lower significantly (> 10.0 units) compared to T-Pose.
+*   **Pike**:
+    *   CoM Z must shift significantly (> 5.0 units) compared to T-Pose (reflecting forward leg movement).
+*   **Layout**:
+    *   CoM Y must be higher than T-Pose (> 2.0 units).
