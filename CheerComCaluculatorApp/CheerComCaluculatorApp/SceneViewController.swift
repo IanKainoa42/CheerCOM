@@ -121,11 +121,34 @@ class SceneViewController: UIViewController {
         if validationHarness != nil { return } // Already running
 
         print("▶️ Starting Diagnostics...")
+
+        // Show Diagnostics Overlay
+        let overlay = DiagnosticsOverlay(frame: view.bounds)
+        overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(overlay)
+
+        // Disable interaction with other controls while running
+        sceneManager.sceneView.isUserInteractionEnabled = false
+        jointControlPanel.isUserInteractionEnabled = false
+        transformControlPanel.isUserInteractionEnabled = false
+        poseLibraryPanel.isUserInteractionEnabled = false
+
+        // Handle close
+        overlay.onClose = { [weak self] in
+            self?.sceneManager.sceneView.isUserInteractionEnabled = true
+            self?.jointControlPanel.isUserInteractionEnabled = true
+            self?.transformControlPanel.isUserInteractionEnabled = true
+            self?.poseLibraryPanel.isUserInteractionEnabled = true
+        }
+
         validationHarness = CoMValidationHarness()
         validationHarness?.runValidation(
             sceneManager: sceneManager,
             calculator: calculator,
-            visualizationsManager: visualizationsManager
+            visualizationsManager: visualizationsManager,
+            logger: { message in
+                overlay.log(message)
+            }
         ) { [weak self] in
             print("🏁 Diagnostics Finished")
             self?.validationHarness = nil
