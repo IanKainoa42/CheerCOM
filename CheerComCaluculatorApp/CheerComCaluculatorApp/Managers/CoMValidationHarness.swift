@@ -143,8 +143,11 @@ class CoMValidationHarness {
         // Log Results
         log("- **Calculated CoM**: `\(formatVector(com))`")
 
+        // Get Hips Position for reference
+        let hipsPos = sceneManager.findBone(named: "mixamorig_Hips")?.worldPosition
+
         // Verify Criteria
-        let (passed, message) = verifyPoseCriteria(poseType, com: com)
+        let (passed, message) = verifyPoseCriteria(poseType, com: com, hipsPos: hipsPos)
         let statusIcon = passed ? "✅" : "❌"
         log("- **Validation**: \(statusIcon) \(message)")
 
@@ -157,15 +160,26 @@ class CoMValidationHarness {
         log("") // New line
     }
 
-    private func verifyPoseCriteria(_ poseType: PoseType, com: SCNVector3) -> (Bool, String) {
+    private func verifyPoseCriteria(_ poseType: PoseType, com: SCNVector3, hipsPos: SCNVector3?) -> (Bool, String) {
         // T-Pose is baseline
         if poseType == .tPose {
             tPoseBaseline = com
+
             // Check symmetry (X should be close to 0)
-            if abs(com.x) < 2.0 {
-                return (true, "Center X is symmetric (< 2.0)")
-            } else {
+            if abs(com.x) >= 2.0 {
                 return (false, "Center X deviation: \(com.x)")
+            }
+
+            // Check Height (Should be above hips)
+            guard let hipsPos = hipsPos else {
+                return (false, "Critical: Hips bone reference not found")
+            }
+
+            // Note: If Trunk is defined only as Hips->Spine, this might fail or be very close.
+            if com.y > hipsPos.y {
+                return (true, "Symmetric & CoM above hips (Diff: \(String(format: "%.1f", com.y - hipsPos.y)))")
+            } else {
+                return (false, "CoM is below hips! (Diff: \(String(format: "%.1f", com.y - hipsPos.y)))")
             }
         }
 
