@@ -114,6 +114,15 @@ class CoMValidationHarness {
         log("--- System Info ---")
         log("Total Body Mass: \(calculator.bodyMass) kg")
         log("Number of Segments: \(calculator.segments.count)")
+
+        // Verify mass ratios sum to 1.0
+        let totalRatio = calculator.segments.reduce(0.0) { $0 + $1.mass }
+        if abs(totalRatio - 1.0) < 0.001 {
+            log("✅ Mass Ratios Sum: \(String(format: "%.3f", totalRatio)) (Valid)")
+        } else {
+            log("⚠️ Mass Ratios Sum: \(String(format: "%.3f", totalRatio)) (Warning: Should be 1.0)")
+        }
+
         log("-------------------\n")
     }
 
