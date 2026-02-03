@@ -18,8 +18,15 @@ class COMCalculator {
     // Based on anthropometric data from Winter (2009) and de Leva (1996)
     // Updated for Mixamo skeleton with mixamorig_ prefix
     let segments: [(name: String, prox: String, dist: String, mass: Double, com: Double)] = [
-        ("Trunk", "mixamorig_Hips", "mixamorig_Spine", 0.497, 0.50),
-        ("Head", "mixamorig_Spine2", "mixamorig_Head", 0.081, 0.50),
+        // Trunk subdivision (Total 49.7%)
+        ("Pelvis", "mixamorig_Hips", "mixamorig_Spine", 0.146, 0.50),
+        ("Abdomen Lower", "mixamorig_Spine", "mixamorig_Spine1", 0.0855, 0.50),
+        ("Abdomen Upper", "mixamorig_Spine1", "mixamorig_Spine2", 0.0855, 0.50),
+        ("Thorax", "mixamorig_Spine2", "mixamorig_Neck", 0.180, 0.50),
+
+        // Head (Total 8.1%) - Updated to start from Neck
+        ("Head", "mixamorig_Neck", "mixamorig_Head", 0.081, 0.50),
+
         ("R Upper Arm", "mixamorig_RightShoulder", "mixamorig_RightArm", 0.028, 0.44),
         ("R Forearm", "mixamorig_RightArm", "mixamorig_RightForeArm", 0.016, 0.43),
         ("R Hand", "mixamorig_RightForeArm", "mixamorig_RightHand", 0.006, 0.50),
@@ -64,7 +71,7 @@ class COMCalculator {
             }
 
             boundSegments.append(BoundSegment(
-                name: segment.prox, // Use proximal joint name as segment ID
+                name: segment.name, // Use descriptive segment name
                 prox: proxNode,
                 dist: distNode,
                 massRatio: segment.mass,
