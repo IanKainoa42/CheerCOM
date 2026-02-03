@@ -71,6 +71,7 @@ The `CoMValidationHarness` performs the following steps:
 
 ### Acceptance Criteria
 - **Symmetry**: In symmetric poses (T-Pose, Squat), CoM X should be within ±2.0 units of 0.
+- **Height**: In T-Pose, CoM Y should be higher than the Hips Y position.
 - **Responsiveness**: Moving heavy segments (legs/trunk) should shift the CoM in the corresponding direction.
 - **Stability**: The calculated CoM should not jitter when the character is stationary.
 
