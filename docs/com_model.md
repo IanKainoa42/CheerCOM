@@ -64,9 +64,35 @@ The `CoMValidationHarness` is included in the app to verify the model's accuracy
 4.  Observe the **Diagnostic Overlay** for pass/fail results and detailed log output.
 5.  Visual markers (cyan spheres) will appear at each segment's CoM, and a large green marker will show the total CoM.
 
-### Automated Checks
-The harness asserts the following conditions:
-*   **T-Pose**: X-position is symmetric (close to 0).
-*   **Touchdown**: CoM Y-position > T-Pose Y-position + 5.0 units.
-*   **Squat**: CoM Y-position < T-Pose Y-position - 10.0 units.
-*   **Pike**: CoM Z-position shift > 2.0 units.
+### What it Does
+The `CoMValidationHarness` performs the following steps:
+1.  **System Check**: Logs total mass and segment count.
+2.  **Pose Cycle**: Automatically transitions the character through a set of deterministic poses:
+    *   **T-Pose**: Baseline check. CoM should be vertically aligned and symmetric (X ≈ 0).
+    *   **Touchdown**: Arms raised overhead. CoM Y should increase significantly.
+    *   **Squat**: Deep knee bend. CoM Y should decrease significantly.
+    *   **Pike**: Legs forward. CoM Z should shift forward.
+    *   **Layout**: Straight body extension. CoM should be higher than T-Pose.
+3.  **Visualization**:
+    *   Green Sphere: Total Body CoM.
+    *   Cyan Spheres: Individual Segment CoMs.
+    *   Trail: Visualizes the path of the CoM during movement.
+4.  **Reporting**: A detailed log is generated, showing the calculated CoM for each pose and pass/fail status based on expected biomechanical behavior.
+
+### Acceptance Criteria
+- **Symmetry**: In symmetric poses (T-Pose, Squat), CoM X should be within ±2.0 units of 0.
+- **Height**: In T-Pose, CoM Y should be higher than the Hips Y position.
+- **Responsiveness**: Moving heavy segments (legs/trunk) should shift the CoM in the corresponding direction.
+- **Stability**: The calculated CoM should not jitter when the character is stationary.
+
+## 5. Audit Findings & Limitations (Baseline Audit)
+
+As of the initial audit, the following limitations in the model have been identified:
+
+### Segment Definitions
+*   **Trunk Simplified**: The "Trunk" segment is defined from `Hips` to `Spine`. This likely underestimates the mass contribution and height of the upper torso (`Spine1`, `Spine2`), as almost 50% of the body mass is concentrated in this lower-spine segment.
+*   **Head/Neck Gap**: The "Head" segment is defined from `Spine2` to `Head`. The `Neck` joint is not explicitly included in a segment definition, potentially creating a small gap in mass distribution.
+
+### Future Improvements
+*   Split "Trunk" into Pelvis, Abdomen, and Thorax segments for more accurate mass distribution.
+*   Explicitly include Neck segment.
