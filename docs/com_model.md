@@ -73,3 +73,15 @@ The `CoMValidationHarness` performs the following steps:
 - **Symmetry**: In symmetric poses (T-Pose, Squat), CoM X should be within ±2.0 units of 0.
 - **Responsiveness**: Moving heavy segments (legs/trunk) should shift the CoM in the corresponding direction.
 - **Stability**: The calculated CoM should not jitter when the character is stationary.
+
+## 5. Audit Findings & Limitations (Baseline Audit)
+
+As of the initial audit, the following limitations in the model have been identified:
+
+### Segment Definitions
+*   **Trunk Simplified**: The "Trunk" segment is defined from `Hips` to `Spine`. This likely underestimates the mass contribution and height of the upper torso (`Spine1`, `Spine2`), as almost 50% of the body mass is concentrated in this lower-spine segment.
+*   **Head/Neck Gap**: The "Head" segment is defined from `Spine2` to `Head`. The `Neck` joint is not explicitly included in a segment definition, potentially creating a small gap in mass distribution.
+
+### Future Improvements
+*   Split "Trunk" into Pelvis, Abdomen, and Thorax segments for more accurate mass distribution.
+*   Explicitly include Neck segment.
