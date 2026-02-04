@@ -27,12 +27,12 @@ class COMCalculator {
         // Head (Total 8.1%) - Updated to start from Neck
         ("Head", "mixamorig_Neck", "mixamorig_Head", 0.081, 0.50),
 
-        ("R Upper Arm", "mixamorig_RightShoulder", "mixamorig_RightArm", 0.028, 0.44),
-        ("R Forearm", "mixamorig_RightArm", "mixamorig_RightForeArm", 0.016, 0.43),
-        ("R Hand", "mixamorig_RightForeArm", "mixamorig_RightHand", 0.006, 0.50),
-        ("L Upper Arm", "mixamorig_LeftShoulder", "mixamorig_LeftArm", 0.028, 0.44),
-        ("L Forearm", "mixamorig_LeftArm", "mixamorig_LeftForeArm", 0.016, 0.43),
-        ("L Hand", "mixamorig_LeftForeArm", "mixamorig_LeftHand", 0.006, 0.50),
+        ("R Upper Arm", "mixamorig_RightArm", "mixamorig_RightForeArm", 0.028, 0.44),
+        ("R Forearm", "mixamorig_RightForeArm", "mixamorig_RightHand", 0.016, 0.43),
+        ("R Hand", "mixamorig_RightHand", "mixamorig_RightHand", 0.006, 0.50),
+        ("L Upper Arm", "mixamorig_LeftArm", "mixamorig_LeftForeArm", 0.028, 0.44),
+        ("L Forearm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", 0.016, 0.43),
+        ("L Hand", "mixamorig_LeftHand", "mixamorig_LeftHand", 0.006, 0.50),
         ("R Thigh", "mixamorig_RightUpLeg", "mixamorig_RightLeg", 0.100, 0.43),
         ("R Shank", "mixamorig_RightLeg", "mixamorig_RightFoot", 0.0465, 0.43),
         ("R Foot", "mixamorig_RightFoot", "mixamorig_RightToeBase", 0.0145, 0.50),

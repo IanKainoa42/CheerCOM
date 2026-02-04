@@ -89,6 +89,40 @@ class VisualizationsManager {
         setupSegmentMarkers(in: scene)
         setupCOMTrail(in: scene)
         setupVisualAids(in: scene)
+        setupAxes(in: scene)
+    }
+
+    private func setupAxes(in scene: SCNScene) {
+        let axisLength: CGFloat = 50.0
+        let radius: CGFloat = 0.5
+
+        // X Axis (Red)
+        let xBox = SCNCylinder(radius: radius, height: axisLength)
+        xBox.firstMaterial?.diffuse.contents = UIColor.red
+        let xNode = SCNNode(geometry: xBox)
+        xNode.position = SCNVector3(axisLength / 2, 0, 0)
+        xNode.eulerAngles.z = -.pi / 2
+
+        // Y Axis (Green)
+        let yBox = SCNCylinder(radius: radius, height: axisLength)
+        yBox.firstMaterial?.diffuse.contents = UIColor.green
+        let yNode = SCNNode(geometry: yBox)
+        yNode.position = SCNVector3(0, axisLength / 2, 0)
+
+        // Z Axis (Blue)
+        let zBox = SCNCylinder(radius: radius, height: axisLength)
+        zBox.firstMaterial?.diffuse.contents = UIColor.blue
+        let zNode = SCNNode(geometry: zBox)
+        zNode.position = SCNVector3(0, 0, axisLength / 2)
+        zNode.eulerAngles.x = .pi / 2
+
+        let axesNode = SCNNode()
+        axesNode.addChildNode(xNode)
+        axesNode.addChildNode(yNode)
+        axesNode.addChildNode(zNode)
+        axesNode.name = "AxesIndicator"
+
+        scene.rootNode.addChildNode(axesNode)
     }
 
     private func setupCOMMarker(in scene: SCNScene) {
