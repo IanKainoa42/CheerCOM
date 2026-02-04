@@ -1,5 +1,3 @@
-import Foundation
-
 enum JointAxis: String {
     case x = "X-Axis"
     case y = "Y-Axis"

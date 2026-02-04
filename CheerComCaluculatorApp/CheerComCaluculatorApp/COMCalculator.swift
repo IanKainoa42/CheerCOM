@@ -1,12 +1,12 @@
 import SceneKit
 
 class COMCalculator {
-    var bodyMass: Double  // kg
+    let bodyMass: Double  // kg
     
     // 14 body segments with (proximal_joint, distal_joint, mass_%, com_%)
     // Based on anthropometric data from Winter (2009) and de Leva (1996)
     // Updated for Mixamo skeleton with mixamorig_ prefix
-    let segments: [(prox: String, dist: String, mass: Double, com: Double)] = [
+    private let segments: [(prox: String, dist: String, mass: Double, com: Double)] = [
         ("mixamorig_Hips", "mixamorig_Spine", 0.497, 0.50),              // Trunk
         ("mixamorig_Spine2", "mixamorig_Head", 0.081, 0.50),             // Head/neck
         ("mixamorig_RightShoulder", "mixamorig_RightArm", 0.028, 0.44),  // R upper arm
@@ -70,4 +70,3 @@ extension SCNVector3 {
         return SCNVector3(v.x * s, v.y * s, v.z * s)
     }
 }
-

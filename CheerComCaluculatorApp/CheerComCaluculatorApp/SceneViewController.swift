@@ -7,14 +7,13 @@ class SceneViewController: UIViewController {
     var sceneManager: CheerCOMSceneManager!
     var cameraManager: CameraManager!
     var visualizationsManager: VisualizationsManager!
-    var calculator: COMCalculator!
+    var comCalculator: COMCalculator!
 
     // Views
     var comInfoPanel: COMInfoPanel!
     var jointControlPanel: JointControlPanel!
     var transformControlPanel: TransformControlPanel!
     var poseLibraryPanel: PoseLibraryPanel!
-    var viewLabel: UILabel!
 
     // State
     private var updateTimer: Timer?
@@ -28,10 +27,6 @@ class SceneViewController: UIViewController {
     // Joint Control State
     var selectedJoint: SCNNode?
     var jointControlMode: JointAxis = .x
-
-    // Continuous control support
-    private var continuousRotationTimer: Timer?
-    private var currentRotationDirection: RotationDirection?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -50,7 +45,7 @@ class SceneViewController: UIViewController {
         )
 
         // 2. Setup Calculator
-        calculator = COMCalculator(bodyMass: 52.2)
+        comCalculator = COMCalculator(bodyMass: 52.2)
 
         // 3. Setup UI
         setupUI()
@@ -139,7 +134,7 @@ class SceneViewController: UIViewController {
         }
 
         // Calculate COM
-        let com = calculator.calculateBodyCOM(jointPositions: jointPositions)
+        let com = comCalculator.calculateBodyCOM(jointPositions: jointPositions)
 
         // Update Visuals
         visualizationsManager.updateCOM(position: com)
@@ -384,12 +379,10 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 
     func didTapMirrorPose() {
         print("↔️ Mirror pose functionality coming soon")
-        // TODO: Implement pose mirroring
     }
 
     func didTapSavePose() {
         print("💾 Save pose functionality coming soon")
-        // TODO: Implement pose saving
     }
 
     func didTapClosePoseLibrary() {
