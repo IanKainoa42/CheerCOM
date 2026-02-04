@@ -4,12 +4,15 @@ This document describes the 3D body model and Center of Mass (CoM) calculation l
 
 ## 1. Body Model & Segments
 
-The human body is modeled as a system of **14 rigid segments**. The segmentation and mass properties are based on anthropometric data (adapted from Winter, 2009 and de Leva, 1996) and mapped to the Mixamo skeletal rig.
+The human body is modeled as a system of **17 rigid segments**. The segmentation and mass properties are based on anthropometric data (adapted from Winter, 2009 and de Leva, 1996) and mapped to the Mixamo skeletal rig. The Trunk mass (49.7%) is distributed across 4 sub-segments (Pelvis, Abdomen, Thorax) to better approximate spinal curvature.
 
 | Segment Name | Proximal Joint | Distal Joint | Mass Ratio (%) | CoM Ratio (%)* |
 | :--- | :--- | :--- | :---: | :---: |
-| Trunk | `mixamorig_Hips` | `mixamorig_Spine` | 49.7% | 50% |
-| Head | `mixamorig_Spine2` | `mixamorig_Head` | 8.1% | 50% |
+| Pelvis | `mixamorig_Hips` | `mixamorig_Spine` | 14.6% | 50% |
+| Abdomen Lower | `mixamorig_Spine` | `mixamorig_Spine1` | 8.55% | 50% |
+| Abdomen Upper | `mixamorig_Spine1` | `mixamorig_Spine2` | 8.55% | 50% |
+| Thorax | `mixamorig_Spine2` | `mixamorig_Neck` | 18.0% | 50% |
+| Head | `mixamorig_Neck` | `mixamorig_Head` | 8.1% | 50% |
 | R Upper Arm | `mixamorig_RightShoulder` | `mixamorig_RightArm` | 2.8% | 44% |
 | R Forearm | `mixamorig_RightArm` | `mixamorig_RightForeArm` | 1.6% | 43% |
 | R Hand | `mixamorig_RightForeArm` | `mixamorig_RightHand` | 0.6% | 50% |
@@ -85,14 +88,16 @@ The `CoMValidationHarness` performs the following steps:
 - **Responsiveness**: Moving heavy segments (legs/trunk) should shift the CoM in the corresponding direction.
 - **Stability**: The calculated CoM should not jitter when the character is stationary.
 
-## 5. Audit Findings & Limitations (Baseline Audit)
+## 5. Audit Findings & Limitations
 
-As of the initial audit, the following limitations in the model have been identified:
+### Resolved Issues
+*   **Trunk Simplified**: The single "Trunk" segment has been split into Pelvis, Lower Abdomen, Upper Abdomen, and Thorax segments. This allows the mass to follow the curve of the spine in poses like Pike and Bridge.
+*   **Head/Neck Gap**: The "Head" segment is now defined from `Neck` to `Head`, and the `Thorax` segment connects `Spine2` to `Neck`, closing the gap.
 
-### Segment Definitions
-*   **Trunk Simplified**: The "Trunk" segment is defined from `Hips` to `Spine`. This likely underestimates the mass contribution and height of the upper torso (`Spine1`, `Spine2`), as almost 50% of the body mass is concentrated in this lower-spine segment.
-*   **Head/Neck Gap**: The "Head" segment is defined from `Spine2` to `Head`. The `Neck` joint is not explicitly included in a segment definition, potentially creating a small gap in mass distribution.
+### Remaining Limitations
+*   **Mass Distribution Source**: The mass ratios for the split trunk segments are approximations derived from De Leva (1996) scaled to match the original total trunk mass (49.7%).
+*   **CoM Ratios**: Default CoM ratios of 0.50 are used for the new trunk segments. Further refinement based on specific anthropometric data could improve accuracy.
 
 ### Future Improvements
-*   Split "Trunk" into Pelvis, Abdomen, and Thorax segments for more accurate mass distribution.
-*   Explicitly include Neck segment.
+*   Implement geometric volume estimation for more accurate per-segment mass.
+*   Add joint limits to prevent impossible spine curvature.
