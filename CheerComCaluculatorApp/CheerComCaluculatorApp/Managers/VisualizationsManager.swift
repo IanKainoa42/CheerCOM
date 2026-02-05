@@ -50,6 +50,7 @@ class VisualizationsManager {
     var gravityLineNode: SCNNode!
     var bosNode: SCNNode!
     var gridNode: SCNNode!
+    var axesNode: SCNNode!
     var segmentCOMNodes: SCNNode!
 
     var showAdvancedVisualizations = false {
@@ -58,6 +59,7 @@ class VisualizationsManager {
             gravityLineNode.isHidden = !showAdvancedVisualizations
             bosNode.isHidden = !showAdvancedVisualizations
             gridNode.isHidden = !showAdvancedVisualizations
+            axesNode.isHidden = !showAdvancedVisualizations
             segmentCOMNodes.isHidden = !showAdvancedVisualizations
 
             if showAdvancedVisualizations {
@@ -89,6 +91,37 @@ class VisualizationsManager {
         setupSegmentMarkers(in: scene)
         setupCOMTrail(in: scene)
         setupVisualAids(in: scene)
+        setupAxes(in: scene)
+    }
+
+    private func setupAxes(in scene: SCNScene) {
+        axesNode = SCNNode()
+
+        // X Axis (Red)
+        let xGeo = SCNCylinder(radius: 0.2, height: 50)
+        xGeo.firstMaterial?.diffuse.contents = UIColor.red
+        let xNode = SCNNode(geometry: xGeo)
+        xNode.position = SCNVector3(25, 0, 0)
+        xNode.eulerAngles.z = -.pi / 2
+        axesNode.addChildNode(xNode)
+
+        // Y Axis (Green)
+        let yGeo = SCNCylinder(radius: 0.2, height: 50)
+        yGeo.firstMaterial?.diffuse.contents = UIColor.green
+        let yNode = SCNNode(geometry: yGeo)
+        yNode.position = SCNVector3(0, 25, 0)
+        axesNode.addChildNode(yNode)
+
+        // Z Axis (Blue)
+        let zGeo = SCNCylinder(radius: 0.2, height: 50)
+        zGeo.firstMaterial?.diffuse.contents = UIColor.blue
+        let zNode = SCNNode(geometry: zGeo)
+        zNode.position = SCNVector3(0, 0, 25)
+        zNode.eulerAngles.x = .pi / 2
+        axesNode.addChildNode(zNode)
+
+        axesNode.isHidden = true
+        scene.rootNode.addChildNode(axesNode)
     }
 
     private func setupCOMMarker(in scene: SCNScene) {
