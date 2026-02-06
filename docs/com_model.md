@@ -80,7 +80,14 @@ The `CoMValidationHarness` performs the following steps:
     *   Green Sphere: Total Body CoM.
     *   Cyan Spheres: Individual Segment CoMs.
     *   Trail: Visualizes the path of the CoM during movement.
+    *   **Axes Indicator**: Red (X), Green (Y), Blue (Z) lines at origin to verify coordinate orientation.
 4.  **Reporting**: A detailed log is generated, showing the calculated CoM for each pose and pass/fail status based on expected biomechanical behavior.
+
+### Unit Testing
+A unit test suite `CheerComCalculatorAppTests` allows verification of the CoM logic without running the full iOS application.
+- **Location**: `Tests/CheerComCalculatorAppTests/COMCalculatorTests.swift`
+- **Execution**: Run `swift test` (requires a valid Swift environment with SceneKit support, e.g., macOS).
+- **Scope**: Verifies CoM calculations for T-Pose, Touchdown, Squat, and Pike using a mock skeleton.
 
 ### Acceptance Criteria
 - **Symmetry**: In symmetric poses (T-Pose, Squat), CoM X should be within ±2.0 units of 0.
