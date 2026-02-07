@@ -101,3 +101,22 @@ The `CoMValidationHarness` performs the following steps:
 ### Future Improvements
 *   Implement geometric volume estimation for more accurate per-segment mass.
 *   Add joint limits to prevent impossible spine curvature.
+
+## 6. Unit Testing
+
+The project includes a Unit Test target (`CheerComCalculatorAppTests`) to verify the `COMCalculator` logic in isolation, ensuring CoM calculations remain stable and physically plausible across updates.
+
+### Test Harness: `COMCalculatorTests.swift`
+This test suite mocks the `SCNNode` hierarchy (avoiding the need for a full scene or rigged character model) and verifies:
+
+1.  **Initialization**: Ensures mass and segments are set up correctly.
+2.  **T-Pose Baseline**:
+    *   **Symmetry**: CoM X should be ≈ 0.
+    *   **Height**: CoM Y should be between Hips and Shoulders.
+3.  **Dynamic Poses**:
+    *   **Arms Up**: Verifies that raising arms significantly raises the CoM Y coordinate.
+4.  **Data Integrity**: verifies that detailed segment data is generated and mass sums correctly.
+
+### Running Tests
+Run the tests using Xcode's Test navigator or via command line:
+`swift test` (if running from a supported environment) or via Xcode `Cmd+U`.
