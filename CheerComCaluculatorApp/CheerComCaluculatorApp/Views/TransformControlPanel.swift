@@ -1,5 +1,6 @@
 import UIKit
 
+/// Delegate for whole-character transform controls (position, rotation, scale).
 protocol TransformControlPanelDelegate: AnyObject {
     func didChangeTransformMode(_ mode: TransformMode)
     func didTapTransform(direction: TransformDirection)

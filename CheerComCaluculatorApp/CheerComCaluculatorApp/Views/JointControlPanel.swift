@@ -1,5 +1,6 @@
 import UIKit
 
+/// Delegate for joint manipulation controls (selection, rotation, reset, view toggles).
 protocol JointControlPanelDelegate: AnyObject {
     func didTapJointSelection(sourceView: UIView)
     func didSelectAxis(_ axis: JointAxis)

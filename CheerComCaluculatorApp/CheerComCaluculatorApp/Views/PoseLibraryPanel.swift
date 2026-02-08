@@ -1,6 +1,6 @@
-import Foundation
 import UIKit
 
+/// Delegate for pose library user interactions (selection, mirror, save, close).
 protocol PoseLibraryPanelDelegate: AnyObject {
     func didSelectPose(_ pose: PoseType)
     func didTapMirrorPose()

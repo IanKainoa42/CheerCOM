@@ -4,18 +4,16 @@ import UIKit
 class SceneViewController: UIViewController {
 
     // Managers
-    var sceneManager: CheerCOMSceneManager!
-    var cameraManager: CameraManager!
-    var visualizationsManager: VisualizationsManager!
-    var calculator: COMCalculator!
+    private(set) var sceneManager: CheerCOMSceneManager!
+    private(set) var cameraManager: CameraManager!
+    private(set) var visualizationsManager: VisualizationsManager!
+    private(set) var calculator: COMCalculator!
 
     // Views
-    var comInfoPanel: COMInfoPanel!
-    var jointControlPanel: JointControlPanel!
-    var transformControlPanel: TransformControlPanel!
-    var poseLibraryPanel: PoseLibraryPanel!
-    var viewLabel: UILabel!
-
+    private var comInfoPanel: COMInfoPanel!
+    private var jointControlPanel: JointControlPanel!
+    private var transformControlPanel: TransformControlPanel!
+    private var poseLibraryPanel: PoseLibraryPanel!
     // State
     private var updateTimer: Timer?
     private var needsCOMUpdate = false
@@ -28,10 +26,6 @@ class SceneViewController: UIViewController {
     // Joint Control State
     var selectedJoint: SCNNode?
     var jointControlMode: JointAxis = .x
-
-    // Continuous control support
-    private var continuousRotationTimer: Timer?
-    private var currentRotationDirection: RotationDirection?
 
     override func viewDidLoad() {
         super.viewDidLoad()
