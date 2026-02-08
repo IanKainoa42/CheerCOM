@@ -1,4 +1,5 @@
-import Foundation
+// MARK: - Shared Types
+// Enums and lightweight types shared across the app.
 
 enum JointAxis: String {
     case x = "X-Axis"

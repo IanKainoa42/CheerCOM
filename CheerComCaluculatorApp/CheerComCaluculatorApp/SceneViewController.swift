@@ -98,7 +98,7 @@ class SceneViewController: UIViewController {
 
     // MARK: - Update Loop
 
-    func startUpdateTimer() {
+    private func startUpdateTimer() {
         updateTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) {
             [weak self] _ in
             guard let self = self else { return }
@@ -112,13 +112,13 @@ class SceneViewController: UIViewController {
         print("⏱️ Update timer started")
     }
 
-    func stopUpdateTimer() {
+    private func stopUpdateTimer() {
         updateTimer?.invalidate()
         updateTimer = nil
         print("⏱️ Update timer stopped")
     }
 
-    func scheduleUpdateCOM() {
+    private func scheduleUpdateCOM() {
         needsCOMUpdate = true
     }
 
