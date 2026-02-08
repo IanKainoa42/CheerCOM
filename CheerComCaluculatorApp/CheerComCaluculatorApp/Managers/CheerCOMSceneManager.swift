@@ -1,6 +1,7 @@
 import SceneKit
 import UIKit
 
+/// Manages the SceneKit scene, character model loading, bone caching, and hit-testing.
 class CheerCOMSceneManager {
     var sceneView: SCNView!
     var scene: SCNScene!

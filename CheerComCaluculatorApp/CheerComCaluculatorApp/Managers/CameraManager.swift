@@ -1,5 +1,6 @@
 import SceneKit
 
+/// Manages fixed camera positions (front, right, back, left, top) and view framing.
 class CameraManager {
     var cameraNode: SCNNode!
     var currentCameraIndex = 0

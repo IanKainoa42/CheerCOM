@@ -1,5 +1,7 @@
 import SceneKit
 
+/// Calculates whole-body center of mass from joint positions using anthropometric segment data
+/// (Winter 2009, de Leva 1996). Designed for Mixamo-rigged characters.
 class COMCalculator {
     var bodyMass: Double  // kg
     

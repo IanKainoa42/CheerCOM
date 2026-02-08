@@ -1,6 +1,7 @@
 import SceneKit
 import UIKit
 
+/// Renders COM marker, gravity line, base-of-support polygon, trail, and stability indicators.
 class VisualizationsManager {
     var comMarker: SCNNode!
     var comTrailNode: SCNNode!
