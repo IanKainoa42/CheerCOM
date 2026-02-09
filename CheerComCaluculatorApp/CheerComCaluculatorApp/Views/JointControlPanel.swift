@@ -44,12 +44,12 @@ class JointControlPanel: UIVisualEffectView {
         let padding: CGFloat = 20
         let contentWidth = width - (padding * 2)
 
-        // 1. Header Row: Joint Selection & Reset
+        // 1. Header Row: Joint Selection, Reset Joint, & Pose Library
         let row1Y: CGFloat = 15
 
         jointSelectionButton = UIButton(type: .system)
         jointSelectionButton.frame = CGRect(
-            x: padding, y: row1Y, width: contentWidth * 0.6, height: 35)
+            x: padding, y: row1Y, width: contentWidth * 0.45, height: 35)
         jointSelectionButton.setTitle("Select Joint...", for: .normal)
         jointSelectionButton.setTitleColor(.white, for: .normal)
         jointSelectionButton.titleLabel?.font = .boldSystemFont(ofSize: 16)
@@ -60,15 +60,27 @@ class JointControlPanel: UIVisualEffectView {
         contentView.addSubview(jointSelectionButton)
 
         let resetJointBtn = createButton(
-            title: "Reset Joint",
-            x: width - padding - (contentWidth * 0.35),
+            title: "Reset",
+            x: padding + contentWidth * 0.5,
             y: row1Y,
-            width: contentWidth * 0.35,
+            width: contentWidth * 0.25,
             height: 35,
             action: #selector(resetJointTapped)
         )
         resetJointBtn.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.8)
         contentView.addSubview(resetJointBtn)
+
+        let poseLibraryTopBtn = createButton(
+            title: "🎭 Library",
+            x: width - padding - (contentWidth * 0.2),
+            y: row1Y,
+            width: contentWidth * 0.2,
+            height: 35,
+            action: #selector(poseLibraryTapped)
+        )
+        poseLibraryTopBtn.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.9)
+        poseLibraryTopBtn.titleLabel?.font = .boldSystemFont(ofSize: 13)
+        contentView.addSubview(poseLibraryTopBtn)
 
         // 2. Axis Selection Row
         let row2Y = row1Y + 45
@@ -121,34 +133,28 @@ class JointControlPanel: UIVisualEffectView {
         jointAngleLabel.textAlignment = .center
         contentView.addSubview(jointAngleLabel)
 
-        // 4. Bottom Control Row (Pose Library, Reset, Utilities)
+        // 4. Bottom Control Row (Reset Pose, Utilities)
         let row4Y = row3Y + 50
 
-        let bottomBtnWidth = (contentWidth - 30) / 4
-
-        let poseLibraryBtn = createButton(
-            title: "🎭 Pose Library", x: padding, y: row4Y, width: bottomBtnWidth * 1.5, height: 35,
-            action: #selector(poseLibraryTapped))
-        poseLibraryBtn.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.8)
-        contentView.addSubview(poseLibraryBtn)
+        let bottomBtnWidth = (contentWidth - 30) / 3
 
         let resetPoseBtn = createButton(
-            title: "T-Pose", x: padding + bottomBtnWidth * 1.5 + 10, y: row4Y,
+            title: "T-Pose", x: padding, y: row4Y,
             width: bottomBtnWidth,
             height: 35, action: #selector(resetPoseTapped))
         resetPoseBtn.backgroundColor = UIColor.systemRed.withAlphaComponent(0.8)
         contentView.addSubview(resetPoseBtn)
 
         let fitViewBtn = createButton(
-            title: "Fit View", x: padding + bottomBtnWidth * 2.5 + 20, y: row4Y,
-            width: bottomBtnWidth * 0.9,
+            title: "Fit View", x: padding + bottomBtnWidth + 15, y: row4Y,
+            width: bottomBtnWidth,
             height: 35, action: #selector(fitViewTapped))
         fitViewBtn.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.8)
         contentView.addSubview(fitViewBtn)
 
         let visualsBtn = createButton(
-            title: "Visuals", x: padding + bottomBtnWidth * 3.4 + 30, y: row4Y,
-            width: bottomBtnWidth * 0.7, height: 35, action: #selector(toggleVisualsTapped))
+            title: "Visuals", x: padding + (bottomBtnWidth * 2) + 30, y: row4Y,
+            width: bottomBtnWidth, height: 35, action: #selector(toggleVisualsTapped))
         visualsBtn.backgroundColor = UIColor.systemIndigo.withAlphaComponent(0.8)
         contentView.addSubview(visualsBtn)
     }
