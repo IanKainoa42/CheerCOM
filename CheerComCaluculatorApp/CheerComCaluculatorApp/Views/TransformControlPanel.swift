@@ -5,6 +5,7 @@ protocol TransformControlPanelDelegate: AnyObject {
     func didChangeTransformMode(_ mode: TransformMode)
     func didTapTransform(direction: TransformDirection)
     func didTapResetTransform()
+    func didChangeStepSize(value: Float)
 }
 
 class TransformControlPanel: UIView {
@@ -13,6 +14,8 @@ class TransformControlPanel: UIView {
 
     private var transformModeLabel: UILabel!
     private var panel: UIVisualEffectView!
+    private var stepSizeSlider: UISlider!
+    private var stepSizeLabel: UILabel!
 
     init(width: CGFloat) {
         super.init(frame: .zero)  // Frame will be set by parent or constraints
@@ -38,12 +41,12 @@ class TransformControlPanel: UIView {
 
         // Add transform control panel
         panel = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
-        panel.frame = CGRect(x: 0, y: 40, width: 220, height: 200)
+        panel.frame = CGRect(x: 0, y: 40, width: 220, height: 250)
         panel.layer.cornerRadius = 15
         panel.layer.masksToBounds = true
         addSubview(panel)
 
-        self.frame = CGRect(x: width - 240, y: 110, width: 220, height: 240)
+        self.frame = CGRect(x: width - 240, y: 110, width: 220, height: 290)
         self.autoresizingMask = [.flexibleLeftMargin]
 
         // Transform mode buttons
@@ -99,9 +102,33 @@ class TransformControlPanel: UIView {
         rightBtn.titleLabel?.font = .systemFont(ofSize: 24)
         panel.contentView.addSubview(rightBtn)
 
+        // Step size label
+        let stepLabel = UILabel(frame: CGRect(x: 10, y: 155, width: 200, height: 20))
+        stepLabel.text = "Step Size:"
+        stepLabel.textColor = .white
+        stepLabel.font = .systemFont(ofSize: 12, weight: .bold)
+        panel.contentView.addSubview(stepLabel)
+
+        // Step size slider
+        stepSizeSlider = UISlider(frame: CGRect(x: 10, y: 177, width: 200, height: 30))
+        stepSizeSlider.minimumValue = 0.5
+        stepSizeSlider.maximumValue = 50.0
+        stepSizeSlider.value = 5.0
+        stepSizeSlider.tintColor = .systemGreen
+        stepSizeSlider.addTarget(self, action: #selector(stepSizeChanged), for: .valueChanged)
+        panel.contentView.addSubview(stepSizeSlider)
+
+        // Step size value label
+        stepSizeLabel = UILabel(frame: CGRect(x: 10, y: 200, width: 200, height: 20))
+        stepSizeLabel.text = "5.0"
+        stepSizeLabel.textColor = .white
+        stepSizeLabel.font = .monospacedSystemFont(ofSize: 12, weight: .bold)
+        stepSizeLabel.textAlignment = .center
+        panel.contentView.addSubview(stepSizeLabel)
+
         // Reset transform button
         let resetTransformBtn = createButton(
-            title: "Reset Position", x: 10, y: 155, width: 200, height: 35,
+            title: "Reset", x: 10, y: 205, width: 200, height: 35,
             action: #selector(resetTapped))
         resetTransformBtn.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.8)
         panel.contentView.addSubview(resetTransformBtn)
@@ -130,6 +157,12 @@ class TransformControlPanel: UIView {
     @objc private func rightTapped() { delegate?.didTapTransform(direction: .right) }
 
     @objc private func resetTapped() { delegate?.didTapResetTransform() }
+
+    @objc private func stepSizeChanged() {
+        let roundedValue = (stepSizeSlider.value * 10).rounded() / 10
+        stepSizeLabel.text = String(format: "%.1f", roundedValue)
+        delegate?.didChangeStepSize(value: roundedValue)
+    }
 
     // MARK: - Helper
 

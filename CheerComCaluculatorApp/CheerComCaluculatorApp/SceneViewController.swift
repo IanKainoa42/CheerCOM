@@ -418,6 +418,10 @@ extension SceneViewController: TransformControlPanelDelegate {
         setTransformMode(mode)
     }
 
+    func didChangeStepSize(value: Float) {
+        transformStep = value
+    }
+
     func setTransformMode(_ mode: TransformMode) {
         currentTransformMode = mode
         switch mode {
