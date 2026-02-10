@@ -13,12 +13,12 @@ The human body is modeled as a system of **17 rigid segments**. The segmentation
 | Abdomen Upper | `mixamorig_Spine1` | `mixamorig_Spine2` | 8.55% | 50% |
 | Thorax | `mixamorig_Spine2` | `mixamorig_Neck` | 18.0% | 50% |
 | Head | `mixamorig_Neck` | `mixamorig_Head` | 8.1% | 50% |
-| R Upper Arm | `mixamorig_RightShoulder` | `mixamorig_RightArm` | 2.8% | 44% |
-| R Forearm | `mixamorig_RightArm` | `mixamorig_RightForeArm` | 1.6% | 43% |
-| R Hand | `mixamorig_RightForeArm` | `mixamorig_RightHand` | 0.6% | 50% |
-| L Upper Arm | `mixamorig_LeftShoulder` | `mixamorig_LeftArm` | 2.8% | 44% |
-| L Forearm | `mixamorig_LeftArm` | `mixamorig_LeftForeArm` | 1.6% | 43% |
-| L Hand | `mixamorig_LeftForeArm` | `mixamorig_LeftHand` | 0.6% | 50% |
+| R Upper Arm | `mixamorig_RightArm` | `mixamorig_RightForeArm` | 2.8% | 44% |
+| R Forearm | `mixamorig_RightForeArm` | `mixamorig_RightHand` | 1.6% | 43% |
+| R Hand | `mixamorig_RightHand` | `mixamorig_RightHand`** | 0.6% | 50% |
+| L Upper Arm | `mixamorig_LeftArm` | `mixamorig_LeftForeArm` | 2.8% | 44% |
+| L Forearm | `mixamorig_LeftForeArm` | `mixamorig_LeftHand` | 1.6% | 43% |
+| L Hand | `mixamorig_LeftHand` | `mixamorig_LeftHand`** | 0.6% | 50% |
 | R Thigh | `mixamorig_RightUpLeg` | `mixamorig_RightLeg` | 10.0% | 43% |
 | R Shank | `mixamorig_RightLeg` | `mixamorig_RightFoot` | 4.65% | 43% |
 | R Foot | `mixamorig_RightFoot` | `mixamorig_RightToeBase` | 1.45% | 50% |
@@ -27,6 +27,8 @@ The human body is modeled as a system of **17 rigid segments**. The segmentation
 | L Foot | `mixamorig_LeftFoot` | `mixamorig_LeftToeBase` | 1.45% | 50% |
 
 ***CoM Ratio**: The distance from the proximal joint to the segment's center of mass, expressed as a percentage of the segment length.
+
+****Hand Segment**: The Hand segment is currently defined as a zero-length segment at the wrist (`RightHand` to `RightHand`) to ensure stability even if finger joints are missing from the rig. The CoM is effectively located at the wrist joint.
 
 ## 2. Coordinate System
 
@@ -93,6 +95,7 @@ The `CoMValidationHarness` performs the following steps:
 ### Resolved Issues
 *   **Trunk Simplified**: The single "Trunk" segment has been split into Pelvis, Lower Abdomen, Upper Abdomen, and Thorax segments. This allows the mass to follow the curve of the spine in poses like Pike and Bridge.
 *   **Head/Neck Gap**: The "Head" segment is now defined from `Neck` to `Head`, and the `Thorax` segment connects `Spine2` to `Neck`, closing the gap.
+*   **Arm Segmentation**: The arm segments were remapped to correctly represent Upper Arm (Shoulder->Elbow), Forearm (Elbow->Wrist), and Hand. Previously, the Clavicle was incorrectly used as the Upper Arm segment.
 
 ### Remaining Limitations
 *   **Mass Distribution Source**: The mass ratios for the split trunk segments are approximations derived from De Leva (1996) scaled to match the original total trunk mass (49.7%).
