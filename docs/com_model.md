@@ -13,12 +13,12 @@ The human body is modeled as a system of **17 rigid segments**. The segmentation
 | Abdomen Upper | `mixamorig_Spine1` | `mixamorig_Spine2` | 8.55% | 50% |
 | Thorax | `mixamorig_Spine2` | `mixamorig_Neck` | 18.0% | 50% |
 | Head | `mixamorig_Neck` | `mixamorig_Head` | 8.1% | 50% |
-| R Upper Arm | `mixamorig_RightShoulder` | `mixamorig_RightArm` | 2.8% | 44% |
-| R Forearm | `mixamorig_RightArm` | `mixamorig_RightForeArm` | 1.6% | 43% |
-| R Hand | `mixamorig_RightForeArm` | `mixamorig_RightHand` | 0.6% | 50% |
-| L Upper Arm | `mixamorig_LeftShoulder` | `mixamorig_LeftArm` | 2.8% | 44% |
-| L Forearm | `mixamorig_LeftArm` | `mixamorig_LeftForeArm` | 1.6% | 43% |
-| L Hand | `mixamorig_LeftForeArm` | `mixamorig_LeftHand` | 0.6% | 50% |
+| R Upper Arm | `mixamorig_RightArm` | `mixamorig_RightForeArm` | 2.8% | 44% |
+| R Forearm | `mixamorig_RightForeArm` | `mixamorig_RightHand` | 1.6% | 43% |
+| R Hand | `mixamorig_RightHand` | `mixamorig_RightHandMiddle1` | 0.6% | 50% |
+| L Upper Arm | `mixamorig_LeftArm` | `mixamorig_LeftForeArm` | 2.8% | 44% |
+| L Forearm | `mixamorig_LeftForeArm` | `mixamorig_LeftHand` | 1.6% | 43% |
+| L Hand | `mixamorig_LeftHand` | `mixamorig_LeftHandMiddle1` | 0.6% | 50% |
 | R Thigh | `mixamorig_RightUpLeg` | `mixamorig_RightLeg` | 10.0% | 43% |
 | R Shank | `mixamorig_RightLeg` | `mixamorig_RightFoot` | 4.65% | 43% |
 | R Foot | `mixamorig_RightFoot` | `mixamorig_RightToeBase` | 1.45% | 50% |
