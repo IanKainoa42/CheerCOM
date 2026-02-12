@@ -14,7 +14,7 @@ struct CalculationResult {
 class COMCalculator {
     var bodyMass: Double  // kg
     
-    // 14 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
+    // 17 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
     // Based on anthropometric data from Winter (2009) and de Leva (1996)
     // Updated for Mixamo skeleton with mixamorig_ prefix
     let segments: [(name: String, prox: String, dist: String, mass: Double, com: Double)] = [
