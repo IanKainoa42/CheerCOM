@@ -14,9 +14,10 @@ struct CalculationResult {
 class COMCalculator {
     var bodyMass: Double  // kg
     
-    // 14 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
+    // 17 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
     // Based on anthropometric data from Winter (2009) and de Leva (1996)
     // Updated for Mixamo skeleton with mixamorig_ prefix
+    // TODO: Fix known issue where "Upper Arm" is mapped to Clavicle and "Forearm" to Humerus
     let segments: [(name: String, prox: String, dist: String, mass: Double, com: Double)] = [
         // Trunk subdivision (Total 49.7%)
         ("Pelvis", "mixamorig_Hips", "mixamorig_Spine", 0.146, 0.50),
