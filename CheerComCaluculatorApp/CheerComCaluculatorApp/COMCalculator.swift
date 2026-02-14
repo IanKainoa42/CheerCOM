@@ -27,12 +27,12 @@ class COMCalculator {
         // Head (Total 8.1%) - Updated to start from Neck
         ("Head", "mixamorig_Neck", "mixamorig_Head", 0.081, 0.50),
 
-        ("R Upper Arm", "mixamorig_RightShoulder", "mixamorig_RightArm", 0.028, 0.44),
-        ("R Forearm", "mixamorig_RightArm", "mixamorig_RightForeArm", 0.016, 0.43),
-        ("R Hand", "mixamorig_RightForeArm", "mixamorig_RightHand", 0.006, 0.50),
-        ("L Upper Arm", "mixamorig_LeftShoulder", "mixamorig_LeftArm", 0.028, 0.44),
-        ("L Forearm", "mixamorig_LeftArm", "mixamorig_LeftForeArm", 0.016, 0.43),
-        ("L Hand", "mixamorig_LeftForeArm", "mixamorig_LeftHand", 0.006, 0.50),
+        ("R Upper Arm", "mixamorig_RightArm", "mixamorig_RightForeArm", 0.028, 0.44),
+        ("R Forearm", "mixamorig_RightForeArm", "mixamorig_RightHand", 0.016, 0.43),
+        ("R Hand", "mixamorig_RightHand", "mixamorig_RightHandMiddle1", 0.006, 0.50),
+        ("L Upper Arm", "mixamorig_LeftArm", "mixamorig_LeftForeArm", 0.028, 0.44),
+        ("L Forearm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", 0.016, 0.43),
+        ("L Hand", "mixamorig_LeftHand", "mixamorig_LeftHandMiddle1", 0.006, 0.50),
         ("R Thigh", "mixamorig_RightUpLeg", "mixamorig_RightLeg", 0.100, 0.43),
         ("R Shank", "mixamorig_RightLeg", "mixamorig_RightFoot", 0.0465, 0.43),
         ("R Foot", "mixamorig_RightFoot", "mixamorig_RightToeBase", 0.0145, 0.50),
@@ -63,17 +63,29 @@ class COMCalculator {
         var missingCount = 0
 
         for segment in segments {
-            guard let proxNode = jointNodes[segment.prox],
-                  let distNode = jointNodes[segment.dist] else {
-                print("⚠️ Missing joint for binding: \(segment.prox) or \(segment.dist)")
+            guard let proxNode = jointNodes[segment.prox] else {
+                print("⚠️ Missing proximal joint for binding: \(segment.prox)")
                 missingCount += 1
                 continue
+            }
+
+            var distNode = jointNodes[segment.dist]
+            if distNode == nil {
+                // Special handling for Hand tips: use proximal if distal is missing (CoM at wrist)
+                if segment.name.contains("Hand") {
+                    print("⚠️ Hand distal \(segment.dist) missing, using proximal as fallback (CoM at wrist)")
+                    distNode = proxNode
+                } else {
+                    print("⚠️ Missing distal joint for binding: \(segment.dist)")
+                    missingCount += 1
+                    continue
+                }
             }
 
             boundSegments.append(BoundSegment(
                 name: segment.name, // Use descriptive segment name
                 prox: proxNode,
-                dist: distNode,
+                dist: distNode!,
                 massRatio: segment.mass,
                 comRatio: segment.com
             ))
