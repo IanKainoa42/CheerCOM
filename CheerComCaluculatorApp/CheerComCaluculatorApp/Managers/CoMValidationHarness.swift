@@ -201,17 +201,17 @@ class CoMValidationHarness {
             // Y should be significantly higher than T-Pose
             let diff = com.y - baseline.y
             if diff > 5.0 {
-                return (true, "CoM rose by \(String(format: "%.1f", diff)) units")
+                return (true, "CoM rose by \(String(format: "%.1f", diff)) units (Expected > 5.0)")
             }
-            return (false, "CoM failed to rise significantly (diff: \(diff))")
+            return (false, "CoM failed to rise significantly (Diff: \(String(format: "%.1f", diff)), Expected > 5.0)")
 
         case .squat:
             // Y should be significantly lower than T-Pose
             let diff = baseline.y - com.y
             if diff > 10.0 {
-                return (true, "CoM lowered by \(String(format: "%.1f", diff)) units")
+                return (true, "CoM lowered by \(String(format: "%.1f", diff)) units (Expected > 10.0)")
             }
-            return (false, "CoM failed to lower significantly (diff: \(diff))")
+            return (false, "CoM failed to lower significantly (Diff: \(String(format: "%.1f", diff)), Expected > 10.0)")
 
         case .pike:
             // Z should move forward (assuming negative Z is forward in this scene, or check diff magnitude)
@@ -219,18 +219,19 @@ class CoMValidationHarness {
             // Check absolute change in Z
             let diff = abs(com.z - baseline.z)
             if diff > 5.0 {
-                return (true, "CoM Z-shift detected (\(String(format: "%.1f", diff)) units)")
+                return (true, "CoM Z-shift detected: \(String(format: "%.1f", diff)) units (Expected > 5.0)")
             }
-            return (false, "CoM Z-axis did not shift significantly")
+            return (false, "CoM Z-axis did not shift significantly (Diff: \(String(format: "%.1f", diff)), Expected > 5.0)")
 
         case .layout:
             // Layout is straight body, similar to T-Pose but arms up?
             // "Fully extended straight body position" - arms up.
             // Should be higher than T-Pose, similar to Touchdown
-            if com.y > baseline.y + 2.0 {
-                return (true, "CoM higher than T-Pose")
+            let diff = com.y - baseline.y
+            if diff > 2.0 {
+                return (true, "CoM higher than T-Pose by \(String(format: "%.1f", diff)) units (Expected > 2.0)")
             }
-            return (false, "CoM not higher than T-Pose")
+            return (false, "CoM not higher than T-Pose (Diff: \(String(format: "%.1f", diff)), Expected > 2.0)")
 
         default:
             return (true, "No specific criteria")

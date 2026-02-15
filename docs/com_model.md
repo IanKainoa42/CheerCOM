@@ -6,13 +6,25 @@ This document describes the biomechanical model used to calculate the Center of 
 
 The model uses a **17-segment** approach based on anthropometric data from Winter (2009) and de Leva (1996). The total body mass is distributed across these segments, and the CoM for each segment is calculated based on its proximal and distal joint positions.
 
-### Coordinate System
-- **Y-axis**: Up (Vertical)
-- **X-axis**: Right (Lateral)
-- **Z-axis**: Forward/Backward (Anterior/Posterior)
-  - **Positive Z**: Forward
-  - **Negative Z**: Backward
-  *(Note: SceneKit coordinate system typically has -Z as forward. This should be verified in the implementation.)*
+| Segment Name | Proximal Joint | Distal Joint | Mass Ratio (%) | CoM Ratio (%)* |
+| :--- | :--- | :--- | :---: | :---: |
+| Pelvis | `mixamorig_Hips` | `mixamorig_Spine` | 14.6% | 50% |
+| Abdomen Lower | `mixamorig_Spine` | `mixamorig_Spine1` | 8.55% | 50% |
+| Abdomen Upper | `mixamorig_Spine1` | `mixamorig_Spine2` | 8.55% | 50% |
+| Thorax | `mixamorig_Spine2` | `mixamorig_Neck` | 18.0% | 50% |
+| Head | `mixamorig_Neck` | `mixamorig_Head` | 8.1% | 50% |
+| R Upper Arm | `mixamorig_RightArm` | `mixamorig_RightForeArm` | 2.8% | 44% |
+| R Forearm | `mixamorig_RightForeArm` | `mixamorig_RightHand` | 1.6% | 43% |
+| R Hand | `mixamorig_RightHand` | `mixamorig_RightHandMiddle1` | 0.6% | 50% |
+| L Upper Arm | `mixamorig_LeftArm` | `mixamorig_LeftForeArm` | 2.8% | 44% |
+| L Forearm | `mixamorig_LeftForeArm` | `mixamorig_LeftHand` | 1.6% | 43% |
+| L Hand | `mixamorig_LeftHand` | `mixamorig_LeftHandMiddle1` | 0.6% | 50% |
+| R Thigh | `mixamorig_RightUpLeg` | `mixamorig_RightLeg` | 10.0% | 43% |
+| R Shank | `mixamorig_RightLeg` | `mixamorig_RightFoot` | 4.65% | 43% |
+| R Foot | `mixamorig_RightFoot` | `mixamorig_RightToeBase` | 1.45% | 50% |
+| L Thigh | `mixamorig_LeftUpLeg` | `mixamorig_LeftLeg` | 10.0% | 43% |
+| L Shank | `mixamorig_LeftLeg` | `mixamorig_LeftFoot` | 4.65% | 43% |
+| L Foot | `mixamorig_LeftFoot` | `mixamorig_LeftToeBase` | 1.45% | 50% |
 
 ### Assumptions
 - **Rigid Bodies**: Each segment is treated as a rigid body with constant mass distribution.
@@ -76,5 +88,35 @@ The current implementation maps "Upper Arm" to the segment between `Shoulder` (C
 - **Impact**: Mass distribution for arms is slightly shifted towards the torso.
 - **Mitigation**: Documented here. Future improvements should refine the segment definitions to accurately map Humerus, Radius/Ulna, and Hand segments, possibly requiring a virtual end-effector for the hand if the rig lacks finger joints.
 
-### Head Segment
-The Head segment is defined from `Neck` to `Head`. A more accurate representation might include an offset or a specific CoM point relative to the Head joint, as the CoM of the head is typically anterior to the atlanto-occipital joint.
+## 5. Audit Findings & Limitations
+
+### Resolved Issues
+*   **Trunk Simplified**: The single "Trunk" segment has been split into Pelvis, Lower Abdomen, Upper Abdomen, and Thorax segments. This allows the mass to follow the curve of the spine in poses like Pike and Bridge.
+*   **Head/Neck Gap**: The "Head" segment is now defined from `Neck` to `Head`, and the `Thorax` segment connects `Spine2` to `Neck`, closing the gap.
+*   **Arm Segment Mapping**: Fixed incorrect mapping of arm segments. "Upper Arm" was previously mapped to the Clavicle, "Forearm" to Upper Arm, and "Hand" to Forearm. These have been corrected to align with Mixamo anatomy (Upper Arm: Shoulder->Elbow, Forearm: Elbow->Wrist, Hand: Wrist->Middle Finger).
+
+### Remaining Limitations
+*   **Arm Segment Mapping Mismatch**: A known issue exists where "Upper Arm" segments are currently mapped to the Clavicle (Shoulder to Arm joints) and "Forearm" segments are mapped to the Humerus (Arm to ForeArm joints) due to Mixamo naming conventions. This results in the anatomical Upper Arm being treated as the Forearm, and the Forearm being treated as the Hand. This will be corrected in a future realism update.
+*   **Mass Distribution Source**: The mass ratios for the split trunk segments are approximations derived from De Leva (1996) scaled to match the original total trunk mass (49.7%).
+*   **CoM Ratios**: Default CoM ratios of 0.50 are used for the new trunk segments. Further refinement based on specific anthropometric data could improve accuracy.
+
+### Future Improvements
+*   Implement geometric volume estimation for more accurate per-segment mass.
+*   Add joint limits to prevent impossible spine curvature.
+
+## 6. Running Tests
+
+Unit tests are included to verify the CoM calculation logic without running the full app UI. These tests simulate a skeleton and verify that the CoM responds correctly to pose changes.
+
+### How to Run
+1.  Open the project in Xcode.
+2.  Select the **CheerComCalculatorApp** scheme.
+3.  Press **Cmd+U** or select **Product > Test** from the menu.
+4.  The tests will run and results will be displayed in the Test Navigator.
+
+### Test Coverage
+The `COMCalculatorTests` suite covers:
+*   **T-Pose Symmetry**: Verifies that the CoM is centered (X ≈ 0) and at an appropriate height.
+*   **Squat Response**: Verifies that lowering the body mass (simulated squat) lowers the total CoM.
+*   **Pike Response**: Verifies that moving legs forward shifts the CoM forward (Z-axis).
+*   **Touchdown Response**: Verifies that raising arms raises the total CoM.
