@@ -152,6 +152,7 @@ class CheerCOMSceneManager {
         let allJoints =
             controllableJoints + [
                 "mixamorig_LeftToeBase", "mixamorig_RightToeBase",
+                "mixamorig_LeftHandMiddle1", "mixamorig_RightHandMiddle1",
             ]
 
         var foundJoints = 0

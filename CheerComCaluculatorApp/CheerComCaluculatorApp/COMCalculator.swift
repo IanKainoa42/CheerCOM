@@ -14,9 +14,10 @@ struct CalculationResult {
 class COMCalculator {
     var bodyMass: Double  // kg
     
-    // 14 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
+    // 17 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
     // Based on anthropometric data from Winter (2009) and de Leva (1996)
     // Updated for Mixamo skeleton with mixamorig_ prefix
+    // TODO: Fix known issue where "Upper Arm" is mapped to Clavicle and "Forearm" to Humerus
     let segments: [(name: String, prox: String, dist: String, mass: Double, com: Double)] = [
         // Trunk subdivision (Total 49.7%)
         ("Pelvis", "mixamorig_Hips", "mixamorig_Spine", 0.146, 0.50),
@@ -27,18 +28,12 @@ class COMCalculator {
         // Head (Total 8.1%) - Updated to start from Neck
         ("Head", "mixamorig_Neck", "mixamorig_Head", 0.081, 0.50),
 
-        // Arms (Refined for accurate segmentation)
-        // Upper Arm: Shoulder to Elbow
         ("R Upper Arm", "mixamorig_RightArm", "mixamorig_RightForeArm", 0.028, 0.44),
-        // Forearm: Elbow to Wrist
         ("R Forearm", "mixamorig_RightForeArm", "mixamorig_RightHand", 0.016, 0.43),
-        // Hand: Wrist to Knuckles/Fingers (Using zero-length segment for stability)
-        ("R Hand", "mixamorig_RightHand", "mixamorig_RightHand", 0.006, 0.50),
-
+        ("R Hand", "mixamorig_RightHand", "mixamorig_RightHandMiddle1", 0.006, 0.50),
         ("L Upper Arm", "mixamorig_LeftArm", "mixamorig_LeftForeArm", 0.028, 0.44),
         ("L Forearm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", 0.016, 0.43),
-        ("L Hand", "mixamorig_LeftHand", "mixamorig_LeftHand", 0.006, 0.50),
-
+        ("L Hand", "mixamorig_LeftHand", "mixamorig_LeftHandMiddle1", 0.006, 0.50),
         ("R Thigh", "mixamorig_RightUpLeg", "mixamorig_RightLeg", 0.100, 0.43),
         ("R Shank", "mixamorig_RightLeg", "mixamorig_RightFoot", 0.0465, 0.43),
         ("R Foot", "mixamorig_RightFoot", "mixamorig_RightToeBase", 0.0145, 0.50),
@@ -69,17 +64,29 @@ class COMCalculator {
         var missingCount = 0
 
         for segment in segments {
-            guard let proxNode = jointNodes[segment.prox],
-                  let distNode = jointNodes[segment.dist] else {
-                print("⚠️ Missing joint for binding: \(segment.prox) or \(segment.dist)")
+            guard let proxNode = jointNodes[segment.prox] else {
+                print("⚠️ Missing proximal joint for binding: \(segment.prox)")
                 missingCount += 1
                 continue
+            }
+
+            var distNode = jointNodes[segment.dist]
+            if distNode == nil {
+                // Special handling for Hand tips: use proximal if distal is missing (CoM at wrist)
+                if segment.name.contains("Hand") {
+                    print("⚠️ Hand distal \(segment.dist) missing, using proximal as fallback (CoM at wrist)")
+                    distNode = proxNode
+                } else {
+                    print("⚠️ Missing distal joint for binding: \(segment.dist)")
+                    missingCount += 1
+                    continue
+                }
             }
 
             boundSegments.append(BoundSegment(
                 name: segment.name, // Use descriptive segment name
                 prox: proxNode,
-                dist: distNode,
+                dist: distNode!,
                 massRatio: segment.mass,
                 comRatio: segment.com
             ))
@@ -92,8 +99,29 @@ class COMCalculator {
 
     /// Optimized calculation using bound nodes directly.
     func calculateBodyCOM() -> SCNVector3 {
-        let result = calculateDetailedBodyCOM()
-        return result.totalCOM
+        // Fallback or warning if not bound?
+        if boundSegments.isEmpty {
+             print("⚠️ COMCalculator: No segments bound. Did you call bind(jointNodes:)?")
+             return SCNVector3Zero
+        }
+
+        var totalWeighted = SCNVector3Zero
+        var totalMass: Double = 0
+
+        for segment in boundSegments {
+            // Direct property access is faster than dictionary lookup
+            let proxPos = segment.prox.worldPosition
+            let distPos = segment.dist.worldPosition
+
+            // COM = proximal + (distal - proximal) * %
+            let segCOM = proxPos + ((distPos - proxPos) * Float(segment.comRatio))
+            let segMass = bodyMass * segment.massRatio
+
+            totalWeighted = totalWeighted + (segCOM * Float(segMass))
+            totalMass += segMass
+        }
+
+        return totalMass > 0 ? (totalWeighted * Float(1.0 / totalMass)) : SCNVector3Zero
     }
 
     /// Detailed calculation returning segment data.
@@ -138,14 +166,18 @@ class COMCalculator {
         var segmentResults: [SegmentResult] = []
         
         for segment in segments {
-            guard let proxPos = jointPositions[segment.prox],
-                  let distPos = jointPositions[segment.dist] else {
-                print("⚠️ Missing joint: \(segment.prox) or \(segment.dist)")
+            guard let proxPos = jointPositions[segment.prox] else {
+                print("⚠️ Missing proximal joint: \(segment.prox)")
                 continue
             }
             
+            var distPos = jointPositions[segment.dist]
+            if distPos == nil {
+                distPos = proxPos // Fallback
+            }
+
             // COM = proximal + (distal - proximal) * %
-            let segCOM = proxPos + ((distPos - proxPos) * Float(segment.com))
+            let segCOM = proxPos + ((distPos! - proxPos) * Float(segment.com))
             let segMass = bodyMass * segment.mass
             
             totalWeighted = totalWeighted + (segCOM * Float(segMass))
