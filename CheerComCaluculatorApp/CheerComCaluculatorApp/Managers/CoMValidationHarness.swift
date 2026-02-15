@@ -248,9 +248,9 @@ class CoMValidationHarness {
             return (false, "CoM failed to lower significantly (Diff: \(String(format: "%.1f", diff)), Expected > 10.0)")
 
         case .pike:
-            // Z should move forward (assuming negative Z is forward in this scene, or check diff magnitude)
-            // Pike (legs forward) -> CoM moves forward (Z changes)
-            // Check absolute change in Z
+            // Pike (legs forward) -> CoM moves forward (Z changes).
+            // Since coordinate system direction depends on camera, we verify significant Z-axis shift.
+            // Typically legs move into +Z or -Z depending on facing.
             let diff = abs(com.z - baseline.z)
             if diff > 5.0 {
                 return (true, "CoM Z-shift detected: \(String(format: "%.1f", diff)) units (Expected > 5.0)")
