@@ -96,6 +96,7 @@ The `CoMValidationHarness` performs the following steps:
 *   **Arm Segment Mapping**: Fixed incorrect mapping of arm segments. "Upper Arm" was previously mapped to the Clavicle, "Forearm" to Upper Arm, and "Hand" to Forearm. These have been corrected to align with Mixamo anatomy (Upper Arm: Shoulder->Elbow, Forearm: Elbow->Wrist, Hand: Wrist->Middle Finger).
 
 ### Remaining Limitations
+*   **Arm Segment Mapping Mismatch**: A known issue exists where "Upper Arm" segments are currently mapped to the Clavicle (Shoulder to Arm joints) and "Forearm" segments are mapped to the Humerus (Arm to ForeArm joints) due to Mixamo naming conventions. This results in the anatomical Upper Arm being treated as the Forearm, and the Forearm being treated as the Hand. This will be corrected in a future realism update.
 *   **Mass Distribution Source**: The mass ratios for the split trunk segments are approximations derived from De Leva (1996) scaled to match the original total trunk mass (49.7%).
 *   **CoM Ratios**: Default CoM ratios of 0.50 are used for the new trunk segments. Further refinement based on specific anthropometric data could improve accuracy.
 
