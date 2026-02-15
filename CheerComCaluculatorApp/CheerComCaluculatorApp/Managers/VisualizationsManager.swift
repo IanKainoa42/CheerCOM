@@ -50,6 +50,7 @@ class VisualizationsManager {
     var gravityLineNode: SCNNode!
     var bosNode: SCNNode!
     var gridNode: SCNNode!
+    var axesNode: SCNNode!
     var segmentCOMNodes: SCNNode!
 
     var showAdvancedVisualizations = false {
@@ -58,6 +59,7 @@ class VisualizationsManager {
             gravityLineNode.isHidden = !showAdvancedVisualizations
             bosNode.isHidden = !showAdvancedVisualizations
             gridNode.isHidden = !showAdvancedVisualizations
+            axesNode.isHidden = !showAdvancedVisualizations
             segmentCOMNodes.isHidden = !showAdvancedVisualizations
 
             if showAdvancedVisualizations {
@@ -144,6 +146,32 @@ class VisualizationsManager {
         gridNode.addChildNode(planeNode2)
         gridNode.isHidden = true
         scene.rootNode.addChildNode(gridNode)
+
+        // Axes Indicator
+        axesNode = SCNNode()
+        axesNode.isHidden = true
+        scene.rootNode.addChildNode(axesNode)
+
+        // X Axis (Red)
+        let xBox = SCNBox(width: 50, height: 1, length: 1, chamferRadius: 0)
+        xBox.firstMaterial?.diffuse.contents = UIColor.red
+        let xNode = SCNNode(geometry: xBox)
+        xNode.position = SCNVector3(25, 0, 0)
+        axesNode.addChildNode(xNode)
+
+        // Y Axis (Green)
+        let yBox = SCNBox(width: 1, height: 50, length: 1, chamferRadius: 0)
+        yBox.firstMaterial?.diffuse.contents = UIColor.green
+        let yNode = SCNNode(geometry: yBox)
+        yNode.position = SCNVector3(0, 25, 0)
+        axesNode.addChildNode(yNode)
+
+        // Z Axis (Blue)
+        let zBox = SCNBox(width: 1, height: 1, length: 50, chamferRadius: 0)
+        zBox.firstMaterial?.diffuse.contents = UIColor.blue
+        let zNode = SCNNode(geometry: zBox)
+        zNode.position = SCNVector3(0, 0, 25)
+        axesNode.addChildNode(zNode)
     }
 
     func updateCOM(result: CalculationResult) {

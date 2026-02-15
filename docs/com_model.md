@@ -1,4 +1,4 @@
-# Center of Mass (CoM) Model
+# Body Model & Center of Mass (CoM) Documentation
 
 This document describes the biomechanical model used to calculate the Center of Mass (CoM) for the character.
 
@@ -6,7 +6,16 @@ This document describes the biomechanical model used to calculate the Center of 
 
 The model uses a **17-segment** approach based on anthropometric data from Winter (2009) and de Leva (1996). The total body mass is distributed across these segments, and the CoM for each segment is calculated based on its proximal and distal joint positions.
 
-| Segment Name | Proximal Joint | Distal Joint | Mass Ratio (%) | CoM Ratio (%)* |
+*   **Y-Axis**: Vertical (Up is positive).
+*   **X-Axis**: Lateral (Right is positive).
+*   **Z-Axis**: Anterior-Posterior (Forward is positive in this scene, though standard Mixamo T-Pose faces +Z).
+*   **Units**: SceneKit units (roughly corresponding to meters or centimeters depending on scale; relative positions matter most).
+
+## Segment Definition
+
+The total body mass is distributed across 17 segments. Each segment is defined by a proximal joint and a distal joint. The segment's Center of Mass is located at a percentage of the distance from the proximal joint to the distal joint.
+
+| Segment Name | Proximal Joint | Distal Joint | Mass % | CoM % (from Proximal) |
 | :--- | :--- | :--- | :---: | :---: |
 | Pelvis | `mixamorig_Hips` | `mixamorig_Spine` | 14.6% | 50% |
 | Abdomen Lower | `mixamorig_Spine` | `mixamorig_Spine1` | 8.55% | 50% |

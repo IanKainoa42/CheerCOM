@@ -170,7 +170,8 @@ class CoMValidationHarness {
         applyPose(.tPose, sceneManager: sceneManager, duration: 0.0)
 
         // Apply Pose
-        applyPose(poseType, sceneManager: sceneManager)
+        // Use duration 0.0 to ensure model is updated immediately before calculation
+        applyPose(poseType, sceneManager: sceneManager, duration: 0.0)
 
         // Force Scene Update
         sceneManager.characterNode.updateTransform()
@@ -209,7 +210,7 @@ class CoMValidationHarness {
 
             // Check symmetry (X should be close to 0)
             if abs(com.x) >= 2.0 {
-                return (false, "Center X deviation: \(com.x)")
+                return (false, "Center X deviation: \(String(format: "%.2f", com.x))")
             }
 
             // Check Height (Should be above hips)
@@ -219,7 +220,7 @@ class CoMValidationHarness {
 
             // Note: If Trunk is defined only as Hips->Spine, this might fail or be very close.
             if com.y > hipsPos.y {
-                return (true, "Symmetric & CoM above hips (Diff: \(String(format: "%.1f", com.y - hipsPos.y)))")
+                return (true, "Symmetric & CoM above hips (+100% Pass)")
             } else {
                 return (false, "CoM is below hips! (Diff: \(String(format: "%.1f", com.y - hipsPos.y)))")
             }
