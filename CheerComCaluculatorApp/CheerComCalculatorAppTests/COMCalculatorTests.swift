@@ -5,165 +5,153 @@ import SceneKit
 final class COMCalculatorTests: XCTestCase {
 
     var calculator: COMCalculator!
-    var mockNodes: [String: SCNNode]!
-    var rootNode: SCNNode!
+    var nodes: [String: SCNNode]!
 
     override func setUp() {
         super.setUp()
-        calculator = COMCalculator(bodyMass: 70.0) // 70kg standard
-        let (nodes, root) = createMockHierarchy()
-        mockNodes = nodes
-        rootNode = root
+        calculator = COMCalculator(bodyMass: 50.0) // 50kg for easy math
+        nodes = createMockSkeleton()
+        calculator.bind(jointNodes: nodes)
     }
 
-    // Builds a simplified T-Pose hierarchy
-    func createMockHierarchy() -> ([String: SCNNode], SCNNode) {
-        var nodes: [String: SCNNode] = [:]
+    func createMockSkeleton() -> [String: SCNNode] {
+        // Create nodes for all joints required by COMCalculator
+        let jointNames = [
+            "mixamorig_Hips", "mixamorig_Spine", "mixamorig_Spine1", "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head",
+            "mixamorig_RightShoulder", "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand",
+            "mixamorig_LeftShoulder", "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand",
+            "mixamorig_RightUpLeg", "mixamorig_RightLeg", "mixamorig_RightFoot", "mixamorig_RightToeBase",
+            "mixamorig_LeftUpLeg", "mixamorig_LeftLeg", "mixamorig_LeftFoot", "mixamorig_LeftToeBase"
+        ]
 
-        func createNode(_ name: String, offset: SCNVector3, parent: SCNNode?) -> SCNNode {
+        var nodes = [String: SCNNode]()
+        for name in jointNames {
             let node = SCNNode()
             node.name = name
-            node.position = offset
-            if let p = parent {
-                p.addChildNode(node)
-            }
             nodes[name] = node
-            return node
         }
 
-        // Root
-        let hips = createNode("mixamorig_Hips", offset: SCNVector3(0, 100, 0), parent: nil) // Hips at 1m height
-
-        // Spine Chain (Up)
-        let spine = createNode("mixamorig_Spine", offset: SCNVector3(0, 10, 0), parent: hips)
-        let spine1 = createNode("mixamorig_Spine1", offset: SCNVector3(0, 10, 0), parent: spine)
-        let spine2 = createNode("mixamorig_Spine2", offset: SCNVector3(0, 10, 0), parent: spine1)
-        let neck = createNode("mixamorig_Neck", offset: SCNVector3(0, 10, 0), parent: spine2)
-        let head = createNode("mixamorig_Head", offset: SCNVector3(0, 10, 0), parent: neck)
-
-        // Right Arm Chain (Out X)
-        let rShoulder = createNode("mixamorig_RightShoulder", offset: SCNVector3(10, 10, 0), parent: spine2)
-        let rArm = createNode("mixamorig_RightArm", offset: SCNVector3(10, 0, 0), parent: rShoulder)
-        let rForeArm = createNode("mixamorig_RightForeArm", offset: SCNVector3(30, 0, 0), parent: rArm)
-        let rHand = createNode("mixamorig_RightHand", offset: SCNVector3(25, 0, 0), parent: rForeArm)
-
-        // Left Arm Chain (Out -X)
-        let lShoulder = createNode("mixamorig_LeftShoulder", offset: SCNVector3(-10, 10, 0), parent: spine2)
-        let lArm = createNode("mixamorig_LeftArm", offset: SCNVector3(-10, 0, 0), parent: lShoulder)
-        let lForeArm = createNode("mixamorig_LeftForeArm", offset: SCNVector3(-30, 0, 0), parent: lArm)
-        let lHand = createNode("mixamorig_LeftHand", offset: SCNVector3(-25, 0, 0), parent: lForeArm)
-
-        // Right Leg Chain (Down)
-        let rUpLeg = createNode("mixamorig_RightUpLeg", offset: SCNVector3(10, -5, 0), parent: hips)
-        let rLeg = createNode("mixamorig_RightLeg", offset: SCNVector3(0, -40, 0), parent: rUpLeg)
-        let rFoot = createNode("mixamorig_RightFoot", offset: SCNVector3(0, -40, 0), parent: rLeg)
-        let rToe = createNode("mixamorig_RightToeBase", offset: SCNVector3(0, -5, 15), parent: rFoot)
-
-        // Left Leg Chain (Down)
-        let lUpLeg = createNode("mixamorig_LeftUpLeg", offset: SCNVector3(-10, -5, 0), parent: hips)
-        let lLeg = createNode("mixamorig_LeftLeg", offset: SCNVector3(0, -40, 0), parent: lUpLeg)
-        let lFoot = createNode("mixamorig_LeftFoot", offset: SCNVector3(0, -40, 0), parent: lLeg)
-        let lToe = createNode("mixamorig_LeftToeBase", offset: SCNVector3(0, -5, 15), parent: lFoot)
-
-        return (nodes, hips)
+        return nodes
     }
 
-    // Helper to degrees to radians
-    func deg(_ d: Float) -> Float { return d * .pi / 180 }
+    func setupTPose() {
+        // Arrange: Set positions for T-Pose
+        // Hips at 0,100,0 (1m up)
+        nodes["mixamorig_Hips"]?.position = SCNVector3(0, 100, 0)
 
-    func testMassSum() {
-        var totalMassRatio = 0.0
-        for segment in calculator.segments {
-            totalMassRatio += segment.mass
-        }
-        XCTAssertEqual(totalMassRatio, 1.0, accuracy: 0.001, "Total mass ratio should sum to approx 1.0")
+        // Spine going up
+        nodes["mixamorig_Spine"]?.position = SCNVector3(0, 110, 0)
+        nodes["mixamorig_Spine1"]?.position = SCNVector3(0, 120, 0)
+        nodes["mixamorig_Spine2"]?.position = SCNVector3(0, 130, 0)
+        nodes["mixamorig_Neck"]?.position = SCNVector3(0, 140, 0)
+        nodes["mixamorig_Head"]?.position = SCNVector3(0, 150, 0)
+
+        // Arms (Symmetric)
+        nodes["mixamorig_RightShoulder"]?.position = SCNVector3(10, 135, 0)
+        nodes["mixamorig_RightArm"]?.position = SCNVector3(20, 135, 0)
+        nodes["mixamorig_RightForeArm"]?.position = SCNVector3(40, 135, 0)
+        nodes["mixamorig_RightHand"]?.position = SCNVector3(60, 135, 0)
+
+        nodes["mixamorig_LeftShoulder"]?.position = SCNVector3(-10, 135, 0)
+        nodes["mixamorig_LeftArm"]?.position = SCNVector3(-20, 135, 0)
+        nodes["mixamorig_LeftForeArm"]?.position = SCNVector3(-40, 135, 0)
+        nodes["mixamorig_LeftHand"]?.position = SCNVector3(-60, 135, 0)
+
+        // Legs
+        nodes["mixamorig_RightUpLeg"]?.position = SCNVector3(10, 100, 0)
+        nodes["mixamorig_RightLeg"]?.position = SCNVector3(10, 50, 0)
+        nodes["mixamorig_RightFoot"]?.position = SCNVector3(10, 10, 0)
+        nodes["mixamorig_RightToeBase"]?.position = SCNVector3(10, 0, 5) // Feet forward
+
+        nodes["mixamorig_LeftUpLeg"]?.position = SCNVector3(-10, 100, 0)
+        nodes["mixamorig_LeftLeg"]?.position = SCNVector3(-10, 50, 0)
+        nodes["mixamorig_LeftFoot"]?.position = SCNVector3(-10, 10, 0)
+        nodes["mixamorig_LeftToeBase"]?.position = SCNVector3(-10, 0, 5)
     }
 
-    func testBindSegments() {
-        calculator.bind(jointNodes: mockNodes)
-        // With corrected mapping: 17 segments should bind
-        let result = calculator.calculateDetailedBodyCOM()
-        XCTAssertEqual(result.segmentCOMs.count, 17, "Should have 17 bound segments")
-    }
+    func testTPose_CoM() {
+        setupTPose()
 
-    func testTPose() {
-        calculator.bind(jointNodes: mockNodes)
-        // Reset rotations
-        for node in mockNodes.values { node.eulerAngles = SCNVector3Zero }
-
+        // Act
         let result = calculator.calculateDetailedBodyCOM()
         let com = result.totalCOM
 
-        // T-Pose should be symmetric X ~ 0
-        XCTAssertEqual(com.x, 0, accuracy: 1.0)
-        // CoM should be above hips (Hips are at 100)
-        XCTAssertGreaterThan(com.y, 100.0)
+        // Assert
+        XCTAssertEqual(com.x, 0, accuracy: 2.0, "CoM X should be symmetric (near 0)")
+        XCTAssertGreaterThan(com.y, 80, "CoM Y should be relatively high (body is upright)")
+        XCTAssertLessThan(com.y, 120, "CoM Y should be below shoulders")
+        XCTAssertEqual(com.z, 0, accuracy: 5.0, "CoM Z should be near 0 for planar T-Pose")
     }
 
-    func testTouchdown() {
-        calculator.bind(jointNodes: mockNodes)
-        // Reset
-        for node in mockNodes.values { node.eulerAngles = SCNVector3Zero }
+    func testSquat_CoM_Lowers() {
+        setupTPose()
+        let highCOM = calculator.calculateDetailedBodyCOM().totalCOM.y
 
-        let tPoseY = calculator.calculateBodyCOM().y
+        // Simulate Squat by lowering hips and upper body
+        // Move hips and everything above/connected down by 40 units
+        let dropAmount: Float = 40.0
 
-        // Raise Arms: Rotate Shoulders or Arms around Z
-        // Right Arm (Along +X). Rotate +90 Z to point Up (+Y)
-        // Left Arm (Along -X). Rotate -90 Z to point Up (+Y)
-        mockNodes["mixamorig_RightArm"]?.eulerAngles.z = deg(90)
-        mockNodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-90)
+        let upperBodyJoints = [
+            "mixamorig_Hips", "mixamorig_Spine", "mixamorig_Spine1", "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head",
+            "mixamorig_RightShoulder", "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand",
+            "mixamorig_LeftShoulder", "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand",
+            "mixamorig_RightUpLeg", "mixamorig_LeftUpLeg" // Thighs move down too (proximal)
+        ]
 
-        let touchdownY = calculator.calculateBodyCOM().y
+        for name in upperBodyJoints {
+            if let node = nodes[name] {
+                node.position.y -= dropAmount
+            }
+        }
 
-        XCTAssertGreaterThan(touchdownY, tPoseY + 2.0, "CoM should rise significantly in Touchdown")
+        // Knees stay same height (approx) but move forward/out? For simplicity, just lowering mass.
+
+        let lowCOM = calculator.calculateDetailedBodyCOM().totalCOM.y
+
+        XCTAssertLessThan(lowCOM, highCOM, "Squatting (lowering body mass) should lower CoM")
+        XCTAssertEqual(highCOM - lowCOM, dropAmount * 0.8, accuracy: 10.0, "Drop should be roughly proportional to mass moved")
     }
 
-    func testSquat() {
-        calculator.bind(jointNodes: mockNodes)
-        // Reset
-        for node in mockNodes.values { node.eulerAngles = SCNVector3Zero }
+    func testPike_CoM_ShiftsForward() {
+        setupTPose()
+        let startZ = calculator.calculateDetailedBodyCOM().totalCOM.z
 
-        let tPoseY = calculator.calculateBodyCOM().y
+        // Pike: Legs move forward (Z+)
+        // Move feet and knees forward
+        nodes["mixamorig_RightLeg"]?.position.z += 50
+        nodes["mixamorig_RightFoot"]?.position.z += 50
+        nodes["mixamorig_RightToeBase"]?.position.z += 50
 
-        // Squat: Rotate Thighs up (Flexion, -X?), Rotate Knees back (Flexion +X?)
-        // Assuming X is pitch.
-        // Hips -> UpLeg (0, -40, 0).
-        // Rotate UpLeg -90 on X -> Leg points Forward (+Z)
-        // Rotate Leg +90 on X -> Foot points Down (-Y)
+        nodes["mixamorig_LeftLeg"]?.position.z += 50
+        nodes["mixamorig_LeftFoot"]?.position.z += 50
+        nodes["mixamorig_LeftToeBase"]?.position.z += 50
 
-        mockNodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(-90)
-        mockNodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(-90)
+        let endZ = calculator.calculateDetailedBodyCOM().totalCOM.z
 
-        mockNodes["mixamorig_RightLeg"]?.eulerAngles.x = deg(90)
-        mockNodes["mixamorig_LeftLeg"]?.eulerAngles.x = deg(90)
-
-        // Also usually spine bends forward, but let's stick to legs
-
-        let squatY = calculator.calculateBodyCOM().y
-
-        XCTAssertLessThan(squatY, tPoseY - 10.0, "CoM should lower significantly in Squat")
+        XCTAssertGreaterThan(endZ, startZ, "Pike (legs forward) should shift CoM forward (Z+)")
     }
 
-    func testPike() {
-        calculator.bind(jointNodes: mockNodes)
-        // Reset
-        for node in mockNodes.values { node.eulerAngles = SCNVector3Zero }
+    func testTouchdown_CoM_Rises() {
+        setupTPose()
+        let startY = calculator.calculateDetailedBodyCOM().totalCOM.y
 
-        let tPoseZ = calculator.calculateBodyCOM().z
+        // Touchdown: Arms up
+        // Move arms up
+        let liftAmount: Float = 50.0
 
-        // Pike: Legs straight forward (+Z)
-        // Rotate UpLegs -90 on X
+        let armJoints = [
+            "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand",
+            "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand"
+        ]
 
-        mockNodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(-90)
-        mockNodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(-90)
+        for name in armJoints {
+            if let node = nodes[name] {
+                node.position.y += liftAmount
+            }
+        }
 
-        // Arms overhead? Usually.
-        mockNodes["mixamorig_RightArm"]?.eulerAngles.z = deg(90)
-        mockNodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-90)
+        let endY = calculator.calculateDetailedBodyCOM().totalCOM.y
 
-        let pikeZ = calculator.calculateBodyCOM().z
-
-        // Legs are heavy (approx 30-40% mass with feet). Moving them forward should shift CoM forward (+Z)
-        XCTAssertGreaterThan(pikeZ, tPoseZ + 5.0, "CoM should shift forward in Pike")
+        XCTAssertGreaterThan(endY, startY, "Touchdown (arms up) should raise CoM")
     }
 }

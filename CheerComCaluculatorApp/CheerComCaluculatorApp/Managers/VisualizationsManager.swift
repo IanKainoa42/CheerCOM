@@ -50,6 +50,7 @@ class VisualizationsManager {
     var gravityLineNode: SCNNode!
     var bosNode: SCNNode!
     var gridNode: SCNNode!
+    var axesNode: SCNNode!
     var segmentCOMNodes: SCNNode!
 
     var showAdvancedVisualizations = false {
@@ -58,6 +59,7 @@ class VisualizationsManager {
             gravityLineNode.isHidden = !showAdvancedVisualizations
             bosNode.isHidden = !showAdvancedVisualizations
             gridNode.isHidden = !showAdvancedVisualizations
+            axesNode.isHidden = !showAdvancedVisualizations
             segmentCOMNodes.isHidden = !showAdvancedVisualizations
 
             if showAdvancedVisualizations {
@@ -93,35 +95,32 @@ class VisualizationsManager {
     }
 
     private func setupAxes(in scene: SCNScene) {
-        let axisLength: CGFloat = 50.0
-        let radius: CGFloat = 0.5
+        axesNode = SCNNode()
 
         // X Axis (Red)
-        let xBox = SCNCylinder(radius: radius, height: axisLength)
-        xBox.firstMaterial?.diffuse.contents = UIColor.red
-        let xNode = SCNNode(geometry: xBox)
-        xNode.position = SCNVector3(axisLength / 2, 0, 0)
+        let xGeo = SCNCylinder(radius: 0.2, height: 50)
+        xGeo.firstMaterial?.diffuse.contents = UIColor.red
+        let xNode = SCNNode(geometry: xGeo)
+        xNode.position = SCNVector3(25, 0, 0)
         xNode.eulerAngles.z = -.pi / 2
+        axesNode.addChildNode(xNode)
 
         // Y Axis (Green)
-        let yBox = SCNCylinder(radius: radius, height: axisLength)
-        yBox.firstMaterial?.diffuse.contents = UIColor.green
-        let yNode = SCNNode(geometry: yBox)
-        yNode.position = SCNVector3(0, axisLength / 2, 0)
+        let yGeo = SCNCylinder(radius: 0.2, height: 50)
+        yGeo.firstMaterial?.diffuse.contents = UIColor.green
+        let yNode = SCNNode(geometry: yGeo)
+        yNode.position = SCNVector3(0, 25, 0)
+        axesNode.addChildNode(yNode)
 
         // Z Axis (Blue)
-        let zBox = SCNCylinder(radius: radius, height: axisLength)
-        zBox.firstMaterial?.diffuse.contents = UIColor.blue
-        let zNode = SCNNode(geometry: zBox)
-        zNode.position = SCNVector3(0, 0, axisLength / 2)
+        let zGeo = SCNCylinder(radius: 0.2, height: 50)
+        zGeo.firstMaterial?.diffuse.contents = UIColor.blue
+        let zNode = SCNNode(geometry: zGeo)
+        zNode.position = SCNVector3(0, 0, 25)
         zNode.eulerAngles.x = .pi / 2
-
-        let axesNode = SCNNode()
-        axesNode.addChildNode(xNode)
-        axesNode.addChildNode(yNode)
         axesNode.addChildNode(zNode)
-        axesNode.name = "AxesIndicator"
 
+        axesNode.isHidden = true
         scene.rootNode.addChildNode(axesNode)
     }
 
@@ -178,6 +177,32 @@ class VisualizationsManager {
         gridNode.addChildNode(planeNode2)
         gridNode.isHidden = true
         scene.rootNode.addChildNode(gridNode)
+
+        // Axes Indicator
+        axesNode = SCNNode()
+        axesNode.isHidden = true
+        scene.rootNode.addChildNode(axesNode)
+
+        // X Axis (Red)
+        let xBox = SCNBox(width: 50, height: 1, length: 1, chamferRadius: 0)
+        xBox.firstMaterial?.diffuse.contents = UIColor.red
+        let xNode = SCNNode(geometry: xBox)
+        xNode.position = SCNVector3(25, 0, 0)
+        axesNode.addChildNode(xNode)
+
+        // Y Axis (Green)
+        let yBox = SCNBox(width: 1, height: 50, length: 1, chamferRadius: 0)
+        yBox.firstMaterial?.diffuse.contents = UIColor.green
+        let yNode = SCNNode(geometry: yBox)
+        yNode.position = SCNVector3(0, 25, 0)
+        axesNode.addChildNode(yNode)
+
+        // Z Axis (Blue)
+        let zBox = SCNBox(width: 1, height: 1, length: 50, chamferRadius: 0)
+        zBox.firstMaterial?.diffuse.contents = UIColor.blue
+        let zNode = SCNNode(geometry: zBox)
+        zNode.position = SCNVector3(0, 0, 25)
+        axesNode.addChildNode(zNode)
     }
 
     func updateCOM(result: CalculationResult) {
@@ -212,7 +237,7 @@ class VisualizationsManager {
         // Clear existing nodes if count mismatch (simple approach) or update them
         // For performance, we should reuse nodes.
 
-        let currentNodes = segmentCOMNodes.childNodes
+        var currentNodes = segmentCOMNodes.childNodes
 
         // Ensure we have enough nodes
         if currentNodes.count < segmentResults.count {
@@ -223,21 +248,24 @@ class VisualizationsManager {
                 let node = SCNNode(geometry: sphere)
                 segmentCOMNodes.addChildNode(node)
             }
+            // Refresh cache after adding nodes
+            currentNodes = segmentCOMNodes.childNodes
         }
 
         // Update positions
         for (index, result) in segmentResults.enumerated() {
-            if index < segmentCOMNodes.childNodes.count {
-                let node = segmentCOMNodes.childNodes[index]
+            if index < currentNodes.count {
+                // Use cached currentNodes to avoid repeated childNodes array creation
+                let node = currentNodes[index]
                 node.position = result.position
                 node.isHidden = !showAdvancedVisualizations // Only show in advanced mode?
             }
         }
 
         // Hide extra nodes if any
-        if segmentCOMNodes.childNodes.count > segmentResults.count {
-            for index in segmentResults.count..<segmentCOMNodes.childNodes.count {
-                segmentCOMNodes.childNodes[index].isHidden = true
+        if currentNodes.count > segmentResults.count {
+            for index in segmentResults.count..<currentNodes.count {
+                currentNodes[index].isHidden = true
             }
         }
     }
@@ -314,7 +342,7 @@ class VisualizationsManager {
     }
 
     private func updateTrailVisualizationOptimized() {
-        let currentNodes = comTrailNode.childNodes
+        var currentNodes = comTrailNode.childNodes
         let needed = trailPositions.count
         let existing = currentNodes.count
 
@@ -327,17 +355,22 @@ class VisualizationsManager {
                 let node = SCNNode(geometry: sphere)
                 comTrailNode.addChildNode(node)
             }
+            // Refresh cache after adding nodes
+            currentNodes = comTrailNode.childNodes
         }
         // Remove excess nodes if we have too many
         else if existing > needed {
             for i in (needed..<existing).reversed() {
                 currentNodes[i].removeFromParentNode()
             }
+            // Refresh cache after removing nodes
+            currentNodes = comTrailNode.childNodes
         }
 
         // Update positions and alpha for all nodes
         for (i, pos) in trailPositions.enumerated() {
-            let node = comTrailNode.childNodes[i]
+            // Use cached currentNodes to avoid repeated childNodes array creation
+            let node = currentNodes[i]
             node.position = pos
 
             // Update alpha

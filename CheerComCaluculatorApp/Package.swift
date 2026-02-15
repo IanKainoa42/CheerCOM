@@ -15,7 +15,7 @@ let package = Package(
     targets: [
         .target(
             name: "CheerComCalculatorApp",
-            path: "CheerComCalculatorApp"
+            path: "CheerComCaluculatorApp"
         ),
         .testTarget(
             name: "CheerComCalculatorAppTests",
