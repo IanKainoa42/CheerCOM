@@ -103,3 +103,20 @@ The `CoMValidationHarness` performs the following steps:
 ### Future Improvements
 *   Implement geometric volume estimation for more accurate per-segment mass.
 *   Add joint limits to prevent impossible spine curvature.
+
+## 6. Running Tests
+
+Unit tests are included to verify the CoM calculation logic without running the full app UI. These tests simulate a skeleton and verify that the CoM responds correctly to pose changes.
+
+### How to Run
+1.  Open the project in Xcode.
+2.  Select the **CheerComCalculatorApp** scheme.
+3.  Press **Cmd+U** or select **Product > Test** from the menu.
+4.  The tests will run and results will be displayed in the Test Navigator.
+
+### Test Coverage
+The `COMCalculatorTests` suite covers:
+*   **T-Pose Symmetry**: Verifies that the CoM is centered (X ≈ 0) and at an appropriate height.
+*   **Squat Response**: Verifies that lowering the body mass (simulated squat) lowers the total CoM.
+*   **Pike Response**: Verifies that moving legs forward shifts the CoM forward (Z-axis).
+*   **Touchdown Response**: Verifies that raising arms raises the total CoM.
