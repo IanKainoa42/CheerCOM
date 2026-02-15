@@ -20,7 +20,7 @@ let package = Package(
         .testTarget(
             name: "CheerComCalculatorAppTests",
             dependencies: ["CheerComCalculatorApp"],
-            path: "Tests/CheerComCalculatorAppTests"
+            path: "CheerComCalculatorAppTests"
         )
     ]
 )

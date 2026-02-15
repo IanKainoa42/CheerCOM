@@ -1,76 +1,131 @@
-# Center of Mass (CoM) Model
+# Body Model & Center of Mass (CoM) Documentation
 
-This document describes the human body model and Center of Mass calculation logic used in the CheerComCalculatorApp.
+This document describes the biomechanical model used to calculate the Center of Mass (CoM) for the character.
 
-## 1. Overview
+## Model Overview
 
-The application uses a **17-segment rigid body model** to calculate the whole-body Center of Mass (CoM). The model is based on anthropometric data (Winter, 2009; de Leva, 1996) adapted for the Mixamo skeletal rig.
+The model uses a **17-segment** approach based on anthropometric data from Winter (2009) and de Leva (1996). The total body mass is distributed across these segments, and the CoM for each segment is calculated based on its proximal and distal joint positions.
 
-## 2. Coordinate Space
+*   **Y-Axis**: Vertical (Up is positive).
+*   **X-Axis**: Lateral (Right is positive).
+*   **Z-Axis**: Anterior-Posterior (Forward is positive in this scene, though standard Mixamo T-Pose faces +Z).
+*   **Units**: SceneKit units (roughly corresponding to meters or centimeters depending on scale; relative positions matter most).
 
-*   **System**: SceneKit (Right-handed, Y-up).
-    *   **+X**: Left (from character's perspective, if facing +Z? No, typically +X is Right in world, need to verify character orientation). *Note: In standard SceneKit, +X is Right, +Y is Up, +Z is Backward (towards camera).*
-*   **Units**: The calculation is unit-agnostic for position (uses World Position from SceneKit), but Mass is defined in **kg**.
+## Segment Definition
 
-## 3. Segment Definitions
+The total body mass is distributed across 17 segments. Each segment is defined by a proximal joint and a distal joint. The segment's Center of Mass is located at a percentage of the distance from the proximal joint to the distal joint.
 
-The body is divided into the following segments. Each segment has a mass (as a percentage of total body mass) and a local CoM location (as a percentage of the length from the proximal joint to the distal joint).
+| Segment Name | Proximal Joint | Distal Joint | Mass % | CoM % (from Proximal) |
+| :--- | :--- | :--- | :---: | :---: |
+| Pelvis | `mixamorig_Hips` | `mixamorig_Spine` | 14.6% | 50% |
+| Abdomen Lower | `mixamorig_Spine` | `mixamorig_Spine1` | 8.55% | 50% |
+| Abdomen Upper | `mixamorig_Spine1` | `mixamorig_Spine2` | 8.55% | 50% |
+| Thorax | `mixamorig_Spine2` | `mixamorig_Neck` | 18.0% | 50% |
+| Head | `mixamorig_Neck` | `mixamorig_Head` | 8.1% | 50% |
+| R Upper Arm | `mixamorig_RightArm` | `mixamorig_RightForeArm` | 2.8% | 44% |
+| R Forearm | `mixamorig_RightForeArm` | `mixamorig_RightHand` | 1.6% | 43% |
+| R Hand | `mixamorig_RightHand` | `mixamorig_RightHandMiddle1` | 0.6% | 50% |
+| L Upper Arm | `mixamorig_LeftArm` | `mixamorig_LeftForeArm` | 2.8% | 44% |
+| L Forearm | `mixamorig_LeftForeArm` | `mixamorig_LeftHand` | 1.6% | 43% |
+| L Hand | `mixamorig_LeftHand` | `mixamorig_LeftHandMiddle1` | 0.6% | 50% |
+| R Thigh | `mixamorig_RightUpLeg` | `mixamorig_RightLeg` | 10.0% | 43% |
+| R Shank | `mixamorig_RightLeg` | `mixamorig_RightFoot` | 4.65% | 43% |
+| R Foot | `mixamorig_RightFoot` | `mixamorig_RightToeBase` | 1.45% | 50% |
+| L Thigh | `mixamorig_LeftUpLeg` | `mixamorig_LeftLeg` | 10.0% | 43% |
+| L Shank | `mixamorig_LeftLeg` | `mixamorig_LeftFoot` | 4.65% | 43% |
+| L Foot | `mixamorig_LeftFoot` | `mixamorig_LeftToeBase` | 1.45% | 50% |
 
-| Segment Name | Proximal Joint (Start) | Distal Joint (End) | Mass % | CoM % (from Proximal) |
+### Assumptions
+- **Rigid Bodies**: Each segment is treated as a rigid body with constant mass distribution.
+- **Linear CoM**: The CoM for each segment is assumed to lie on the straight line connecting the proximal and distal joints.
+- **Proximal Reference**: CoM position is defined as a percentage distance from the proximal joint.
+
+## Segment Definitions
+
+| Segment Name | Proximal Joint | Distal Joint | Mass % | CoM % (from Proximal) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Pelvis** | mixamorig_Hips | mixamorig_Spine | 14.6% | 50% |
-| **Abdomen Lower** | mixamorig_Spine | mixamorig_Spine1 | 8.55% | 50% |
-| **Abdomen Upper** | mixamorig_Spine1 | mixamorig_Spine2 | 8.55% | 50% |
-| **Thorax** | mixamorig_Spine2 | mixamorig_Neck | 18.0% | 50% |
-| **Head** | mixamorig_Neck | mixamorig_Head | 8.1% | 50% |
-| **R Upper Arm** | mixamorig_RightShoulder | mixamorig_RightArm | 2.8% | 44% |
-| **R Forearm** | mixamorig_RightArm | mixamorig_RightForeArm | 1.6% | 43% |
-| **R Hand** | mixamorig_RightForeArm | mixamorig_RightHand | 0.6% | 50% |
-| **L Upper Arm** | mixamorig_LeftShoulder | mixamorig_LeftArm | 2.8% | 44% |
-| **L Forearm** | mixamorig_LeftArm | mixamorig_LeftForeArm | 1.6% | 43% |
-| **L Hand** | mixamorig_LeftForeArm | mixamorig_LeftHand | 0.6% | 50% |
-| **R Thigh** | mixamorig_RightUpLeg | mixamorig_RightLeg | 10.0% | 43% |
-| **R Shank** | mixamorig_RightLeg | mixamorig_RightFoot | 4.65% | 43% |
-| **R Foot** | mixamorig_RightFoot | mixamorig_RightToeBase | 1.45% | 50% |
-| **L Thigh** | mixamorig_LeftUpLeg | mixamorig_LeftLeg | 10.0% | 43% |
-| **L Shank** | mixamorig_LeftLeg | mixamorig_LeftFoot | 4.65% | 43% |
-| **L Foot** | mixamorig_LeftFoot | mixamorig_LeftToeBase | 1.45% | 50% |
+| **Trunk** (Subdivided) | | | **49.7%** | |
+| Pelvis | Hips | Spine | 14.6% | 50% |
+| Abdomen Lower | Spine | Spine1 | 8.55% | 50% |
+| Abdomen Upper | Spine1 | Spine2 | 8.55% | 50% |
+| Thorax | Spine2 | Neck | 18.0% | 50% |
+| **Head** | Neck | Head | 8.1% | 50% |
+| **Right Arm** | | | | |
+| R Upper Arm | R Shoulder | R Arm | 2.8% | 44% |
+| R Forearm | R Arm | R Forearm | 1.6% | 43% |
+| R Hand | R Forearm | R Hand | 0.6% | 50% |
+| **Left Arm** | | | | |
+| L Upper Arm | L Shoulder | L Arm | 2.8% | 44% |
+| L Forearm | L Arm | L Forearm | 1.6% | 43% |
+| L Hand | L Forearm | L Hand | 0.6% | 50% |
+| **Right Leg** | | | | |
+| R Thigh | R UpLeg | R Leg | 10.0% | 43% |
+| R Shank | R Leg | R Foot | 4.65% | 43% |
+| R Foot | R Foot | R ToeBase | 1.45% | 50% |
+| **Left Leg** | | | | |
+| L Thigh | L UpLeg | L Leg | 10.0% | 43% |
+| L Shank | L Leg | L Foot | 4.65% | 43% |
+| L Foot | L Foot | L ToeBase | 1.45% | 50% |
 
-**Total Mass Verification**: The sum of all segment mass ratios is approximately 1.0 (100%).
+## Validation
 
-## 4. Calculation Method
+The `CoMValidationHarness` class is used to verify the correctness of the CoM calculation. It performs the following checks:
 
-The Whole-Body CoM is calculated using the weighted average method:
+1.  **System Integrity**: Verifies that the sum of all segment mass ratios is approximately 1.0 (tolerance 0.001).
+2.  **Pose Validation**: Checks CoM behavior in standard poses against expected outcomes:
+    - **T-Pose**:
+        - Symmetry check: X-axis deviation should be minimal (< 2.0 units).
+        - Height check: CoM Y should be greater than Hips Y.
+    - **Touchdown**:
+        - CoM Y should rise significantly compared to T-Pose (> 5.0 units).
+    - **Squat**:
+        - CoM Y should lower significantly compared to T-Pose (> 10.0 units).
+    - **Pike**:
+        - CoM Z should shift significantly (> 5.0 units).
+    - **Layout**:
+        - CoM Y should be higher than T-Pose (> 2.0 units).
 
-$$
-CoM_{total} = \frac{\sum (m_i \cdot p_i)}{\sum m_i}
-$$
+To run the validation:
+1.  Launch the app.
+2.  Tap "Run Diagnostics".
+3.  Observe the 3D view (green CoM marker) and the log overlay.
 
-Where:
-*   $m_i$ is the mass of segment $i$.
-*   $p_i$ is the world position of the Center of Mass of segment $i$.
+## Known Issues & Notes
 
-The segment CoM ($p_i$) is approximated as a point on the line segment connecting the proximal joint ($J_{prox}$) and distal joint ($J_{dist}$):
+### Joint Mapping Discrepancy (Arms)
+The current implementation maps "Upper Arm" to the segment between `Shoulder` (Clavicle) and `Arm` (Humerus), and "Forearm" to the segment between `Arm` and `ForeArm`. This effectively treats the Clavicle as the Upper Arm and shifts the arm segments proximally by one joint. The actual hand segment (distal to wrist) is currently not accounted for explicitly, with the "Hand" segment defined as `ForeArm` to `Hand` (which corresponds to the actual Forearm).
+- **Impact**: Mass distribution for arms is slightly shifted towards the torso.
+- **Mitigation**: Documented here. Future improvements should refine the segment definitions to accurately map Humerus, Radius/Ulna, and Hand segments, possibly requiring a virtual end-effector for the hand if the rig lacks finger joints.
 
-$$
-p_i = J_{prox} + (J_{dist} - J_{prox}) \cdot \text{ratio}_{com}
-$$
+## 5. Audit Findings & Limitations
 
-## 5. Assumptions & Limitations
+### Resolved Issues
+*   **Trunk Simplified**: The single "Trunk" segment has been split into Pelvis, Lower Abdomen, Upper Abdomen, and Thorax segments. This allows the mass to follow the curve of the spine in poses like Pike and Bridge.
+*   **Head/Neck Gap**: The "Head" segment is now defined from `Neck` to `Head`, and the `Thorax` segment connects `Spine2` to `Neck`, closing the gap.
+*   **Arm Segment Mapping**: Fixed incorrect mapping of arm segments. "Upper Arm" was previously mapped to the Clavicle, "Forearm" to Upper Arm, and "Hand" to Forearm. These have been corrected to align with Mixamo anatomy (Upper Arm: Shoulder->Elbow, Forearm: Elbow->Wrist, Hand: Wrist->Middle Finger).
 
-1.  **Rigidity**: Segments are treated as rigid bodies. Soft tissue deformation is not modeled.
-2.  **Linear CoM**: The segment CoM always lies exactly on the vector between the two defining joints. This simplifies the geometry but may slightly deviate from true anatomical CoM for complex shapes like the torso.
-3.  **Symmetry**: Left and right limbs are assumed to have identical mass properties.
-4.  **Rig Dependency**: The accuracy depends on the skeletal rig ("mixamorig") matching standard human proportions.
+### Remaining Limitations
+*   **Arm Segment Mapping Mismatch**: A known issue exists where "Upper Arm" segments are currently mapped to the Clavicle (Shoulder to Arm joints) and "Forearm" segments are mapped to the Humerus (Arm to ForeArm joints) due to Mixamo naming conventions. This results in the anatomical Upper Arm being treated as the Forearm, and the Forearm being treated as the Hand. This will be corrected in a future realism update.
+*   **Mass Distribution Source**: The mass ratios for the split trunk segments are approximations derived from De Leva (1996) scaled to match the original total trunk mass (49.7%).
+*   **CoM Ratios**: Default CoM ratios of 0.50 are used for the new trunk segments. Further refinement based on specific anthropometric data could improve accuracy.
 
-## 6. Verification
+### Future Improvements
+*   Implement geometric volume estimation for more accurate per-segment mass.
+*   Add joint limits to prevent impossible spine curvature.
 
-To verify the CoM calculation:
-1.  Launch the App.
-2.  Tap the **"Run Diagnostics"** button in the UI.
-3.  The **CoM Validation Harness** will execute a series of deterministic poses:
-    *   **T-Pose**: Checks for bilateral symmetry (X ≈ 0) and height (Y > Hips).
-    *   **Touchdown** (Arms overhead): CoM should rise significantly.
-    *   **Squat**: CoM should lower significantly.
-    *   **Pike** (Legs forward): CoM should shift forward (Z-axis).
-4.  Review the "Validation Summary" in the debug overlay or console logs.
+## 6. Running Tests
+
+Unit tests are included to verify the CoM calculation logic without running the full app UI. These tests simulate a skeleton and verify that the CoM responds correctly to pose changes.
+
+### How to Run
+1.  Open the project in Xcode.
+2.  Select the **CheerComCalculatorApp** scheme.
+3.  Press **Cmd+U** or select **Product > Test** from the menu.
+4.  The tests will run and results will be displayed in the Test Navigator.
+
+### Test Coverage
+The `COMCalculatorTests` suite covers:
+*   **T-Pose Symmetry**: Verifies that the CoM is centered (X ≈ 0) and at an appropriate height.
+*   **Squat Response**: Verifies that lowering the body mass (simulated squat) lowers the total CoM.
+*   **Pike Response**: Verifies that moving legs forward shifts the CoM forward (Z-axis).
+*   **Touchdown Response**: Verifies that raising arms raises the total CoM.
