@@ -201,17 +201,17 @@ class CoMValidationHarness {
             // Y should be significantly higher than T-Pose
             let diff = com.y - baseline.y
             if diff > 5.0 {
-                return (true, "CoM rose by \(String(format: "%.1f", diff)) units")
+                return (true, "CoM rose by \(String(format: "%.1f", diff)) units (Expected > 5.0)")
             }
-            return (false, "CoM failed to rise significantly (diff: \(diff))")
+            return (false, "CoM failed to rise significantly (Diff: \(String(format: "%.1f", diff)), Expected > 5.0)")
 
         case .squat:
             // Y should be significantly lower than T-Pose
             let diff = baseline.y - com.y
             if diff > 10.0 {
-                return (true, "CoM lowered by \(String(format: "%.1f", diff)) units")
+                return (true, "CoM lowered by \(String(format: "%.1f", diff)) units (Expected > 10.0)")
             }
-            return (false, "CoM failed to lower significantly (diff: \(diff))")
+            return (false, "CoM failed to lower significantly (Diff: \(String(format: "%.1f", diff)), Expected > 10.0)")
 
         case .pike:
             // Z should move forward (assuming negative Z is forward in this scene, or check diff magnitude)
@@ -219,18 +219,19 @@ class CoMValidationHarness {
             // Check absolute change in Z
             let diff = abs(com.z - baseline.z)
             if diff > 5.0 {
-                return (true, "CoM Z-shift detected (\(String(format: "%.1f", diff)) units)")
+                return (true, "CoM Z-shift detected: \(String(format: "%.1f", diff)) units (Expected > 5.0)")
             }
-            return (false, "CoM Z-axis did not shift significantly")
+            return (false, "CoM Z-axis did not shift significantly (Diff: \(String(format: "%.1f", diff)), Expected > 5.0)")
 
         case .layout:
             // Layout is straight body, similar to T-Pose but arms up?
             // "Fully extended straight body position" - arms up.
             // Should be higher than T-Pose, similar to Touchdown
-            if com.y > baseline.y + 2.0 {
-                return (true, "CoM higher than T-Pose")
+            let diff = com.y - baseline.y
+            if diff > 2.0 {
+                return (true, "CoM higher than T-Pose by \(String(format: "%.1f", diff)) units (Expected > 2.0)")
             }
-            return (false, "CoM not higher than T-Pose")
+            return (false, "CoM not higher than T-Pose (Diff: \(String(format: "%.1f", diff)), Expected > 2.0)")
 
         default:
             return (true, "No specific criteria")
@@ -254,22 +255,36 @@ class CoMValidationHarness {
 
     private func logDetailedSegments(result: CalculationResult) {
         log("\n### Segment Details")
-        log("| Segment Name | Mass (kg) | CoM Position (x, y, z) |")
-        log("| :--- | :---: | :--- |")
+
+        func pad(_ s: String, _ len: Int) -> String {
+            return s.padding(toLength: len, withPad: " ", startingAt: 0)
+        }
+
+        log("| " + pad("Segment Name", 20) + " | " + pad("Mass (kg)", 10) + " | " + pad("CoM Position", 25) + " |")
+        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 12) + "|" + String(repeating: "-", count: 27) + "|")
+
         for segment in result.segmentCOMs {
             let massString = String(format: "%.3f", segment.mass)
-            log("| \(segment.name) | \(massString) | \(formatVector(segment.position)) |")
+            let posString = formatVector(segment.position)
+            log("| " + pad(segment.name, 20) + " | " + pad(massString, 10) + " | " + pad(posString, 25) + " |")
         }
         log("")
     }
 
     private func logValidationSummary() {
         log("### Validation Summary")
-        log("| Pose | Final CoM (x, y, z) | Result | Note |")
-        log("| :--- | :--- | :---: | :--- |")
+
+        func pad(_ s: String, _ len: Int) -> String {
+            return s.padding(toLength: len, withPad: " ", startingAt: 0)
+        }
+
+        log("| " + pad("Pose", 15) + " | " + pad("Final CoM", 25) + " | " + pad("Result", 6) + " | " + pad("Note", 40) + " |")
+        log("|" + String(repeating: "-", count: 17) + "|" + String(repeating: "-", count: 27) + "|" + String(repeating: "-", count: 8) + "|" + String(repeating: "-", count: 42) + "|")
+
         for res in validationResults {
             let icon = res.passed ? "✅" : "❌"
-            log("| \(res.pose) | \(formatVector(res.com)) | \(icon) | \(res.message) |")
+            let comString = formatVector(res.com)
+            log("| " + pad(res.pose, 15) + " | " + pad(comString, 25) + " | " + pad(icon, 6) + " | " + pad(res.message, 40) + " |")
         }
         log("")
     }
