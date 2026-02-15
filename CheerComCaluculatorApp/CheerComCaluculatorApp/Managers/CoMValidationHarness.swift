@@ -48,7 +48,7 @@ class CoMValidationHarness {
         visualizationsManager.showAdvancedVisualizations = true
 
         // 1. Log System Info
-        logSystemInfo(calculator: calculator)
+        logSystemInfo(calculator: calculator, sceneManager: sceneManager)
 
         // 2. Iterate Poses recursively
         runNextPose(index: 0,
@@ -110,19 +110,52 @@ class CoMValidationHarness {
 
     // MARK: - Helper Methods
 
-    private func logSystemInfo(calculator: COMCalculator) {
+    private func logSystemInfo(calculator: COMCalculator, sceneManager: CheerCOMSceneManager) {
         log("--- System Info ---")
         log("Total Body Mass: \(calculator.bodyMass) kg")
-        log("Number of Segments: \(calculator.segments.count)")
+        log("Number of Segments Defined: \(calculator.segments.count)")
 
+        // 1. Verify Mass Ratios
         let totalMassRatio = calculator.segments.reduce(0.0) { $0 + $1.mass }
         log("Total Mass Ratio Sum: \(String(format: "%.4f", totalMassRatio))")
 
         if abs(totalMassRatio - 1.0) > 0.001 {
-             log("⚠️ WARNING: Mass ratios do not sum to 1.0! (Diff: \(String(format: "%.4f", totalMassRatio - 1.0)))")
+             log("⚠️ CRITICAL: Mass ratios do not sum to 1.0! (Diff: \(String(format: "%.4f", totalMassRatio - 1.0)))")
         } else {
              log("✅ Mass ratios sum to approx 1.0")
         }
+
+        // 2. Verify Segment Binding
+        let result = calculator.calculateDetailedBodyCOM()
+        let boundCount = result.segmentCOMs.count
+        log("Number of Segments Bound: \(boundCount)")
+
+        if boundCount < calculator.segments.count {
+            log("⚠️ CRITICAL: Only \(boundCount)/\(calculator.segments.count) segments are bound! Some segments are missing from the calculation.")
+            // Identify missing segments
+            let boundNames = Set(result.segmentCOMs.map { $0.name })
+            for segment in calculator.segments {
+                if !boundNames.contains(segment.name) {
+                    log("   ❌ Missing: \(segment.name) (Joints: \(segment.prox) -> \(segment.dist))")
+                }
+            }
+        } else {
+            log("✅ All segments successfully bound to joints.")
+        }
+
+        // 3. Verify BOS Nodes (Visualizations)
+        let bosJoints = ["mixamorig_LeftFoot", "mixamorig_RightFoot", "mixamorig_LeftToeBase", "mixamorig_RightToeBase"]
+        var missingBOS = false
+        for joint in bosJoints {
+            if sceneManager.findBone(named: joint) == nil {
+                log("⚠️ WARNING: BOS Joint missing: \(joint)")
+                missingBOS = true
+            }
+        }
+        if !missingBOS {
+             log("✅ All BOS joints found.")
+        }
+
         log("-------------------\n")
     }
 
