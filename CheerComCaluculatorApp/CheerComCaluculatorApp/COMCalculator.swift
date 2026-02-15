@@ -166,14 +166,18 @@ class COMCalculator {
         var segmentResults: [SegmentResult] = []
         
         for segment in segments {
-            guard let proxPos = jointPositions[segment.prox],
-                  let distPos = jointPositions[segment.dist] else {
-                print("⚠️ Missing joint: \(segment.prox) or \(segment.dist)")
+            guard let proxPos = jointPositions[segment.prox] else {
+                print("⚠️ Missing proximal joint: \(segment.prox)")
                 continue
             }
             
+            var distPos = jointPositions[segment.dist]
+            if distPos == nil {
+                distPos = proxPos // Fallback
+            }
+
             // COM = proximal + (distal - proximal) * %
-            let segCOM = proxPos + ((distPos - proxPos) * Float(segment.com))
+            let segCOM = proxPos + ((distPos! - proxPos) * Float(segment.com))
             let segMass = bodyMass * segment.mass
             
             totalWeighted = totalWeighted + (segCOM * Float(segMass))
