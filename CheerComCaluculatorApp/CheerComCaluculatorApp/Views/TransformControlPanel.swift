@@ -4,6 +4,7 @@ protocol TransformControlPanelDelegate: AnyObject {
     func didChangeTransformMode(_ mode: TransformMode)
     func didTapTransform(direction: TransformDirection)
     func didTapResetTransform()
+    func didChangeTransformStep(_ step: Float)
 }
 
 class TransformControlPanel: UIView {
@@ -11,7 +12,13 @@ class TransformControlPanel: UIView {
     weak var delegate: TransformControlPanelDelegate?
 
     private var transformModeLabel: UILabel!
+    private var transformStepLabel: UILabel!
+    private var transformStepStepper: UIStepper!
     private var panel: UIVisualEffectView!
+
+    private var positionModeButton: UIButton!
+    private var rotationModeButton: UIButton!
+    private var scaleModeButton: UIButton!
 
     init(width: CGFloat) {
         super.init(frame: .zero)  // Frame will be set by parent or constraints
@@ -37,38 +44,51 @@ class TransformControlPanel: UIView {
 
         // Add transform control panel
         panel = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
-        panel.frame = CGRect(x: 0, y: 40, width: 220, height: 200)
+        panel.frame = CGRect(x: 0, y: 40, width: 220, height: 250)
         panel.layer.cornerRadius = 15
         panel.layer.masksToBounds = true
         addSubview(panel)
 
-        self.frame = CGRect(x: width - 240, y: 110, width: 220, height: 240)
+        self.frame = CGRect(x: width - 240, y: 110, width: 220, height: 290)
         self.autoresizingMask = [.flexibleLeftMargin]
 
         // Transform mode buttons
-        let posTransformBtn = createButton(
+        positionModeButton = createButton(
             title: "Position", x: 10, y: 10, width: 65, height: 35,
             action: #selector(positionModeTapped))
-        posTransformBtn.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.9)
-        panel.contentView.addSubview(posTransformBtn)
+        panel.contentView.addSubview(positionModeButton)
 
-        let rotTransformBtn = createButton(
+        rotationModeButton = createButton(
             title: "Rotate", x: 78, y: 10, width: 65, height: 35,
             action: #selector(rotationModeTapped)
         )
-        rotTransformBtn.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.6)
-        panel.contentView.addSubview(rotTransformBtn)
+        panel.contentView.addSubview(rotationModeButton)
 
-        let scaleTransformBtn = createButton(
+        scaleModeButton = createButton(
             title: "Scale", x: 145, y: 10, width: 65, height: 35, action: #selector(scaleModeTapped)
         )
-        scaleTransformBtn.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.6)
-        panel.contentView.addSubview(scaleTransformBtn)
+        panel.contentView.addSubview(scaleModeButton)
+
+        // Step size controls
+        transformStepLabel = UILabel(frame: CGRect(x: 10, y: 50, width: 130, height: 24))
+        transformStepLabel.textColor = .white
+        transformStepLabel.font = .monospacedSystemFont(ofSize: 12, weight: .semibold)
+        transformStepLabel.textAlignment = .left
+        transformStepLabel.text = "Step: 5.0"
+        panel.contentView.addSubview(transformStepLabel)
+
+        transformStepStepper = UIStepper(frame: CGRect(x: 145, y: 47, width: 65, height: 28))
+        transformStepStepper.minimumValue = 0.1
+        transformStepStepper.maximumValue = 20.0
+        transformStepStepper.stepValue = 0.1
+        transformStepStepper.value = 5.0
+        transformStepStepper.addTarget(self, action: #selector(stepValueChanged), for: .valueChanged)
+        panel.contentView.addSubview(transformStepStepper)
 
         // Arrow key-style controls
         let arrowSize: CGFloat = 45
         let centerX: CGFloat = 110
-        let centerY: CGFloat = 100
+        let centerY: CGFloat = 135
 
         // Up arrow
         let upBtn = createButton(
@@ -100,10 +120,12 @@ class TransformControlPanel: UIView {
 
         // Reset transform button
         let resetTransformBtn = createButton(
-            title: "Reset Position", x: 10, y: 155, width: 200, height: 35,
+            title: "Reset Position", x: 10, y: 205, width: 200, height: 35,
             action: #selector(resetTapped))
         resetTransformBtn.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.8)
         panel.contentView.addSubview(resetTransformBtn)
+
+        updateModeButtons(for: .position)
     }
 
     func updateModeDisplay(mode: TransformMode) {
@@ -115,6 +137,21 @@ class TransformControlPanel: UIView {
         case .scale:
             transformModeLabel.text = "Transform: Scale"
         }
+        updateModeButtons(for: mode)
+    }
+
+    func updateStepDisplay(_ step: Float) {
+        transformStepStepper.value = Double(step)
+        transformStepLabel.text = String(format: "Step: %.1f", step)
+    }
+
+    private func updateModeButtons(for mode: TransformMode) {
+        let selected = UIColor.systemPurple.withAlphaComponent(0.9)
+        let unselected = UIColor.systemPurple.withAlphaComponent(0.6)
+
+        positionModeButton.backgroundColor = (mode == .position) ? selected : unselected
+        rotationModeButton.backgroundColor = (mode == .rotation) ? selected : unselected
+        scaleModeButton.backgroundColor = (mode == .scale) ? selected : unselected
     }
 
     // MARK: - Actions
@@ -122,6 +159,12 @@ class TransformControlPanel: UIView {
     @objc private func positionModeTapped() { delegate?.didChangeTransformMode(.position) }
     @objc private func rotationModeTapped() { delegate?.didChangeTransformMode(.rotation) }
     @objc private func scaleModeTapped() { delegate?.didChangeTransformMode(.scale) }
+
+    @objc private func stepValueChanged() {
+        let step = Float((transformStepStepper.value * 10).rounded() / 10)
+        transformStepLabel.text = String(format: "Step: %.1f", step)
+        delegate?.didChangeTransformStep(step)
+    }
 
     @objc private func upTapped() { delegate?.didTapTransform(direction: .up) }
     @objc private func downTapped() { delegate?.didTapTransform(direction: .down) }

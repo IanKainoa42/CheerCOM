@@ -132,7 +132,7 @@ class JointControlPanel: UIVisualEffectView {
         contentView.addSubview(poseLibraryBtn)
 
         let resetPoseBtn = createButton(
-            title: "Reset Pose", x: padding + bottomBtnWidth * 1.5 + 10, y: row4Y,
+            title: "Reset T-Pose", x: padding + bottomBtnWidth * 1.5 + 10, y: row4Y,
             width: bottomBtnWidth,
             height: 35, action: #selector(resetPoseTapped))
         resetPoseBtn.backgroundColor = UIColor.systemRed.withAlphaComponent(0.8)

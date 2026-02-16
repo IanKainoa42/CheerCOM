@@ -14,6 +14,7 @@ class SceneViewController: UIViewController {
     var jointControlPanel: JointControlPanel!
     var transformControlPanel: TransformControlPanel!
     var poseLibraryPanel: PoseLibraryPanel!
+    var poseLibraryQuickAccessButton: UIButton!
     var viewLabel: UILabel!
 
     // State
@@ -31,6 +32,13 @@ class SceneViewController: UIViewController {
     // Joint Control State
     var selectedJoint: SCNNode?
     var jointControlMode: JointAxis = .x
+    private var selectedJointIndicator: SCNNode?
+
+    private var transformStepByMode: [TransformMode: Float] = [
+        .position: 5.0,
+        .rotation: 5.0,
+        .scale: 0.1,
+    ]
 
     // Continuous control support
     private var continuousRotationTimer: Timer?
@@ -101,10 +109,24 @@ class SceneViewController: UIViewController {
         poseLibraryPanel.isHidden = true
         view.addSubview(poseLibraryPanel)
 
+        // Quick Access Pose Library button (improves discoverability when panel is hidden)
+        poseLibraryQuickAccessButton = UIButton(type: .system)
+        poseLibraryQuickAccessButton.frame = CGRect(x: 20, y: view.bounds.height - 240, width: 140, height: 40)
+        poseLibraryQuickAccessButton.autoresizingMask = [.flexibleTopMargin, .flexibleRightMargin]
+        poseLibraryQuickAccessButton.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.9)
+        poseLibraryQuickAccessButton.setTitle("🎭 Pose Library", for: .normal)
+        poseLibraryQuickAccessButton.setTitleColor(.white, for: .normal)
+        poseLibraryQuickAccessButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
+        poseLibraryQuickAccessButton.layer.cornerRadius = 12
+        poseLibraryQuickAccessButton.addTarget(self, action: #selector(didTapPoseLibraryQuickAccess), for: .touchUpInside)
+        view.addSubview(poseLibraryQuickAccessButton)
+
         // Transform Control Panel
         transformControlPanel = TransformControlPanel(width: view.bounds.width)
         transformControlPanel.delegate = self
         view.addSubview(transformControlPanel)
+        setTransformMode(.position)
+        updatePoseLibraryDiscoverabilityUI()
 
         // Validation Button
         let validationBtn = UIButton(type: .system)
@@ -115,6 +137,11 @@ class SceneViewController: UIViewController {
         validationBtn.layer.cornerRadius = 10
         validationBtn.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
         view.addSubview(validationBtn)
+    }
+
+    @objc func didTapPoseLibraryQuickAccess() {
+        poseLibraryPanel.isHidden = false
+        updatePoseLibraryDiscoverabilityUI()
     }
 
     @objc func didTapRunDiagnostics() {
@@ -191,6 +218,11 @@ class SceneViewController: UIViewController {
         // Update Visuals
         visualizationsManager.updateCOM(result: result)
 
+        // Keep selected-joint marker visually attached while character moves
+        if let joint = selectedJoint {
+            updateSelectedJointIndicator(for: joint)
+        }
+
         // Throttle UI updates
         updateCounter += 1
         if updateCounter >= uiUpdateInterval {
@@ -200,6 +232,41 @@ class SceneViewController: UIViewController {
             // Update UI
             comInfoPanel.update(com: result.totalCOM, isStable: isStable, margin: margin)
         }
+    }
+
+    private func updatePoseLibraryDiscoverabilityUI() {
+        poseLibraryQuickAccessButton.isHidden = !poseLibraryPanel.isHidden
+    }
+
+    private func clearSelectedJointIndicator() {
+        selectedJointIndicator?.removeFromParentNode()
+        selectedJointIndicator = nil
+    }
+
+    private func updateSelectedJointIndicator(for joint: SCNNode) {
+        clearSelectedJointIndicator()
+
+        let markerGeometry = SCNSphere(radius: 1.8)
+        markerGeometry.firstMaterial?.diffuse.contents = UIColor.systemYellow
+        markerGeometry.firstMaterial?.emission.contents = UIColor.systemYellow.withAlphaComponent(0.9)
+        markerGeometry.firstMaterial?.lightingModel = .constant
+
+        let markerNode = SCNNode(geometry: markerGeometry)
+        markerNode.name = "selectedJointIndicator"
+
+        let billboard = SCNBillboardConstraint()
+        billboard.freeAxes = .all
+        markerNode.constraints = [billboard]
+
+        let pulse = SCNAction.sequence([
+            SCNAction.scale(to: 1.25, duration: 0.35),
+            SCNAction.scale(to: 0.9, duration: 0.35),
+        ])
+        markerNode.runAction(.repeatForever(pulse))
+
+        joint.addChildNode(markerNode)
+        markerNode.position = SCNVector3Zero
+        selectedJointIndicator = markerNode
     }
 
     // MARK: - Keyboard Support
@@ -268,6 +335,7 @@ extension SceneViewController: JointControlPanelDelegate {
     func selectJoint(named name: String) {
         if let joint = sceneManager.findBone(named: name) {
             selectedJoint = joint
+            updateSelectedJointIndicator(for: joint)
             let displayName = formatJointName(name)
 
             // Update UI
@@ -364,6 +432,7 @@ extension SceneViewController: JointControlPanelDelegate {
     func didTapPoseLibrary() {
         // Toggle pose library visibility
         poseLibraryPanel.isHidden = !poseLibraryPanel.isHidden
+        updatePoseLibraryDiscoverabilityUI()
         print("🎭 Pose library \(poseLibraryPanel.isHidden ? "hidden" : "shown")")
     }
 
@@ -513,6 +582,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 
     func didTapClosePoseLibrary() {
         poseLibraryPanel.isHidden = true
+        updatePoseLibraryDiscoverabilityUI()
         print("🎭 Pose library closed")
     }
 
@@ -558,13 +628,16 @@ extension SceneViewController: TransformControlPanelDelegate {
 
     func setTransformMode(_ mode: TransformMode) {
         currentTransformMode = mode
-        switch mode {
-        case .position: transformStep = 5.0
-        case .rotation: transformStep = 5.0
-        case .scale: transformStep = 0.1
-        }
+        transformStep = transformStepByMode[mode] ?? 5.0
         transformControlPanel.updateModeDisplay(mode: mode)
-        print("Mode: \(mode)")
+        transformControlPanel.updateStepDisplay(transformStep)
+        print("Mode: \(mode), step: \(transformStep)")
+    }
+
+    func didChangeTransformStep(_ step: Float) {
+        transformStep = step
+        transformStepByMode[currentTransformMode] = step
+        print("Transform step updated: \(step) for \(currentTransformMode)")
     }
 
     func didTapTransform(direction: TransformDirection) {
