@@ -39,6 +39,7 @@ class CoMValidationHarness {
 
         log("\n==========================================")
         log("🧪 STARTING CoM VALIDATION HARNESS")
+        log("📅 \(Date())")
         log("==========================================\n")
 
         validationResults.removeAll()
@@ -115,7 +116,7 @@ class CoMValidationHarness {
         log("Total Body Mass: \(calculator.bodyMass) kg")
         log("Number of Segments Defined: \(calculator.segments.count)")
 
-        // 1. Verify Mass Ratios
+        // 1. Verify Mass Ratios & Total Mass
         let totalMassRatio = calculator.segments.reduce(0.0) { $0 + $1.mass }
         log("Total Mass Ratio Sum: \(String(format: "%.4f", totalMassRatio))")
 
@@ -123,6 +124,16 @@ class CoMValidationHarness {
              log("⚠️ CRITICAL: Mass ratios do not sum to 1.0! (Diff: \(String(format: "%.4f", totalMassRatio - 1.0)))")
         } else {
              log("✅ Mass ratios sum to approx 1.0")
+        }
+
+        // Verify Total Mass Calculation
+        let calculatedTotalMass = calculator.calculateDetailedBodyCOM().segmentCOMs.reduce(0.0) { $0 + $1.mass }
+        log("Calculated Total Mass: \(String(format: "%.3f", calculatedTotalMass)) kg (Expected: \(String(format: "%.3f", calculator.bodyMass)) kg)")
+
+        if abs(calculatedTotalMass - calculator.bodyMass) > 0.01 {
+            log("⚠️ CRITICAL: Calculated total mass does not match body mass!")
+        } else {
+            log("✅ Calculated mass matches body mass.")
         }
 
         // 2. Verify Segment Binding
