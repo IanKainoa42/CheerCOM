@@ -1,3 +1,4 @@
+#if canImport(XCTest)
 import XCTest
 import SceneKit
 @testable import CheerComCaluculatorApp
@@ -53,3 +54,5 @@ class COMCalculatorBenchmark: XCTestCase {
         }
     }
 }
+
+#endif
