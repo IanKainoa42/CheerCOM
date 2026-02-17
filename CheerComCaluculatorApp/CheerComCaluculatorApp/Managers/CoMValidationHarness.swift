@@ -111,8 +111,12 @@ class CoMValidationHarness {
     // MARK: - Helper Methods
 
     private func logSystemInfo(calculator: COMCalculator, sceneManager: CheerCOMSceneManager) {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .short
+        dateFormatter.timeStyle = .medium
+        log("Run Date: \(dateFormatter.string(from: Date()))")
         log("--- System Info ---")
-        log("Total Body Mass: \(calculator.bodyMass) kg")
+        log("Total Body Mass (Configured): \(calculator.bodyMass) kg")
         log("Number of Segments Defined: \(calculator.segments.count)")
 
         // 1. Verify Mass Ratios
@@ -125,10 +129,19 @@ class CoMValidationHarness {
              log("✅ Mass ratios sum to approx 1.0")
         }
 
-        // 2. Verify Segment Binding
+        // 2. Verify Segment Binding & Total Mass Calculation
         let result = calculator.calculateDetailedBodyCOM()
         let boundCount = result.segmentCOMs.count
         log("Number of Segments Bound: \(boundCount)")
+
+        let totalCalculatedMass = result.segmentCOMs.reduce(0.0) { $0 + $1.mass }
+        log("Total Calculated Mass: \(String(format: "%.2f", totalCalculatedMass)) kg")
+
+        if abs(totalCalculatedMass - calculator.bodyMass) > 0.1 {
+            log("⚠️ CRITICAL: Calculated mass differs from configured body mass! (Diff: \(String(format: "%.2f", totalCalculatedMass - calculator.bodyMass)) kg)")
+        } else {
+            log("✅ Total calculated mass matches configured body mass.")
+        }
 
         if boundCount < calculator.segments.count {
             log("⚠️ CRITICAL: Only \(boundCount)/\(calculator.segments.count) segments are bound! Some segments are missing from the calculation.")

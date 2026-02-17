@@ -17,20 +17,26 @@ The total body mass is distributed across 17 segments. Each segment is defined b
 
 | Segment Name | Proximal Joint | Distal Joint | Mass % | CoM % (from Proximal) |
 | :--- | :--- | :--- | :---: | :---: |
+| **Trunk** (Subdivided) | | | **49.7%** | |
 | Pelvis | `mixamorig_Hips` | `mixamorig_Spine` | 14.6% | 50% |
 | Abdomen Lower | `mixamorig_Spine` | `mixamorig_Spine1` | 8.55% | 50% |
 | Abdomen Upper | `mixamorig_Spine1` | `mixamorig_Spine2` | 8.55% | 50% |
 | Thorax | `mixamorig_Spine2` | `mixamorig_Neck` | 18.0% | 50% |
+| **Head** | | | **8.1%** | |
 | Head | `mixamorig_Neck` | `mixamorig_Head` | 8.1% | 50% |
+| **Right Arm** | | | | |
 | R Upper Arm | `mixamorig_RightArm` | `mixamorig_RightForeArm` | 2.8% | 44% |
 | R Forearm | `mixamorig_RightForeArm` | `mixamorig_RightHand` | 1.6% | 43% |
 | R Hand | `mixamorig_RightHand` | `mixamorig_RightHandMiddle1` | 0.6% | 50% |
+| **Left Arm** | | | | |
 | L Upper Arm | `mixamorig_LeftArm` | `mixamorig_LeftForeArm` | 2.8% | 44% |
 | L Forearm | `mixamorig_LeftForeArm` | `mixamorig_LeftHand` | 1.6% | 43% |
 | L Hand | `mixamorig_LeftHand` | `mixamorig_LeftHandMiddle1` | 0.6% | 50% |
+| **Right Leg** | | | | |
 | R Thigh | `mixamorig_RightUpLeg` | `mixamorig_RightLeg` | 10.0% | 43% |
 | R Shank | `mixamorig_RightLeg` | `mixamorig_RightFoot` | 4.65% | 43% |
 | R Foot | `mixamorig_RightFoot` | `mixamorig_RightToeBase` | 1.45% | 50% |
+| **Left Leg** | | | | |
 | L Thigh | `mixamorig_LeftUpLeg` | `mixamorig_LeftLeg` | 10.0% | 43% |
 | L Shank | `mixamorig_LeftLeg` | `mixamorig_LeftFoot` | 4.65% | 43% |
 | L Foot | `mixamorig_LeftFoot` | `mixamorig_LeftToeBase` | 1.45% | 50% |
@@ -40,38 +46,11 @@ The total body mass is distributed across 17 segments. Each segment is defined b
 - **Linear CoM**: The CoM for each segment is assumed to lie on the straight line connecting the proximal and distal joints.
 - **Proximal Reference**: CoM position is defined as a percentage distance from the proximal joint.
 
-## Segment Definitions
-
-| Segment Name | Proximal Joint | Distal Joint | Mass % | CoM % (from Proximal) |
-| :--- | :--- | :--- | :--- | :--- |
-| **Trunk** (Subdivided) | | | **49.7%** | |
-| Pelvis | Hips | Spine | 14.6% | 50% |
-| Abdomen Lower | Spine | Spine1 | 8.55% | 50% |
-| Abdomen Upper | Spine1 | Spine2 | 8.55% | 50% |
-| Thorax | Spine2 | Neck | 18.0% | 50% |
-| **Head** | Neck | Head | 8.1% | 50% |
-| **Right Arm** | | | | |
-| R Upper Arm | R Shoulder | R Arm | 2.8% | 44% |
-| R Forearm | R Arm | R Forearm | 1.6% | 43% |
-| R Hand | R Forearm | R Hand | 0.6% | 50% |
-| **Left Arm** | | | | |
-| L Upper Arm | L Shoulder | L Arm | 2.8% | 44% |
-| L Forearm | L Arm | L Forearm | 1.6% | 43% |
-| L Hand | L Forearm | L Hand | 0.6% | 50% |
-| **Right Leg** | | | | |
-| R Thigh | R UpLeg | R Leg | 10.0% | 43% |
-| R Shank | R Leg | R Foot | 4.65% | 43% |
-| R Foot | R Foot | R ToeBase | 1.45% | 50% |
-| **Left Leg** | | | | |
-| L Thigh | L UpLeg | L Leg | 10.0% | 43% |
-| L Shank | L Leg | L Foot | 4.65% | 43% |
-| L Foot | L Foot | L ToeBase | 1.45% | 50% |
-
 ## Validation
 
 The `CoMValidationHarness` class is used to verify the correctness of the CoM calculation. It performs the following checks:
 
-1.  **System Integrity**: Verifies that the sum of all segment mass ratios is approximately 1.0 (tolerance 0.001).
+1.  **System Integrity**: Verifies that the sum of all segment mass ratios is approximately 1.0 (tolerance 0.001) and that the total calculated mass matches the defined body mass.
 2.  **Pose Validation**: Checks CoM behavior in standard poses against expected outcomes:
     - **T-Pose**:
         - Symmetry check: X-axis deviation should be minimal (< 2.0 units).
@@ -90,14 +69,7 @@ To run the validation:
 2.  Tap "Run Diagnostics".
 3.  Observe the 3D view (green CoM marker) and the log overlay.
 
-## Known Issues & Notes
-
-### Joint Mapping Discrepancy (Arms)
-The current implementation maps "Upper Arm" to the segment between `Shoulder` (Clavicle) and `Arm` (Humerus), and "Forearm" to the segment between `Arm` and `ForeArm`. This effectively treats the Clavicle as the Upper Arm and shifts the arm segments proximally by one joint. The actual hand segment (distal to wrist) is currently not accounted for explicitly, with the "Hand" segment defined as `ForeArm` to `Hand` (which corresponds to the actual Forearm).
-- **Impact**: Mass distribution for arms is slightly shifted towards the torso.
-- **Mitigation**: Documented here. Future improvements should refine the segment definitions to accurately map Humerus, Radius/Ulna, and Hand segments, possibly requiring a virtual end-effector for the hand if the rig lacks finger joints.
-
-## 5. Audit Findings & Limitations
+## Audit Findings & Limitations
 
 ### Resolved Issues
 *   **Trunk Simplified**: The single "Trunk" segment has been split into Pelvis, Lower Abdomen, Upper Abdomen, and Thorax segments. This allows the mass to follow the curve of the spine in poses like Pike and Bridge.
@@ -105,7 +77,6 @@ The current implementation maps "Upper Arm" to the segment between `Shoulder` (C
 *   **Arm Segment Mapping**: Fixed incorrect mapping of arm segments. "Upper Arm" was previously mapped to the Clavicle, "Forearm" to Upper Arm, and "Hand" to Forearm. These have been corrected to align with Mixamo anatomy (Upper Arm: Shoulder->Elbow, Forearm: Elbow->Wrist, Hand: Wrist->Middle Finger).
 
 ### Remaining Limitations
-*   **Arm Segment Mapping Mismatch**: A known issue exists where "Upper Arm" segments are currently mapped to the Clavicle (Shoulder to Arm joints) and "Forearm" segments are mapped to the Humerus (Arm to ForeArm joints) due to Mixamo naming conventions. This results in the anatomical Upper Arm being treated as the Forearm, and the Forearm being treated as the Hand. This will be corrected in a future realism update.
 *   **Mass Distribution Source**: The mass ratios for the split trunk segments are approximations derived from De Leva (1996) scaled to match the original total trunk mass (49.7%).
 *   **CoM Ratios**: Default CoM ratios of 0.50 are used for the new trunk segments. Further refinement based on specific anthropometric data could improve accuracy.
 
@@ -113,7 +84,7 @@ The current implementation maps "Upper Arm" to the segment between `Shoulder` (C
 *   Implement geometric volume estimation for more accurate per-segment mass.
 *   Add joint limits to prevent impossible spine curvature.
 
-## 6. Running Tests
+## Running Tests
 
 Unit tests are included to verify the CoM calculation logic without running the full app UI. These tests simulate a skeleton and verify that the CoM responds correctly to pose changes.
 
