@@ -19,6 +19,7 @@ class TransformControlPanel: UIView {
     private var positionModeButton: UIButton!
     private var rotationModeButton: UIButton!
     private var scaleModeButton: UIButton!
+    private var resetTransformButton: UIButton!
 
     init(width: CGFloat) {
         super.init(frame: .zero)  // Frame will be set by parent or constraints
@@ -119,11 +120,11 @@ class TransformControlPanel: UIView {
         panel.contentView.addSubview(rightBtn)
 
         // Reset transform button
-        let resetTransformBtn = createButton(
+        resetTransformButton = createButton(
             title: "Reset Position", x: 10, y: 205, width: 200, height: 35,
             action: #selector(resetTapped))
-        resetTransformBtn.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.8)
-        panel.contentView.addSubview(resetTransformBtn)
+        resetTransformButton.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.8)
+        panel.contentView.addSubview(resetTransformButton)
 
         updateModeButtons(for: .position)
     }
@@ -132,10 +133,13 @@ class TransformControlPanel: UIView {
         switch mode {
         case .position:
             transformModeLabel.text = "Transform: Position"
+            resetTransformButton.setTitle("Reset Position", for: .normal)
         case .rotation:
             transformModeLabel.text = "Transform: Rotation"
+            resetTransformButton.setTitle("Reset Rotation", for: .normal)
         case .scale:
             transformModeLabel.text = "Transform: Scale"
+            resetTransformButton.setTitle("Reset Scale", for: .normal)
         }
         updateModeButtons(for: mode)
     }

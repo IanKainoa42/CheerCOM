@@ -20,6 +20,7 @@ class PoseLibraryPanel: UIVisualEffectView {
     private var currentCategory: PoseCategory = .fullBody
 
     private let panelHeight: CGFloat = 280
+    private let jointPanelHeight: CGFloat = 180
     private let buttonSize: CGFloat = 70
     private let buttonsPerRow: Int = 4
     private let buttonSpacing: CGFloat = 10
@@ -35,8 +36,7 @@ class PoseLibraryPanel: UIVisualEffectView {
     }
 
     private func setupUI(width: CGFloat) {
-        // Position above the Joint Control Panel (which is 180px tall)
-        let jointPanelHeight: CGFloat = 180
+        // Position above the Joint Control Panel
         self.frame = CGRect(
             x: 0,
             y: UIScreen.main.bounds.height - panelHeight - jointPanelHeight,
@@ -124,6 +124,21 @@ class PoseLibraryPanel: UIVisualEffectView {
 
         // Load initial category
         loadPosesForCategory(.fullBody)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        let availableWidth = superview?.bounds.width ?? bounds.width
+        let availableHeight = superview?.bounds.height ?? UIScreen.main.bounds.height
+        let safeBottom = superview?.safeAreaInsets.bottom ?? 0
+
+        frame = CGRect(
+            x: 0,
+            y: max(0, availableHeight - safeBottom - panelHeight - jointPanelHeight),
+            width: availableWidth,
+            height: panelHeight
+        )
     }
 
     private func createUtilityButton(

@@ -144,6 +144,11 @@ class SceneViewController: UIViewController {
         updatePoseLibraryDiscoverabilityUI()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updatePoseLibraryQuickAccessLayout()
+    }
+
     @objc func didTapRunDiagnostics() {
         if validationHarness != nil { return } // Already running
 
@@ -236,6 +241,15 @@ class SceneViewController: UIViewController {
 
     private func updatePoseLibraryDiscoverabilityUI() {
         poseLibraryQuickAccessButton.isHidden = !poseLibraryPanel.isHidden
+        updatePoseLibraryQuickAccessLayout()
+    }
+
+    private func updatePoseLibraryQuickAccessLayout() {
+        let safeBottom = view.safeAreaInsets.bottom
+        let buttonHeight: CGFloat = 40
+        let bottomInsetAboveControls: CGFloat = 188 // Joint panel height + spacing
+        let y = view.bounds.height - safeBottom - bottomInsetAboveControls - buttonHeight
+        poseLibraryQuickAccessButton.frame = CGRect(x: 20, y: max(20, y), width: 140, height: buttonHeight)
     }
 
     private func clearSelectedJointIndicator() {
@@ -528,15 +542,18 @@ extension SceneViewController: PoseLibraryPanelDelegate {
     func didTapSavePose() {
         let alert = UIAlertController(title: "Save Pose", message: "Enter a name for this pose", preferredStyle: .alert)
 
+        var nameField: UITextField?
         alert.addTextField { textField in
             textField.placeholder = "Pose Name"
+            textField.clearButtonMode = .whileEditing
+            nameField = textField
         }
 
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
 
         let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self] _ in
             guard let self = self,
-                  let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
+                  let name = nameField?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
 
             self.saveCurrentPose(name: name)
         }
@@ -545,18 +562,14 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         alert.addAction(cancelAction)
         alert.addAction(saveAction)
 
-        present(alert, animated: true)
-
-        // Add observer to enable button only when text is present
-        NotificationCenter.default.addObserver(forName: UITextField.textDidChangeNotification, object: alert.textFields?.first, queue: OperationQueue.main) { notification in
-            if let textField = notification.object as? UITextField,
-               let text = textField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !text.isEmpty {
-                saveAction.isEnabled = true
-            } else {
-                saveAction.isEnabled = false
-            }
+        if let field = nameField {
+            field.addAction(UIAction { _ in
+                let text = field.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                saveAction.isEnabled = !text.isEmpty
+            }, for: .editingChanged)
         }
+
+        present(alert, animated: true)
     }
 
     private func saveCurrentPose(name: String) {
@@ -651,13 +664,20 @@ extension SceneViewController: TransformControlPanelDelegate {
 
     func didTapResetTransform() {
         SCNTransaction.begin()
-        SCNTransaction.animationDuration = 0.5
-        sceneManager.characterNode.position = SCNVector3(0, 0, 0)
-        sceneManager.characterNode.eulerAngles = SCNVector3(0, 0, 0)
-        sceneManager.characterNode.scale = SCNVector3(1, 1, 1)
+        SCNTransaction.animationDuration = 0.3
+
+        switch currentTransformMode {
+        case .position:
+            sceneManager.characterNode.position = SCNVector3(0, 0, 0)
+        case .rotation:
+            sceneManager.characterNode.eulerAngles = SCNVector3(0, 0, 0)
+        case .scale:
+            sceneManager.characterNode.scale = SCNVector3(1, 1, 1)
+        }
+
         SCNTransaction.completionBlock = { [weak self] in
             self?.scheduleUpdateCOM()
-            print("✅ Transform reset")
+            print("✅ Reset \(self?.currentTransformMode ?? .position) transform")
         }
         SCNTransaction.commit()
     }
