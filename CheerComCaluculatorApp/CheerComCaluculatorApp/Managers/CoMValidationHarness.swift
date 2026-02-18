@@ -130,6 +130,14 @@ class CoMValidationHarness {
         let boundCount = result.segmentCOMs.count
         log("Number of Segments Bound: \(boundCount)")
 
+        log("\nSegment Mapping Verification:")
+        for segment in calculator.segments {
+            let proxName = segment.prox
+            let distName = segment.dist
+            log(" - \(segment.name): \(proxName) -> \(distName)")
+        }
+        log("")
+
         if boundCount < calculator.segments.count {
             log("⚠️ CRITICAL: Only \(boundCount)/\(calculator.segments.count) segments are bound! Some segments are missing from the calculation.")
             // Identify missing segments
