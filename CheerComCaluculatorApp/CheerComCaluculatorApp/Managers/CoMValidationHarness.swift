@@ -112,8 +112,12 @@ class CoMValidationHarness {
     // MARK: - Helper Methods
 
     private func logSystemInfo(calculator: COMCalculator, sceneManager: CheerCOMSceneManager) {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .short
+        dateFormatter.timeStyle = .medium
+        log("Run Date: \(dateFormatter.string(from: Date()))")
         log("--- System Info ---")
-        log("Total Body Mass: \(calculator.bodyMass) kg")
+        log("Total Body Mass (Configured): \(calculator.bodyMass) kg")
         log("Number of Segments Defined: \(calculator.segments.count)")
 
         // 1. Verify Mass Ratios & Total Mass
