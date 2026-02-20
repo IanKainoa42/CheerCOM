@@ -1,77 +1,59 @@
 # Center of Mass (CoM) Model
 
-This document describes the Center of Mass model used in the CheerCOM app.
+This document describes the anthropometric model used to calculate the Center of Mass (CoM) for the CheerComCalculatorApp.
 
 ## Overview
 
-The CoM calculator uses a **17-segment model** based on anthropometric data from Winter (2009) and de Leva (1996). It calculates the total body center of mass as the weighted average of the individual segment centers of mass.
-
-Formula:
-$$ CoM_{total} = \frac{\sum (m_i \times p_i)}{\sum m_i} $$
-
-Where:
-- $m_i$ is the mass of segment $i$.
-- $p_i$ is the position of the center of mass of segment $i$.
+The CoM calculation is based on a **17-segment rigid body model**, using anthropometric data adapted from **Winter (2009)** and **de Leva (1996)**. The model approximates the human body by defining segments with specific mass ratios and local CoM locations relative to their proximal and distal joints.
 
 ## Coordinate System
 
-- **Origin**: The world origin (0,0,0) is typically at the center of the floor plane.
-- **Y-Axis**: Vertical (Up). Gravity acts along -Y.
-- **X-Axis**: Lateral (Right).
-- **Z-Axis**: Anterior-Posterior (Forward/Backward).
+The application uses the **SceneKit Coordinate System**:
+*   **Y-axis:** Up (Vertical)
+*   **X-axis:** Right (Lateral)
+*   **Z-axis:** Forward/Backward (Depth) - *Note: Direction depends on camera, but typically +Z is forward for the character.*
 
-The model assumes the character is rigged with a standard Mixamo skeleton (`mixamorig_` prefix).
+The character is rigged using the **Mixamo** skeleton convention (`mixamorig_*`).
 
-## Segments
+## Segment Definitions
 
-The body is divided into 17 segments. Each segment is defined by a **Proximal Joint** (start) and a **Distal Joint** (end). The segment's CoM is located at a fixed percentage along the line connecting these two joints.
+The total body mass is distributed across 17 segments. The sum of all segment mass ratios is approximately **1.0**.
 
-### Trunk (49.7% of Total Mass)
-The trunk is subdivided into 4 segments to better approximate spinal curvature:
-1.  **Pelvis** (14.6%): Hips → Spine (L5/S1 to L1)
-2.  **Abdomen Lower** (8.55%): Spine → Spine1 (L1 to T12)
-3.  **Abdomen Upper** (8.55%): Spine1 → Spine2 (T12 to T1)
-4.  **Thorax** (18.0%): Spine2 → Neck (T1 to C7)
+| Segment Name | Proximal Joint (Start) | Distal Joint (End) | Mass Ratio (%) | CoM % (from Proximal) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Head** | `mixamorig_Neck` | `mixamorig_Head` | 8.10% | 50% |
+| **Thorax** | `mixamorig_Spine2` | `mixamorig_Neck` | 18.00% | 50% |
+| **Abdomen Upper** | `mixamorig_Spine1` | `mixamorig_Spine2` | 8.55% | 50% |
+| **Abdomen Lower** | `mixamorig_Spine` | `mixamorig_Spine1` | 8.55% | 50% |
+| **Pelvis** | `mixamorig_Hips` | `mixamorig_Spine` | 14.60% | 50% |
+| **R Upper Arm** | `mixamorig_RightArm` | `mixamorig_RightForeArm` | 2.80% | 44% |
+| **R Forearm** | `mixamorig_RightForeArm` | `mixamorig_RightHand` | 1.60% | 43% |
+| **R Hand** | `mixamorig_RightHand` | `mixamorig_RightHandMiddle1` | 0.60% | 50% |
+| **L Upper Arm** | `mixamorig_LeftArm` | `mixamorig_LeftForeArm` | 2.80% | 44% |
+| **L Forearm** | `mixamorig_LeftForeArm` | `mixamorig_LeftHand` | 1.60% | 43% |
+| **L Hand** | `mixamorig_LeftHand` | `mixamorig_LeftHandMiddle1` | 0.60% | 50% |
+| **R Thigh** | `mixamorig_RightUpLeg` | `mixamorig_RightLeg` | 10.00% | 43% |
+| **R Shank** | `mixamorig_RightLeg` | `mixamorig_RightFoot` | 4.65% | 43% |
+| **R Foot** | `mixamorig_RightFoot` | `mixamorig_RightToeBase` | 1.45% | 50% |
+| **L Thigh** | `mixamorig_LeftUpLeg` | `mixamorig_LeftLeg` | 10.00% | 43% |
+| **L Shank** | `mixamorig_LeftLeg` | `mixamorig_LeftFoot` | 4.65% | 43% |
+| **L Foot** | `mixamorig_LeftFoot` | `mixamorig_LeftToeBase` | 1.45% | 50% |
 
-*Note: The Clavicle/Scapula mass is considered integrated into the Thorax segment.*
+### Key Assumptions & Notes
 
-### Head & Neck (8.1%)
-5.  **Head** (8.1%): Neck → Head
-    *   *Assumption*: The CoM is located at 50% along the Neck bone. This is an approximation; realistically, the CoM is higher (inside the cranium), but this segment definition captures the general mass location relative to the spine.
-
-### Upper Limbs (10.0%)
-Left and Right sides are symmetric.
-6.  **Upper Arm** (2.8%): Shoulder (Humerus Head) → Elbow
-    *   *Joints*: `mixamorig_RightArm` → `mixamorig_RightForeArm`
-7.  **Forearm** (1.6%): Elbow → Wrist
-    *   *Joints*: `mixamorig_RightForeArm` → `mixamorig_RightHand`
-8.  **Hand** (0.6%): Wrist → Knuckles
-    *   *Joints*: `mixamorig_RightHand` → `mixamorig_RightHandMiddle1`
-    *   *Fallback*: If the distal joint is missing, the CoM defaults to the wrist position.
-
-### Lower Limbs (32.2%)
-9.  **Thigh** (10.0%): Hip → Knee
-    *   *Joints*: `mixamorig_RightUpLeg` → `mixamorig_RightLeg`
-10. **Shank** (4.65%): Knee → Ankle
-    *   *Joints*: `mixamorig_RightLeg` → `mixamorig_RightFoot`
-11. **Foot** (1.45%): Ankle → Toes
-    *   *Joints*: `mixamorig_RightFoot` → `mixamorig_RightToeBase`
+1.  **Clavicle:** The Clavicle segment (Shoulder -> Arm) is explicitly **excluded** from the segment list. Its mass is assumed to be integrated into the **Thorax** mass (18.0%).
+2.  **Hand Tips:** The model attempts to use `mixamorig_RightHandMiddle1` (and Left equivalent) as the distal joint for the hand. If this joint is missing in the rig, the calculator falls back to using the proximal joint (`mixamorig_RightHand`) as the distal point, effectively placing the Hand CoM at the wrist (Zero length segment).
+3.  **Trunk Subdivision:** The trunk is subdivided into 4 segments (Pelvis, Abdomen Lower, Abdomen Upper, Thorax) to better approximate the CoM shift during spinal flexion/extension, rather than treating the trunk as a single rigid body.
 
 ## Verification
 
-To verify the CoM calculation in the app:
-1.  Launch the app.
-2.  Tap the **"Run Diagnostics"** button in the top-right corner.
-3.  The app will cycle through standard poses:
-    *   **T-Pose**: Baseline. CoM should be symmetric (X ≈ 0, Z ≈ 0) and above hips.
-    *   **Touchdown**: Arms up. CoM should rise significantly (~5-10 units).
-    *   **Squat**: Hips lower. CoM should lower significantly (~10-20 units).
-    *   **Pike**: Legs forward. CoM should shift forward (Z+).
-    *   **Layout**: Straight body. CoM similar to Touchdown/T-Pose but higher than T-Pose.
-4.  A detailed report is printed to the console and the on-screen overlay.
+### 1. In-App Diagnostics
+The application includes a **CoM Validation Harness**.
+*   **Action:** Tap "Run Diagnostics" in the main view.
+*   **Behavior:** The character will cycle through deterministic poses (T-Pose, Touchdown, Squat, Pike, Layout).
+*   **Output:** A debug overlay displays the calculated CoM, segment details, and a Pass/Fail status based on expected CoM shifts (e.g., CoM must rise during Touchdown).
 
-## Known Limitations
-
-1.  **Clavicle Segment**: The shoulder girdle (clavicle) is not modeled as a separate moving segment. Its mass is effectively lumped into the Thorax.
-2.  **Head CoM**: The Head segment uses `Neck` → `Head` joints. This places the CoM lower than anatomical reality (mid-neck vs cranium).
-3.  **Rig Dependency**: The calculation relies on specific `mixamorig_` bone names. If a custom character uses different naming, the calculator must be updated.
+### 2. Unit Tests
+A manual validation test suite exists in `CheerComCalculatorAppTests/ManualCoMValidationTest.swift`.
+*   **Purpose:** verifies the calculation logic without the full 3D rendering overhead.
+*   **Method:** Constructs a programmatic skeleton, applies rotations, and asserts that the CoM moves in the expected direction relative to the T-Pose baseline.

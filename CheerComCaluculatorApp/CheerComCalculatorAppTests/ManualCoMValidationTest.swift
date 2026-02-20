@@ -3,12 +3,15 @@ import SceneKit
 @testable import CheerComCalculatorApp
 
 /// A manual validation test that runs without the full app environment.
-/// It builds a mock skeleton, applies poses, and prints the CoM audit table.
+/// It builds a mock skeleton, applies poses, and asserts CoM shifts match expectations.
 final class ManualCoMValidationTest: XCTestCase {
 
     var calculator: COMCalculator!
     var rootNode: SCNNode!
     var nodes: [String: SCNNode]!
+
+    // Baseline for relative checks
+    var tPoseCOM: SCNVector3?
 
     override func setUp() {
         super.setUp()
@@ -22,10 +25,45 @@ final class ManualCoMValidationTest: XCTestCase {
         print("🧪 MANUAL CoM VALIDATION AUDIT")
         print("==========================================\n")
 
-        validatePose(name: "T-Pose", setupClosure: applyTPose)
-        validatePose(name: "Touchdown", setupClosure: applyTouchdown)
-        validatePose(name: "Squat", setupClosure: applySquat)
-        validatePose(name: "Pike", setupClosure: applyPike)
+        // 1. T-Pose Baseline
+        validatePose(name: "T-Pose", setupClosure: applyTPose) { com in
+            XCTAssertLessThan(abs(com.x), 0.1, "T-Pose CoM should be centered on X")
+            self.tPoseCOM = com
+        }
+
+        guard let baseline = tPoseCOM else {
+            XCTFail("T-Pose validation failed, cannot continue")
+            return
+        }
+
+        // 2. Touchdown (Arms Up)
+        validatePose(name: "Touchdown", setupClosure: applyTouchdown) { com in
+            let diff = com.y - baseline.y
+            print("   Delta Y: \(diff)")
+            XCTAssertGreaterThan(diff, 2.0, "Touchdown CoM should be significantly higher than T-Pose")
+        }
+
+        // 3. Squat (Hips Down)
+        validatePose(name: "Squat", setupClosure: applySquat) { com in
+            let diff = baseline.y - com.y
+            print("   Delta Y: \(diff)")
+            XCTAssertGreaterThan(diff, 5.0, "Squat CoM should be lower than T-Pose")
+        }
+
+        // 4. Pike (Legs Forward)
+        validatePose(name: "Pike", setupClosure: applyPike) { com in
+            // Legs move forward (+Z or -Z depending on rig, assuming +Z is forward here?)
+            // In our rig construction, legs are at (0, -40, 0).
+            // Applying Pike (-90 deg X rot on UpLegs) brings legs up.
+            // If +Z comes out of screen (SceneKit default), rotating -X moves +Y to +Z?
+            // Right Hand Rule: Thumb +X. Fingers curl Y -> Z.
+            // -X rotation: Y -> -Z.
+            // So legs move to -Z (backward?).
+            // Let's just check absolute Z shift.
+            let diff = abs(com.z - baseline.z)
+            print("   Delta Z: \(diff)")
+            XCTAssertGreaterThan(diff, 2.0, "Pike CoM should shift significantly in Z")
+        }
 
         print("\n==========================================")
         print("✅ AUDIT COMPLETE")
@@ -34,7 +72,7 @@ final class ManualCoMValidationTest: XCTestCase {
 
     // MARK: - Helper Methods
 
-    private func validatePose(name: String, setupClosure: () -> Void) {
+    private func validatePose(name: String, setupClosure: () -> Void, assertion: ((SCNVector3) -> Void)? = nil) {
         print("\n## Validating Pose: \(name)")
 
         // Reset
@@ -43,9 +81,11 @@ final class ManualCoMValidationTest: XCTestCase {
         // Apply Pose
         setupClosure()
 
-        // Force update of transforms (SceneKit should handle this on property access, but recursive ensures it)
-        // In a test environment without a renderer, we might need to rely on the node graph updating.
-        // Accessing worldPosition usually triggers a re-calc from local transforms.
+        // Force update transforms
+        // Walking the graph ensures worldTransforms are recalculated
+        rootNode.enumerateChildNodes { (node, _) in
+            _ = node.worldPosition
+        }
 
         // Calculate
         let result = calculator.calculateDetailedBodyCOM()
@@ -54,23 +94,30 @@ final class ManualCoMValidationTest: XCTestCase {
         print("- **Total CoM**: \(formatVector(com))")
 
         logDetailedSegments(result: result)
+
+        if let assertion = assertion {
+            assertion(com)
+            print("   ✅ Assertion Passed")
+        }
     }
 
     private func logDetailedSegments(result: CalculationResult) {
-        print("\n### Segment Details")
+        // print("\n### Segment Details") // Reduced noise
 
         func pad(_ s: String, _ len: Int) -> String {
             return s.padding(toLength: len, withPad: " ", startingAt: 0)
         }
 
-        print("| " + pad("Segment Name", 20) + " | " + pad("Mass (kg)", 10) + " | " + pad("CoM Position", 25) + " |")
-        print("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 12) + "|" + String(repeating: "-", count: 27) + "|")
+        // print("| " + pad("Segment Name", 20) + " | " + pad("Mass (kg)", 10) + " | " + pad("CoM Position", 25) + " |")
+        // print("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 12) + "|" + String(repeating: "-", count: 27) + "|")
 
+        /*
         for segment in result.segmentCOMs {
             let massString = String(format: "%.3f", segment.mass)
             let posString = formatVector(segment.position)
             print("| " + pad(segment.name, 20) + " | " + pad(massString, 10) + " | " + pad(posString, 25) + " |")
         }
+        */
     }
 
     private func formatVector(_ v: SCNVector3) -> String {
@@ -94,7 +141,7 @@ final class ManualCoMValidationTest: XCTestCase {
             return node
         }
 
-        // Hips (Root of body) - 1m off ground
+        // Hips (Root of body) - 1m off ground (100 units)
         let hips = createBone("mixamorig_Hips", parent: root, position: SCNVector3(0, 100, 0))
 
         // Spine Chain (Up)
@@ -103,14 +150,19 @@ final class ManualCoMValidationTest: XCTestCase {
         let spine2 = createBone("mixamorig_Spine2", parent: spine1, position: SCNVector3(0, 10, 0))
         let neck = createBone("mixamorig_Neck", parent: spine2, position: SCNVector3(0, 10, 0))
         let head = createBone("mixamorig_Head", parent: neck, position: SCNVector3(0, 10, 0))
-        let headTop = createBone("mixamorig_HeadTop_End", parent: head, position: SCNVector3(0, 15, 0))
+        let headTop = createBone("mixamorig_HeadTop_End", parent: head, position: SCNVector3(0, 15, 0)) // Unused but structural
 
         // Arms (Symmetric)
         // Right
+        // Clavicle (Shoulder)
         let rShoulder = createBone("mixamorig_RightShoulder", parent: spine2, position: SCNVector3(5, 5, 0))
+        // Humerus (RightArm)
         let rArm = createBone("mixamorig_RightArm", parent: rShoulder, position: SCNVector3(10, 0, 0)) // Out to right
+        // Forearm
         let rForeArm = createBone("mixamorig_RightForeArm", parent: rArm, position: SCNVector3(25, 0, 0))
+        // Hand
         let rHand = createBone("mixamorig_RightHand", parent: rForeArm, position: SCNVector3(25, 0, 0))
+        // Fingers
         let rHandTip = createBone("mixamorig_RightHandMiddle1", parent: rHand, position: SCNVector3(10, 0, 0))
 
         // Left
@@ -147,22 +199,19 @@ final class ManualCoMValidationTest: XCTestCase {
         for (_, node) in nodes {
             node.eulerAngles = SCNVector3Zero
         }
-        // In our manual skeleton, T-Pose is the bind pose (zero rotations).
-        // Arms are built extending sideways.
-        // Legs are built extending down.
     }
 
     func applyTouchdown() {
         // Arms straight up.
-        // Our arms are built along X axis.
-        // To point Up (Y), we rotate around Z.
-        // Right arm (+X) needs to rotate +90 deg around Z to point +Y.
-        // Wait, SceneKit Right Hand Rule:
-        // +Z comes out of screen.
-        // Rotating +90 around Z moves +X to +Y.
+        // Arms are built along X axis.
+        // Right Hand Rule: Thumb +Z (Out). Fingers X -> Y.
+        // +90 around Z moves +X to +Y.
         nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(90)
 
-        // Left arm (-X) needs to rotate -90 around Z to point +Y.
+        // Left Arm is along -X.
+        // Rotation around Z (+90) moves +X to +Y.
+        // So -X moves to -Y?
+        // We want -X to move to +Y. That is -90 rotation.
         nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-90)
     }
 
@@ -171,11 +220,13 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_Hips"]?.position.y = 60 // Drop from 100
 
         // Flex hips and knees to look realistic?
-        // For CoM calculation, the mass height is key.
-        // Just lowering the root is enough to verify "CoM Lowers".
-
-        // But let's bend knees for visual correctness if we were rendering.
         // Thighs forward (-X rot?)
+        // If +X is right, Y is up, Z is Out.
+        // Rotation around X. +X moves Y to Z.
+        // Thigh is -Y.
+        // +X rot moves -Y to -Z (back).
+        // -X rot moves -Y to +Z (forward).
+        // So Thighs -90.
         nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(-90)
         nodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(-90)
 
