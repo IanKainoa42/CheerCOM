@@ -39,6 +39,7 @@ class CoMValidationHarness {
 
         log("\n==========================================")
         log("🧪 STARTING CoM VALIDATION HARNESS")
+        log("📅 \(Date())")
         log("==========================================\n")
 
         validationResults.removeAll()
@@ -119,7 +120,7 @@ class CoMValidationHarness {
         log("Total Body Mass (Configured): \(calculator.bodyMass) kg")
         log("Number of Segments Defined: \(calculator.segments.count)")
 
-        // 1. Verify Mass Ratios
+        // 1. Verify Mass Ratios & Total Mass
         let totalMassRatio = calculator.segments.reduce(0.0) { $0 + $1.mass }
         log("Total Mass Ratio Sum: \(String(format: "%.4f", totalMassRatio))")
 
@@ -129,19 +130,28 @@ class CoMValidationHarness {
              log("✅ Mass ratios sum to approx 1.0")
         }
 
-        // 2. Verify Segment Binding & Total Mass Calculation
+        // Verify Total Mass Calculation
+        let calculatedTotalMass = calculator.calculateDetailedBodyCOM().segmentCOMs.reduce(0.0) { $0 + $1.mass }
+        log("Calculated Total Mass: \(String(format: "%.3f", calculatedTotalMass)) kg (Expected: \(String(format: "%.3f", calculator.bodyMass)) kg)")
+
+        if abs(calculatedTotalMass - calculator.bodyMass) > 0.01 {
+            log("⚠️ CRITICAL: Calculated total mass does not match body mass!")
+        } else {
+            log("✅ Calculated mass matches body mass.")
+        }
+
+        // 2. Verify Segment Binding
         let result = calculator.calculateDetailedBodyCOM()
         let boundCount = result.segmentCOMs.count
         log("Number of Segments Bound: \(boundCount)")
 
-        let totalCalculatedMass = result.segmentCOMs.reduce(0.0) { $0 + $1.mass }
-        log("Total Calculated Mass: \(String(format: "%.2f", totalCalculatedMass)) kg")
-
-        if abs(totalCalculatedMass - calculator.bodyMass) > 0.1 {
-            log("⚠️ CRITICAL: Calculated mass differs from configured body mass! (Diff: \(String(format: "%.2f", totalCalculatedMass - calculator.bodyMass)) kg)")
-        } else {
-            log("✅ Total calculated mass matches configured body mass.")
+        log("\nSegment Mapping Verification:")
+        for segment in calculator.segments {
+            let proxName = segment.prox
+            let distName = segment.dist
+            log(" - \(segment.name): \(proxName) -> \(distName)")
         }
+        log("")
 
         if boundCount < calculator.segments.count {
             log("⚠️ CRITICAL: Only \(boundCount)/\(calculator.segments.count) segments are bound! Some segments are missing from the calculation.")
