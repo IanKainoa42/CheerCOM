@@ -17,7 +17,7 @@ class COMCalculator {
     // 17 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
     // Based on anthropometric data from Winter (2009) and de Leva (1996)
     // Updated for Mixamo skeleton with mixamorig_ prefix
-    // TODO: Fix known issue where "Upper Arm" is mapped to Clavicle and "Forearm" to Humerus
+    // Note: Clavicle mass is assumed to be integrated into Thorax.
     let segments: [(name: String, prox: String, dist: String, mass: Double, com: Double)] = [
         // Trunk subdivision (Total 49.7%)
         ("Pelvis", "mixamorig_Hips", "mixamorig_Spine", 0.146, 0.50),
@@ -25,12 +25,17 @@ class COMCalculator {
         ("Abdomen Upper", "mixamorig_Spine1", "mixamorig_Spine2", 0.0855, 0.50),
         ("Thorax", "mixamorig_Spine2", "mixamorig_Neck", 0.180, 0.50),
 
-        // Head (Total 8.1%) - Updated to start from Neck
+        // Head (Total 8.1%) - Modeled as Neck segment (approx)
         ("Head", "mixamorig_Neck", "mixamorig_Head", 0.081, 0.50),
 
+        // Upper Limbs (Total 10.0%)
+        // RightArm = Humerus (Shoulder to Elbow)
         ("R Upper Arm", "mixamorig_RightArm", "mixamorig_RightForeArm", 0.028, 0.44),
+        // RightForeArm = Radius/Ulna (Elbow to Wrist)
         ("R Forearm", "mixamorig_RightForeArm", "mixamorig_RightHand", 0.016, 0.43),
+        // RightHand = Hand (Wrist to Knuckles)
         ("R Hand", "mixamorig_RightHand", "mixamorig_RightHandMiddle1", 0.006, 0.50),
+
         ("L Upper Arm", "mixamorig_LeftArm", "mixamorig_LeftForeArm", 0.028, 0.44),
         ("L Forearm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", 0.016, 0.43),
         ("L Hand", "mixamorig_LeftHand", "mixamorig_LeftHandMiddle1", 0.006, 0.50),
