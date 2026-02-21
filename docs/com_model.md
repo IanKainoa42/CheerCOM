@@ -70,6 +70,16 @@ To verify the CoM calculation in the app:
     *   **Layout**: Straight body. CoM similar to Touchdown/T-Pose but higher than T-Pose.
 4.  A detailed report is printed to the console and the on-screen overlay.
 
+### Math Verification (Python)
+
+To verify the mathematical logic independently of the iOS runtime:
+```bash
+python3 tests/verify_com_math.py
+```
+This script mocks the segment definitions and calculates the CoM for a simplified T-Pose model, verifying:
+*   Standard segment calculation (e.g., Upper Arm).
+*   Fallback logic for missing distal joints (e.g., Hand tips).
+
 ## Known Limitations
 
 1.  **Clavicle Segment**: The shoulder girdle (clavicle) is not modeled as a separate moving segment. Its mass is effectively lumped into the Thorax.

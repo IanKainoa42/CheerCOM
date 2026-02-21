@@ -17,6 +17,7 @@ class CoMValidationHarness {
     private struct ValidationOutcome {
         let pose: String
         let com: SCNVector3
+        let totalMass: Double
         let passed: Bool
         let message: String
     }
@@ -217,8 +218,11 @@ class CoMValidationHarness {
         let statusIcon = passed ? "✅" : "❌"
         log("- **Validation**: \(statusIcon) \(message)")
 
+        // Check mass conservation
+        let currentTotalMass = result.segmentCOMs.reduce(0.0) { $0 + $1.mass }
+
         // Store for summary
-        validationResults.append(ValidationOutcome(pose: poseType.displayName, com: com, passed: passed, message: message))
+        validationResults.append(ValidationOutcome(pose: poseType.displayName, com: com, totalMass: currentTotalMass, passed: passed, message: message))
 
         // Log Segment Details for all poses to aid debugging
         logDetailedSegments(result: result)
@@ -335,13 +339,14 @@ class CoMValidationHarness {
             return s.padding(toLength: len, withPad: " ", startingAt: 0)
         }
 
-        log("| " + pad("Pose", 15) + " | " + pad("Final CoM", 25) + " | " + pad("Result", 6) + " | " + pad("Note", 40) + " |")
-        log("|" + String(repeating: "-", count: 17) + "|" + String(repeating: "-", count: 27) + "|" + String(repeating: "-", count: 8) + "|" + String(repeating: "-", count: 42) + "|")
+        log("| " + pad("Pose", 15) + " | " + pad("Mass (kg)", 10) + " | " + pad("Final CoM", 25) + " | " + pad("Result", 6) + " | " + pad("Note", 40) + " |")
+        log("|" + String(repeating: "-", count: 17) + "|" + String(repeating: "-", count: 12) + "|" + String(repeating: "-", count: 27) + "|" + String(repeating: "-", count: 8) + "|" + String(repeating: "-", count: 42) + "|")
 
         for res in validationResults {
             let icon = res.passed ? "✅" : "❌"
             let comString = formatVector(res.com)
-            log("| " + pad(res.pose, 15) + " | " + pad(comString, 25) + " | " + pad(icon, 6) + " | " + pad(res.message, 40) + " |")
+            let massString = String(format: "%.2f", res.totalMass)
+            log("| " + pad(res.pose, 15) + " | " + pad(massString, 10) + " | " + pad(comString, 25) + " | " + pad(icon, 6) + " | " + pad(res.message, 40) + " |")
         }
         log("")
     }
