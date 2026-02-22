@@ -6,6 +6,7 @@ class CoMValidationHarness {
     // MARK: - Validation Config
 
     // Poses to validate
+    // NOTE: .tPose MUST be the first pose to establish a baseline for relative comparisons.
     private let posesToValidate: [PoseType] = [
         .tPose,
         .touchdown,
@@ -41,6 +42,7 @@ class CoMValidationHarness {
         log("🧪 STARTING CoM VALIDATION HARNESS")
         log("📅 \(Date())")
         log("==========================================\n")
+        log("ℹ️ Note: This harness runs in-app. For mathematical verification of the model, run 'python3 tests/verify_com_math.py' in the repository root.\n")
 
         validationResults.removeAll()
         tPoseBaseline = nil
