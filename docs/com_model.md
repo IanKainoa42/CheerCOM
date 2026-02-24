@@ -70,6 +70,15 @@ To verify the CoM calculation in the app:
     *   **Layout**: Straight body. CoM similar to Touchdown/T-Pose but higher than T-Pose.
 4.  A detailed report is printed to the console and the on-screen overlay.
 
+### Verification Script (Python)
+
+For independent verification of the mathematical model (segment mass ratios, fallbacks) without running the app:
+1.  Run `python3 tests/verify_com_math.py`
+2.  This script mocks the SceneKit vector math and verifies that:
+    *   Total mass ratio sums to exactly 1.0.
+    *   Hand segment fallback logic works correctly.
+    *   Coordinate calculations match expected values for a T-Pose.
+
 ## Known Limitations
 
 1.  **Clavicle Segment**: The shoulder girdle (clavicle) is not modeled as a separate moving segment. Its mass is effectively lumped into the Thorax.
