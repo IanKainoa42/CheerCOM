@@ -11,7 +11,8 @@ class CoMValidationHarness {
         .touchdown,
         .squat,
         .pike,
-        .layout
+        .layout,
+        .sideLean
     ]
 
     private struct ValidationOutcome {
@@ -289,6 +290,14 @@ class CoMValidationHarness {
                 return (true, "CoM higher than T-Pose by \(String(format: "%.1f", diff)) units (Expected > 2.0)")
             }
             return (false, "CoM not higher than T-Pose (Diff: \(String(format: "%.1f", diff)), Expected > 2.0)")
+
+        case .sideLean:
+            // Side lean -> CoM should shift in X
+            let diff = abs(com.x - baseline.x)
+            if diff > 2.0 {
+                return (true, "CoM shifted laterally by \(String(format: "%.1f", diff)) units (Expected > 2.0)")
+            }
+            return (false, "CoM did not shift laterally significantly (Diff: \(String(format: "%.1f", diff)), Expected > 2.0)")
 
         default:
             return (true, "No specific criteria")
