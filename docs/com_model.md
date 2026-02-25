@@ -68,6 +68,7 @@ To verify the CoM calculation in the app:
     *   **Squat**: Hips lower. CoM should lower significantly (~10-20 units).
     *   **Pike**: Legs forward. CoM should shift forward (Z+).
     *   **Layout**: Straight body. CoM similar to Touchdown/T-Pose but higher than T-Pose.
+    *   **Side Lean**: Trunk lateral flexion. CoM should shift laterally (X-axis).
 4.  A detailed report is printed to the console and the on-screen overlay.
 
 ### Verification Script (Python)

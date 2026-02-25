@@ -290,6 +290,35 @@ class PosePresets {
                 description: "Fully extended straight body position"
             )
 
+        case .sideLean:
+            return PoseDefinition(
+                name: "Side Lean",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_Hips": SCNVector3Zero,
+                    "mixamorig_Spine": SCNVector3(deg(0), deg(0), deg(20)),
+                    "mixamorig_Spine1": SCNVector3(deg(0), deg(0), deg(20)),
+                    "mixamorig_Spine2": SCNVector3(deg(0), deg(0), deg(20)),
+                    "mixamorig_Neck": SCNVector3(deg(0), deg(0), deg(0)),
+                    "mixamorig_Head": SCNVector3(deg(0), deg(0), deg(0)),
+                    "mixamorig_RightShoulder": SCNVector3Zero,
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-90)),
+                    "mixamorig_RightForeArm": SCNVector3Zero,
+                    "mixamorig_RightHand": SCNVector3Zero,
+                    "mixamorig_LeftShoulder": SCNVector3Zero,
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(90)),
+                    "mixamorig_LeftForeArm": SCNVector3Zero,
+                    "mixamorig_LeftHand": SCNVector3Zero,
+                    "mixamorig_RightUpLeg": SCNVector3Zero,
+                    "mixamorig_RightLeg": SCNVector3Zero,
+                    "mixamorig_RightFoot": SCNVector3Zero,
+                    "mixamorig_LeftUpLeg": SCNVector3Zero,
+                    "mixamorig_LeftLeg": SCNVector3Zero,
+                    "mixamorig_LeftFoot": SCNVector3Zero,
+                ],
+                description: "Side lean with T-arms"
+            )
+
         // MARK: - Arms Only Poses
 
         case .armsHighV:
@@ -541,7 +570,7 @@ class PosePresets {
         let allPoses: [PoseType] = [
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout,
+            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
