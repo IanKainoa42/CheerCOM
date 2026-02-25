@@ -104,33 +104,12 @@ class COMCalculator {
 
     /// Optimized calculation using bound nodes directly.
     func calculateBodyCOM() -> SCNVector3 {
-        // Fallback or warning if not bound?
-        if boundSegments.isEmpty {
-             print("⚠️ COMCalculator: No segments bound. Did you call bind(jointNodes:)?")
-             return SCNVector3Zero
-        }
-
-        var totalWeighted = SCNVector3Zero
-        var totalMass: Double = 0
-
-        for segment in boundSegments {
-            // Direct property access is faster than dictionary lookup
-            let proxPos = segment.prox.worldPosition
-            let distPos = segment.dist.worldPosition
-
-            // COM = proximal + (distal - proximal) * %
-            let segCOM = proxPos + ((distPos - proxPos) * Float(segment.comRatio))
-            let segMass = bodyMass * segment.massRatio
-
-            totalWeighted = totalWeighted + (segCOM * Float(segMass))
-            totalMass += segMass
-        }
-
-        return totalMass > 0 ? (totalWeighted * Float(1.0 / totalMass)) : SCNVector3Zero
+        return calculateDetailedBodyCOM(detailed: false).totalCOM
     }
 
     /// Detailed calculation returning segment data.
-    func calculateDetailedBodyCOM() -> CalculationResult {
+    /// - Parameter detailed: If false, segmentCOMs will be empty to save allocations.
+    func calculateDetailedBodyCOM(detailed: Bool = true) -> CalculationResult {
         // Fallback or warning if not bound?
         if boundSegments.isEmpty {
              print("⚠️ COMCalculator: No segments bound. Did you call bind(jointNodes:)?")
@@ -139,7 +118,12 @@ class COMCalculator {
 
         var totalWeighted = SCNVector3Zero
         var totalMass: Double = 0
+
+        // Only allocate array if detailed results are requested
         var segmentResults: [SegmentResult] = []
+        if detailed {
+            segmentResults.reserveCapacity(boundSegments.count)
+        }
 
         for segment in boundSegments {
             // Direct property access is faster than dictionary lookup
@@ -153,11 +137,13 @@ class COMCalculator {
             totalWeighted = totalWeighted + (segCOM * Float(segMass))
             totalMass += segMass
 
-            segmentResults.append(SegmentResult(
-                name: segment.name,
-                position: segCOM,
-                mass: segMass
-            ))
+            if detailed {
+                segmentResults.append(SegmentResult(
+                    name: segment.name,
+                    position: segCOM,
+                    mass: segMass
+                ))
+            }
         }
 
         let totalCOM = totalMass > 0 ? (totalWeighted * Float(1.0 / totalMass)) : SCNVector3Zero

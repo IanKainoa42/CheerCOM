@@ -186,7 +186,10 @@ class SceneViewController: UIViewController {
 
     func performCOMUpdate() {
         // Calculate COM directly using bound nodes
-        let result = calculator.calculateDetailedBodyCOM()
+        // Optimization: Only compute detailed segments if advanced visualizations are enabled
+        let result = calculator.calculateDetailedBodyCOM(
+            detailed: visualizationsManager.showAdvancedVisualizations
+        )
 
         // Update Visuals
         visualizationsManager.updateCOM(result: result)
