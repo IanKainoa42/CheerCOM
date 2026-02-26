@@ -27,6 +27,8 @@ class SceneViewController: UIViewController {
     // Transform State
     var currentTransformMode: TransformMode = .position
     var transformStep: Float = 5.0
+    var fineTransform: Bool = false
+
 
     // Joint Control State
     var selectedJoint: SCNNode?
@@ -98,7 +100,7 @@ class SceneViewController: UIViewController {
         // Pose Library Panel (initially hidden)
         poseLibraryPanel = PoseLibraryPanel(width: view.bounds.width)
         poseLibraryPanel.delegate = self
-        poseLibraryPanel.isHidden = true
+        poseLibraryPanel.isHidden = false
         view.addSubview(poseLibraryPanel)
 
         // Transform Control Panel
@@ -226,6 +228,11 @@ class SceneViewController: UIViewController {
             transformLeft()
         case .keyboardRightArrow:
             transformRight()
+        case .keyboardF:
+            fineTransform.toggle()
+            setTransformMode(currentTransformMode)
+            print("Fine transform: \(fineTransform)")
+
         case .keyboardSpacebar:
             // Cycle through transform modes
             switch currentTransformMode {
@@ -269,8 +276,14 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func selectJoint(named name: String) {
+        // Reset previous highlight
+        selectedJoint?.geometry?.firstMaterial?.emission.contents = UIColor.black
+
         if let joint = sceneManager.findBone(named: name) {
             selectedJoint = joint
+            // Highlight new joint
+            selectedJoint?.geometry?.firstMaterial?.emission.contents = UIColor.yellow
+
             let displayName = formatJointName(name)
 
             // Update UI
@@ -515,7 +528,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
     }
 
     func didTapClosePoseLibrary() {
-        poseLibraryPanel.isHidden = true
+        poseLibraryPanel.isHidden = false
         print("🎭 Pose library closed")
     }
 
@@ -560,6 +573,15 @@ extension SceneViewController: TransformControlPanelDelegate {
     }
 
     func setTransformMode(_ mode: TransformMode) {
+        currentTransformMode = mode
+        let baseStep: Float = fineTransform ? 1.0 : 5.0
+        switch mode {
+        case .position: transformStep = baseStep
+        case .rotation: transformStep = baseStep
+        case .scale: transformStep = fineTransform ? 0.05 : 0.1
+        }
+        transformControlPanel.updateModeDisplay(mode: mode)
+
         currentTransformMode = mode
         switch mode {
         case .position: transformStep = 5.0
