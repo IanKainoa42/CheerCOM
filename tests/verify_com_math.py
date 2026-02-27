@@ -143,66 +143,122 @@ def run_verification():
     else:
         print("✅ PASS: Mass ratios sum to approx 1.0")
 
-    # Mock Nodes
-    nodes = {}
-    # Trunk
-    nodes["mixamorig_Hips"] = SCNNode("Hips", SCNVector3(0, 100, 0))
-    nodes["mixamorig_Spine"] = SCNNode("Spine", SCNVector3(0, 110, 0))
-    nodes["mixamorig_Spine1"] = SCNNode("Spine1", SCNVector3(0, 120, 0))
-    nodes["mixamorig_Spine2"] = SCNNode("Spine2", SCNVector3(0, 130, 0))
-    nodes["mixamorig_Neck"] = SCNNode("Neck", SCNVector3(0, 140, 0))
-    nodes["mixamorig_Head"] = SCNNode("Head", SCNVector3(0, 150, 0))
+    def create_base_nodes():
+        nodes = {}
+        # Trunk
+        nodes["mixamorig_Hips"] = SCNNode("Hips", SCNVector3(0, 100, 0))
+        nodes["mixamorig_Spine"] = SCNNode("Spine", SCNVector3(0, 110, 0))
+        nodes["mixamorig_Spine1"] = SCNNode("Spine1", SCNVector3(0, 120, 0))
+        nodes["mixamorig_Spine2"] = SCNNode("Spine2", SCNVector3(0, 130, 0))
+        nodes["mixamorig_Neck"] = SCNNode("Neck", SCNVector3(0, 140, 0))
+        nodes["mixamorig_Head"] = SCNNode("Head", SCNVector3(0, 150, 0))
 
-    # Right Arm (T-Poseish)
-    nodes["mixamorig_RightArm"] = SCNNode("RArm", SCNVector3(20, 130, 0))
-    nodes["mixamorig_RightForeArm"] = SCNNode("RForeArm", SCNVector3(50, 130, 0))
-    nodes["mixamorig_RightHand"] = SCNNode("RHand", SCNVector3(80, 130, 0))
-    # Missing Hand Tip to test fallback
+        # Right Arm (T-Poseish)
+        nodes["mixamorig_RightArm"] = SCNNode("RArm", SCNVector3(20, 130, 0))
+        nodes["mixamorig_RightForeArm"] = SCNNode("RForeArm", SCNVector3(50, 130, 0))
+        nodes["mixamorig_RightHand"] = SCNNode("RHand", SCNVector3(80, 130, 0))
+        # Missing Hand Tip to test fallback
 
-    # Left Arm
-    nodes["mixamorig_LeftArm"] = SCNNode("LArm", SCNVector3(-20, 130, 0))
-    nodes["mixamorig_LeftForeArm"] = SCNNode("LForeArm", SCNVector3(-50, 130, 0))
-    nodes["mixamorig_LeftHand"] = SCNNode("LHand", SCNVector3(-80, 130, 0))
-    nodes["mixamorig_LeftHandMiddle1"] = SCNNode("LHandTip", SCNVector3(-90, 130, 0))
+        # Left Arm
+        nodes["mixamorig_LeftArm"] = SCNNode("LArm", SCNVector3(-20, 130, 0))
+        nodes["mixamorig_LeftForeArm"] = SCNNode("LForeArm", SCNVector3(-50, 130, 0))
+        nodes["mixamorig_LeftHand"] = SCNNode("LHand", SCNVector3(-80, 130, 0))
+        nodes["mixamorig_LeftHandMiddle1"] = SCNNode("LHandTip", SCNVector3(-90, 130, 0))
 
-    # Legs (simplified)
-    nodes["mixamorig_RightUpLeg"] = SCNNode("RUpLeg", SCNVector3(10, 100, 0))
-    nodes["mixamorig_RightLeg"] = SCNNode("RLeg", SCNVector3(10, 50, 0))
-    nodes["mixamorig_RightFoot"] = SCNNode("RFoot", SCNVector3(10, 10, 0))
-    nodes["mixamorig_RightToeBase"] = SCNNode("RToe", SCNVector3(10, 0, 10))
+        # Legs (simplified)
+        nodes["mixamorig_RightUpLeg"] = SCNNode("RUpLeg", SCNVector3(10, 100, 0))
+        nodes["mixamorig_RightLeg"] = SCNNode("RLeg", SCNVector3(10, 50, 0))
+        nodes["mixamorig_RightFoot"] = SCNNode("RFoot", SCNVector3(10, 10, 0))
+        nodes["mixamorig_RightToeBase"] = SCNNode("RToe", SCNVector3(10, 0, 10))
 
-    nodes["mixamorig_LeftUpLeg"] = SCNNode("LUpLeg", SCNVector3(-10, 100, 0))
-    nodes["mixamorig_LeftLeg"] = SCNNode("LLeg", SCNVector3(-10, 50, 0))
-    nodes["mixamorig_LeftFoot"] = SCNNode("LFoot", SCNVector3(-10, 10, 0))
-    nodes["mixamorig_LeftToeBase"] = SCNNode("LToe", SCNVector3(-10, 0, 10))
+        nodes["mixamorig_LeftUpLeg"] = SCNNode("LUpLeg", SCNVector3(-10, 100, 0))
+        nodes["mixamorig_LeftLeg"] = SCNNode("LLeg", SCNVector3(-10, 50, 0))
+        nodes["mixamorig_LeftFoot"] = SCNNode("LFoot", SCNVector3(-10, 10, 0))
+        nodes["mixamorig_LeftToeBase"] = SCNNode("LToe", SCNVector3(-10, 0, 10))
+        return nodes
 
+    def print_pose_report(pose_name, total_com, segments):
+        print(f"\n--- {pose_name} ---")
+        print(f"Total CoM: {total_com}")
+        print("Segments:")
+        for s in segments:
+            print(f"  {s['name'].ljust(15)} Mass: {s['mass']:<6.3f} CoM: {s['position']}")
+
+    # 1. T-Pose Baseline
+    nodes = create_base_nodes()
     print("\n--- Binding Nodes ---")
     calculator.bind(nodes)
 
-    print("\n--- Calculating CoM ---")
-    total_com, segments = calculator.calculate_detailed_body_com()
-
-    print(f"Total CoM: {total_com}")
+    total_com_tpose, segments_tpose = calculator.calculate_detailed_body_com()
+    print_pose_report("T-Pose (Baseline)", total_com_tpose, segments_tpose)
 
     # Verify Hand Fallback
-    r_hand = next((s for s in segments if s["name"] == "R Hand"), None)
+    r_hand = next((s for s in segments_tpose if s["name"] == "R Hand"), None)
     if r_hand:
-        print(f"✅ R Hand (Fallback): {r_hand['position']}")
+        print(f"\n✅ R Hand (Fallback): {r_hand['position']}")
         expected = SCNVector3(80, 130, 0)
         if abs(r_hand['position'].x - expected.x) < 0.001:
             print("   PASS: Correctly used proximal position")
         else:
             print(f"   FAIL: Expected {expected}, got {r_hand['position']}")
 
-    l_hand = next((s for s in segments if s["name"] == "L Hand"), None)
+    l_hand = next((s for s in segments_tpose if s["name"] == "L Hand"), None)
     if l_hand:
-        # Prox: -80, Dist: -90. CoM at 0.50 -> -85
         print(f"✅ L Hand (Normal): {l_hand['position']}")
         expected_x = -85.0
         if abs(l_hand['position'].x - expected_x) < 0.001:
             print("   PASS: Correctly calculated midpoint")
         else:
             print(f"   FAIL: Expected X={expected_x}, got {l_hand['position'].x}")
+
+    # 2. Touchdown (Arms up)
+    nodes_td = create_base_nodes()
+    for name in ["mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand",
+                 "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", "mixamorig_LeftHandMiddle1"]:
+        if name in nodes_td:
+            nodes_td[name].position.y += 50
+    calculator.bind(nodes_td)
+    total_com_td, segments_td = calculator.calculate_detailed_body_com()
+    print_pose_report("Touchdown (Arms Up)", total_com_td, segments_td)
+    print(f"Y Difference from T-Pose: {total_com_td.y - total_com_tpose.y:.3f} (Expected > 0)")
+
+    # 3. Squat (Hips down)
+    nodes_sq = create_base_nodes()
+    upper_body = ["mixamorig_Hips", "mixamorig_Spine", "mixamorig_Spine1", "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head",
+                  "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand",
+                  "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", "mixamorig_LeftHandMiddle1",
+                  "mixamorig_RightUpLeg", "mixamorig_LeftUpLeg"]
+    for name in upper_body:
+        if name in nodes_sq:
+            nodes_sq[name].position.y -= 40
+    calculator.bind(nodes_sq)
+    total_com_sq, segments_sq = calculator.calculate_detailed_body_com()
+    print_pose_report("Squat", total_com_sq, segments_sq)
+    print(f"Y Difference from T-Pose: {total_com_sq.y - total_com_tpose.y:.3f} (Expected < 0)")
+
+    # 4. Pike (Legs forward)
+    nodes_pk = create_base_nodes()
+    legs_fwd = ["mixamorig_RightLeg", "mixamorig_RightFoot", "mixamorig_RightToeBase",
+                "mixamorig_LeftLeg", "mixamorig_LeftFoot", "mixamorig_LeftToeBase"]
+    for name in legs_fwd:
+        if name in nodes_pk:
+            nodes_pk[name].position.z += 50
+    calculator.bind(nodes_pk)
+    total_com_pk, segments_pk = calculator.calculate_detailed_body_com()
+    print_pose_report("Pike", total_com_pk, segments_pk)
+    print(f"Z Difference from T-Pose: {total_com_pk.z - total_com_tpose.z:.3f} (Expected > 0)")
+
+    # 5. Layout (Straight body) - In this mock, Layout is similar to Touchdown
+    # as the baseline mock nodes are already upright like a standing position.
+    nodes_ly = create_base_nodes()
+    for name in ["mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand",
+                 "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", "mixamorig_LeftHandMiddle1"]:
+        if name in nodes_ly:
+            nodes_ly[name].position.y += 50
+    calculator.bind(nodes_ly)
+    total_com_ly, segments_ly = calculator.calculate_detailed_body_com()
+    print_pose_report("Layout", total_com_ly, segments_ly)
+    print(f"Y Difference from T-Pose: {total_com_ly.y - total_com_tpose.y:.3f} (Expected > 0)")
 
 if __name__ == "__main__":
     run_verification()
