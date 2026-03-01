@@ -69,6 +69,7 @@ To verify the CoM calculation in the app:
     *   **Pike**: Legs forward. CoM should shift forward (Z+).
     *   **Layout**: Straight body. CoM similar to Touchdown/T-Pose but higher than T-Pose.
     *   **Side Lean**: Trunk lateral flexion. CoM should shift laterally (X-axis).
+    *   **Bow and Arrow**: Asymmetric arm extension. CoM should shift laterally (X-axis) away from the baseline.
 4.  A detailed report is printed to the console and the on-screen overlay.
 
 ### Verification Script (Python)
