@@ -29,6 +29,7 @@ class SceneViewController: UIViewController {
     // Transform State
     var currentTransformMode: TransformMode = .position
     var transformStep: Float = 5.0
+    var transformStepMultiplier: Float = 1.0
     var fineTransform: Bool = false
 
 
@@ -109,6 +110,7 @@ class SceneViewController: UIViewController {
         transformControlPanel = TransformControlPanel(width: view.bounds.width)
         transformControlPanel.delegate = self
         view.addSubview(transformControlPanel)
+        transformControlPanel.updateStepMultiplierSelection(transformStepMultiplier)
 
         poseLibraryToggleButton = UIButton(type: .system)
         poseLibraryToggleButton.frame = CGRect(x: 20, y: 60, width: 130, height: 40)
@@ -142,6 +144,8 @@ class SceneViewController: UIViewController {
         validationBtn.layer.cornerRadius = 10
         validationBtn.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
         view.addSubview(validationBtn)
+
+        setTransformMode(currentTransformMode)
     }
 
     @objc private func didTapPoseLibraryToggleButton() {
@@ -621,22 +625,16 @@ extension SceneViewController: TransformControlPanelDelegate {
 
     func setTransformMode(_ mode: TransformMode) {
         currentTransformMode = mode
-        let baseStep: Float = fineTransform ? 1.0 : 5.0
-        switch mode {
-        case .position: transformStep = baseStep
-        case .rotation: transformStep = baseStep
-        case .scale: transformStep = fineTransform ? 0.05 : 0.1
-        }
-        transformControlPanel.updateModeDisplay(mode: mode)
+        transformStep = baseTransformStep(for: mode) * transformStepMultiplier
+        transformControlPanel.updateModeDisplay(mode: mode, step: transformStep)
+        print("Mode: \(mode), step: \(transformStep)")
+    }
 
-        currentTransformMode = mode
-        switch mode {
-        case .position: transformStep = 5.0
-        case .rotation: transformStep = 5.0
-        case .scale: transformStep = 0.1
-        }
-        transformControlPanel.updateModeDisplay(mode: mode)
-        print("Mode: \(mode)")
+    func didChangeTransformStepMultiplier(_ multiplier: Float) {
+        transformStepMultiplier = multiplier
+        transformStep = baseTransformStep(for: currentTransformMode) * transformStepMultiplier
+        transformControlPanel.updateModeDisplay(mode: currentTransformMode, step: transformStep)
+        print("Step multiplier: \(multiplier)x (step: \(transformStep))")
     }
 
     func didTapTransform(direction: TransformDirection) {
@@ -700,5 +698,14 @@ extension SceneViewController: TransformControlPanelDelegate {
         case .scale: break
         }
         scheduleUpdateCOM()
+    }
+
+    private func baseTransformStep(for mode: TransformMode) -> Float {
+        switch mode {
+        case .position, .rotation:
+            return fineTransform ? 1.0 : 5.0
+        case .scale:
+            return fineTransform ? 0.05 : 0.1
+        }
     }
 }
