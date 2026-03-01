@@ -36,6 +36,9 @@ class SceneViewController: UIViewController {
     // Joint Control State
     var selectedJoint: SCNNode?
     var jointControlMode: JointAxis = .x
+    private var selectedJointMarkerNode: SCNNode?
+    private weak var highlightedJointMaterial: SCNMaterial?
+    private var highlightedJointOriginalEmission: Any?
 
     // Continuous control support
     private var continuousRotationTimer: Timer?
@@ -249,6 +252,7 @@ class SceneViewController: UIViewController {
 
         // Update Visuals
         visualizationsManager.updateCOM(result: result)
+        updateSelectedJointHighlightPosition()
 
         // Throttle UI updates
         updateCounter += 1
@@ -330,13 +334,12 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func selectJoint(named name: String) {
-        // Reset previous highlight
-        selectedJoint?.geometry?.firstMaterial?.emission.contents = UIColor.black
+        clearSelectedJointHighlight()
+        selectedJoint = nil
 
         if let joint = sceneManager.findBone(named: name) {
             selectedJoint = joint
-            // Highlight new joint
-            selectedJoint?.geometry?.firstMaterial?.emission.contents = UIColor.yellow
+            applySelectedJointHighlight(for: joint)
 
             let displayName = formatJointName(name)
 
@@ -487,6 +490,60 @@ extension SceneViewController: JointControlPanelDelegate {
             result.append(char)
         }
         return result
+    }
+
+    private func applySelectedJointHighlight(for joint: SCNNode) {
+        if let material = joint.geometry?.firstMaterial {
+            highlightedJointOriginalEmission = material.emission.contents
+            material.emission.contents = UIColor.systemYellow
+            highlightedJointMaterial = material
+        } else {
+            highlightedJointMaterial = nil
+            highlightedJointOriginalEmission = nil
+        }
+
+        let markerGeometry = SCNSphere(radius: 1.8)
+        markerGeometry.segmentCount = 18
+        markerGeometry.firstMaterial?.diffuse.contents = UIColor.systemYellow.withAlphaComponent(0.45)
+        markerGeometry.firstMaterial?.emission.contents = UIColor.systemYellow
+        markerGeometry.firstMaterial?.lightingModel = .constant
+        markerGeometry.firstMaterial?.isDoubleSided = true
+
+        let markerNode = SCNNode(geometry: markerGeometry)
+        markerNode.position = joint.presentation.worldPosition
+        markerNode.name = "selected_joint_marker"
+        sceneManager.scene.rootNode.addChildNode(markerNode)
+
+        let pulseAnimation = CABasicAnimation(keyPath: "opacity")
+        pulseAnimation.fromValue = 0.2
+        pulseAnimation.toValue = 0.9
+        pulseAnimation.duration = 0.65
+        pulseAnimation.autoreverses = true
+        pulseAnimation.repeatCount = .infinity
+        markerNode.addAnimation(pulseAnimation, forKey: "pulse")
+
+        selectedJointMarkerNode = markerNode
+    }
+
+    private func clearSelectedJointHighlight() {
+        if let material = highlightedJointMaterial {
+            material.emission.contents = highlightedJointOriginalEmission
+        }
+        highlightedJointMaterial = nil
+        highlightedJointOriginalEmission = nil
+
+        selectedJointMarkerNode?.removeAllAnimations()
+        selectedJointMarkerNode?.removeFromParentNode()
+        selectedJointMarkerNode = nil
+    }
+
+    private func updateSelectedJointHighlightPosition() {
+        guard let selectedJoint = selectedJoint,
+            let markerNode = selectedJointMarkerNode
+        else {
+            return
+        }
+        markerNode.position = selectedJoint.presentation.worldPosition
     }
 }
 
