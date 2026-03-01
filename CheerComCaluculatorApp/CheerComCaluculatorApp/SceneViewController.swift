@@ -14,6 +14,8 @@ class SceneViewController: UIViewController {
     var jointControlPanel: JointControlPanel!
     var transformControlPanel: TransformControlPanel!
     var poseLibraryPanel: PoseLibraryPanel!
+    private var poseLibraryToggleButton: UIButton!
+    private var resetTPoseButton: UIButton!
     var viewLabel: UILabel!
 
     // State
@@ -100,13 +102,36 @@ class SceneViewController: UIViewController {
         // Pose Library Panel (initially hidden)
         poseLibraryPanel = PoseLibraryPanel(width: view.bounds.width)
         poseLibraryPanel.delegate = self
-        poseLibraryPanel.isHidden = false
+        poseLibraryPanel.isHidden = true
         view.addSubview(poseLibraryPanel)
 
         // Transform Control Panel
         transformControlPanel = TransformControlPanel(width: view.bounds.width)
         transformControlPanel.delegate = self
         view.addSubview(transformControlPanel)
+
+        poseLibraryToggleButton = UIButton(type: .system)
+        poseLibraryToggleButton.frame = CGRect(x: 20, y: 60, width: 130, height: 40)
+        poseLibraryToggleButton.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.85)
+        poseLibraryToggleButton.setTitleColor(.white, for: .normal)
+        poseLibraryToggleButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
+        poseLibraryToggleButton.layer.cornerRadius = 10
+        poseLibraryToggleButton.addTarget(
+            self, action: #selector(didTapPoseLibraryToggleButton), for: .touchUpInside)
+        view.addSubview(poseLibraryToggleButton)
+
+        resetTPoseButton = UIButton(type: .system)
+        resetTPoseButton.frame = CGRect(x: 20, y: 105, width: 130, height: 40)
+        resetTPoseButton.backgroundColor = UIColor.systemRed.withAlphaComponent(0.85)
+        resetTPoseButton.setTitle("Reset T-Pose", for: .normal)
+        resetTPoseButton.setTitleColor(.white, for: .normal)
+        resetTPoseButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
+        resetTPoseButton.layer.cornerRadius = 10
+        resetTPoseButton.addTarget(
+            self, action: #selector(didTapResetTPoseButton), for: .touchUpInside)
+        view.addSubview(resetTPoseButton)
+
+        updatePoseLibraryToggleButton()
 
         // Validation Button
         let validationBtn = UIButton(type: .system)
@@ -117,6 +142,31 @@ class SceneViewController: UIViewController {
         validationBtn.layer.cornerRadius = 10
         validationBtn.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
         view.addSubview(validationBtn)
+    }
+
+    @objc private func didTapPoseLibraryToggleButton() {
+        setPoseLibraryVisible(poseLibraryPanel.isHidden)
+    }
+
+    @objc private func didTapResetTPoseButton() {
+        didTapResetPose()
+    }
+
+    private func setPoseLibraryVisible(_ isVisible: Bool) {
+        poseLibraryPanel.isHidden = !isVisible
+        updatePoseLibraryToggleButton()
+        print("🎭 Pose library \(isVisible ? "shown" : "hidden")")
+    }
+
+    private func updatePoseLibraryToggleButton() {
+        let isVisible = !poseLibraryPanel.isHidden
+        poseLibraryToggleButton?.setTitle(
+            isVisible ? "Hide Pose Library" : "Show Pose Library",
+            for: .normal
+        )
+        poseLibraryToggleButton?.backgroundColor = isVisible
+            ? UIColor.systemPurple.withAlphaComponent(0.95)
+            : UIColor.systemPurple.withAlphaComponent(0.75)
     }
 
     @objc func didTapRunDiagnostics() {
@@ -378,9 +428,7 @@ extension SceneViewController: JointControlPanelDelegate {
 
     // Pose Library
     func didTapPoseLibrary() {
-        // Toggle pose library visibility
-        poseLibraryPanel.isHidden = !poseLibraryPanel.isHidden
-        print("🎭 Pose library \(poseLibraryPanel.isHidden ? "hidden" : "shown")")
+        setPoseLibraryVisible(poseLibraryPanel.isHidden)
     }
 
     func didTapResetPose() {
@@ -528,8 +576,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
     }
 
     func didTapClosePoseLibrary() {
-        poseLibraryPanel.isHidden = false
-        print("🎭 Pose library closed")
+        setPoseLibraryVisible(false)
     }
 
     private func applyPose(_ pose: PoseType) {
