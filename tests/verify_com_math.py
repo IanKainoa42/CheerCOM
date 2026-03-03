@@ -3,6 +3,7 @@
 # It replicates the logic of COMCalculator.swift.
 
 import math
+import sys
 
 class SCNVector3:
     def __init__(self, x=0.0, y=0.0, z=0.0):
@@ -28,8 +29,14 @@ class SCNNode:
     def __init__(self, name=None, position=None):
         self.name = name
         self.position = position if position else SCNVector3()
-        # In this mock, worldPosition is just position since we don't have a hierarchy
-        self.worldPosition = self.position
+
+    @property
+    def worldPosition(self):
+        return self.position
+
+    @worldPosition.setter
+    def worldPosition(self, value):
+        self.position = value
 
 class COMCalculatorMock:
     def __init__(self, body_mass):
@@ -75,7 +82,7 @@ class COMCalculatorMock:
         for name, prox_name, dist_name, mass_ratio, com_ratio in self.segments:
             prox_node = joint_nodes.get(prox_name)
             if not prox_node:
-                print(f"⚠️ Missing proximal joint for binding: {prox_name}")
+                # print(f"⚠️ Missing proximal joint for binding: {prox_name}")
                 missing_count += 1
                 continue
 
@@ -83,10 +90,10 @@ class COMCalculatorMock:
             if not dist_node:
                 # Special handling for Hand tips
                 if "Hand" in name:
-                    print(f"⚠️ Hand distal {dist_name} missing, using proximal as fallback (CoM at wrist)")
+                    # print(f"⚠️ Hand distal {dist_name} missing, using proximal as fallback (CoM at wrist)")
                     dist_node = prox_node
                 else:
-                    print(f"⚠️ Missing distal joint for binding: {dist_name}")
+                    # print(f"⚠️ Missing distal joint for binding: {dist_name}")
                     missing_count += 1
                     continue
 
@@ -97,9 +104,6 @@ class COMCalculatorMock:
                 "mass_ratio": mass_ratio,
                 "com_ratio": com_ratio
             })
-
-        if missing_count == 0:
-            print(f"✅ COMCalculator bound to {len(self.bound_segments)} segments")
 
     def calculate_detailed_body_com(self):
         if not self.bound_segments:
@@ -130,34 +134,22 @@ class COMCalculatorMock:
         total_com = (total_weighted * (1.0 / total_mass)) if total_mass > 0 else SCNVector3()
         return total_com, segment_results
 
-def run_verification():
-    print("🧪 Running CoM Verification (Python)...")
+# Helper to create T-Pose Nodes
+def create_t_pose_nodes():
+    nodes = {}
+    # Trunk (Y-axis vertical)
+    nodes["mixamorig_Hips"] = SCNNode("Hips", SCNVector3(0, 100, 0))
+    nodes["mixamorig_Spine"] = SCNNode("Spine", SCNVector3(0, 110, 0))
+    nodes["mixamorig_Spine1"] = SCNNode("Spine1", SCNVector3(0, 120, 0))
+    nodes["mixamorig_Spine2"] = SCNNode("Spine2", SCNVector3(0, 130, 0))
+    nodes["mixamorig_Neck"] = SCNNode("Neck", SCNVector3(0, 140, 0))
+    nodes["mixamorig_Head"] = SCNNode("Head", SCNVector3(0, 150, 0))
 
-    calculator = COMCalculatorMock(body_mass=70.0)
-
-    # Verify Mass Ratios
-    total_ratio = sum(s[3] for s in calculator.segments)
-    print(f"Total Mass Ratio: {total_ratio:.4f}")
-    if abs(total_ratio - 1.0) > 0.001:
-        print(f"❌ FAIL: Mass ratios do not sum to 1.0 (Diff: {total_ratio - 1.0:.4f})")
-    else:
-        print("✅ PASS: Mass ratios sum to approx 1.0")
-
-    def create_base_nodes():
-        nodes = {}
-        # Trunk
-        nodes["mixamorig_Hips"] = SCNNode("Hips", SCNVector3(0, 100, 0))
-        nodes["mixamorig_Spine"] = SCNNode("Spine", SCNVector3(0, 110, 0))
-        nodes["mixamorig_Spine1"] = SCNNode("Spine1", SCNVector3(0, 120, 0))
-        nodes["mixamorig_Spine2"] = SCNNode("Spine2", SCNVector3(0, 130, 0))
-        nodes["mixamorig_Neck"] = SCNNode("Neck", SCNVector3(0, 140, 0))
-        nodes["mixamorig_Head"] = SCNNode("Head", SCNVector3(0, 150, 0))
-
-        # Right Arm (T-Poseish)
-        nodes["mixamorig_RightArm"] = SCNNode("RArm", SCNVector3(20, 130, 0))
-        nodes["mixamorig_RightForeArm"] = SCNNode("RForeArm", SCNVector3(50, 130, 0))
-        nodes["mixamorig_RightHand"] = SCNNode("RHand", SCNVector3(80, 130, 0))
-        # Missing Hand Tip to test fallback
+    # Right Arm (X-axis lateral)
+    nodes["mixamorig_RightArm"] = SCNNode("RArm", SCNVector3(20, 130, 0))
+    nodes["mixamorig_RightForeArm"] = SCNNode("RForeArm", SCNVector3(50, 130, 0))
+    nodes["mixamorig_RightHand"] = SCNNode("RHand", SCNVector3(80, 130, 0))
+    # Missing Hand Tip to test fallback for Right Hand
 
         # Left Arm
         nodes["mixamorig_LeftArm"] = SCNNode("LArm", SCNVector3(-20, 130, 0))
@@ -165,11 +157,11 @@ def run_verification():
         nodes["mixamorig_LeftHand"] = SCNNode("LHand", SCNVector3(-80, 130, 0))
         nodes["mixamorig_LeftHandMiddle1"] = SCNNode("LHandTip", SCNVector3(-90, 130, 0))
 
-        # Legs (simplified)
-        nodes["mixamorig_RightUpLeg"] = SCNNode("RUpLeg", SCNVector3(10, 100, 0))
-        nodes["mixamorig_RightLeg"] = SCNNode("RLeg", SCNVector3(10, 50, 0))
-        nodes["mixamorig_RightFoot"] = SCNNode("RFoot", SCNVector3(10, 10, 0))
-        nodes["mixamorig_RightToeBase"] = SCNNode("RToe", SCNVector3(10, 0, 10))
+    # Legs
+    nodes["mixamorig_RightUpLeg"] = SCNNode("RUpLeg", SCNVector3(10, 100, 0))
+    nodes["mixamorig_RightLeg"] = SCNNode("RLeg", SCNVector3(10, 50, 0))
+    nodes["mixamorig_RightFoot"] = SCNNode("RFoot", SCNVector3(10, 10, 0))
+    nodes["mixamorig_RightToeBase"] = SCNNode("RToe", SCNVector3(10, 0, 10))
 
         nodes["mixamorig_LeftUpLeg"] = SCNNode("LUpLeg", SCNVector3(-10, 100, 0))
         nodes["mixamorig_LeftLeg"] = SCNNode("LLeg", SCNVector3(-10, 50, 0))
@@ -177,39 +169,173 @@ def run_verification():
         nodes["mixamorig_LeftToeBase"] = SCNNode("LToe", SCNVector3(-10, 0, 10))
         return nodes
 
-    def print_pose_report(pose_name, total_com, segments):
-        print(f"\n--- {pose_name} ---")
-        print(f"Total CoM: {total_com}")
-        print("Segments:")
-        for s in segments:
-            print(f"  {s['name'].ljust(15)} Mass: {s['mass']:<6.3f} CoM: {s['position']}")
+    return nodes
 
-    # 1. T-Pose Baseline
-    nodes = create_base_nodes()
-    print("\n--- Binding Nodes ---")
+def test_mass_ratios():
+    print("Test: Mass Ratios Sum to 1.0")
+    calculator = COMCalculatorMock(body_mass=70.0)
+    total_ratio = sum(s[3] for s in calculator.segments)
+    if abs(total_ratio - 1.0) > 0.001:
+        print(f"❌ FAIL: Mass ratios sum to {total_ratio:.4f}")
+        return False
+    print(f"✅ PASS: Mass ratios sum to {total_ratio:.4f}")
+    return True
+
+def test_t_pose(calculator):
+    print("\nTest: T-Pose Baseline")
+    nodes = create_t_pose_nodes()
     calculator.bind(nodes)
 
-    total_com_tpose, segments_tpose = calculator.calculate_detailed_body_com()
-    print_pose_report("T-Pose (Baseline)", total_com_tpose, segments_tpose)
+    total_com, segments = calculator.calculate_detailed_body_com()
+    print(f"   T-Pose CoM: {total_com}")
 
-    # Verify Hand Fallback
-    r_hand = next((s for s in segments_tpose if s["name"] == "R Hand"), None)
-    if r_hand:
-        print(f"\n✅ R Hand (Fallback): {r_hand['position']}")
-        expected = SCNVector3(80, 130, 0)
-        if abs(r_hand['position'].x - expected.x) < 0.001:
-            print("   PASS: Correctly used proximal position")
-        else:
-            print(f"   FAIL: Expected {expected}, got {r_hand['position']}")
+    # Check Hand Fallback logic (Right Hand missing tip)
+    r_hand = next((s for s in segments if s["name"] == "R Hand"), None)
+    if r_hand and abs(r_hand['position'].x - 80.0) < 0.001:
+        print("✅ PASS: R Hand Fallback correct (used proximal)")
+    else:
+        print(f"❌ FAIL: R Hand Fallback incorrect. Got {r_hand['position']}")
 
-    l_hand = next((s for s in segments_tpose if s["name"] == "L Hand"), None)
-    if l_hand:
-        print(f"✅ L Hand (Normal): {l_hand['position']}")
-        expected_x = -85.0
-        if abs(l_hand['position'].x - expected_x) < 0.001:
-            print("   PASS: Correctly calculated midpoint")
-        else:
-            print(f"   FAIL: Expected X={expected_x}, got {l_hand['position'].x}")
+    # Check Normal Hand logic (Left Hand has tip)
+    l_hand = next((s for s in segments if s["name"] == "L Hand"), None)
+    if l_hand and abs(l_hand['position'].x - (-85.0)) < 0.001:
+        print("✅ PASS: L Hand Normal correct (midpoint)")
+    else:
+        print(f"❌ FAIL: L Hand Normal incorrect. Got {l_hand['position']}")
+
+    return total_com
+
+def test_touchdown(calculator, t_pose_com):
+    print("\nTest: Touchdown Pose (Arms Up)")
+    nodes = create_t_pose_nodes()
+
+    # Raise Arms: Rotate 180 deg around shoulder to point UP
+    # Shoulder height is 130
+    # Arm length approx 30 (20->50), Forearm 30 (50->80)
+
+    # Right Arm UP
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(20, 160, 0) # +30 Y
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 190, 0) # +30 Y
+
+    # Left Arm UP
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 160, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 190, 0)
+    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-20, 200, 0)
+
+    calculator.bind(nodes)
+    touchdown_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Touchdown CoM: {touchdown_com}")
+
+    diff = touchdown_com.y - t_pose_com.y
+    print(f"   Rise from T-Pose: {diff:.2f}")
+
+    if diff > 2.0:
+        print("✅ PASS: CoM rose significantly")
+        return True
+    else:
+        print("❌ FAIL: CoM did not rise significantly")
+        return False
+
+def test_squat(calculator, t_pose_com):
+    print("\nTest: Squat Pose (Hips Lowered)")
+    nodes = create_t_pose_nodes()
+
+    # Lower everything by 20 units
+    drop = 20.0
+    for key in nodes:
+        nodes[key].position.y -= drop
+
+    # In a real squat, legs bend, but simply lowering the whole upper body
+    # and adjusting knees outward/forward is enough to test "lowering CoM" logic
+
+    # Keep feet on ground
+    nodes["mixamorig_RightFoot"].position.y = 10
+    nodes["mixamorig_RightToeBase"].position.y = 0
+    nodes["mixamorig_LeftFoot"].position.y = 10
+    nodes["mixamorig_LeftToeBase"].position.y = 0
+
+    # Knees bend forward/out
+    nodes["mixamorig_RightLeg"].position = SCNVector3(15, 50, 20)
+    nodes["mixamorig_LeftLeg"].position = SCNVector3(-15, 50, 20)
+
+    calculator.bind(nodes)
+    squat_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Squat CoM: {squat_com}")
+
+    diff = t_pose_com.y - squat_com.y
+    print(f"   Drop from T-Pose: {diff:.2f}")
+
+    if diff > 10.0:
+        print("✅ PASS: CoM lowered significantly")
+        return True
+    else:
+        print("❌ FAIL: CoM did not lower significantly")
+        return False
+
+def test_pike(calculator, t_pose_com):
+    print("\nTest: Pike Pose (Legs Forward)")
+    nodes = create_t_pose_nodes()
+
+    # Pike: Hips flexed 90 deg, legs extended straight forward (Z+)
+    # Hips remain roughly at same height or slightly lower, but legs move deep into Z+
+
+    # Upper legs extend forward from Hips (0, 100, 0) -> Z+
+    # Length approx 50. End at (0, 100, 50)
+    nodes["mixamorig_RightUpLeg"].position = SCNVector3(10, 100, 0) # Proximal
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 100, 50) # Distal/Knee
+
+    nodes["mixamorig_LeftUpLeg"].position = SCNVector3(-10, 100, 0)
+    nodes["mixamorig_LeftLeg"].position = SCNVector3(-10, 100, 50)
+
+    # Lower legs continue forward
+    # Length approx 40. End at (0, 100, 90)
+    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 100, 90) # Ankle
+    nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 110, 90) # Toes point up
+
+    nodes["mixamorig_LeftFoot"].position = SCNVector3(-10, 100, 90)
+    nodes["mixamorig_LeftToeBase"].position = SCNVector3(-10, 110, 90)
+
+    calculator.bind(nodes)
+    pike_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Pike CoM: {pike_com}")
+
+    # Check Z-shift
+    # T-Pose Z is approx 0. Pike Z should be positive (legs are heavy)
+    diff = pike_com.z - t_pose_com.z
+    print(f"   Forward Shift (Z) from T-Pose: {diff:.2f}")
+
+    if diff > 10.0:
+        print("✅ PASS: CoM shifted forward significantly")
+        return True
+    else:
+        print("❌ FAIL: CoM did not shift forward significantly")
+        return False
+
+def run_verification():
+    print("🧪 Running CoM Verification Harness (Python)\n")
+
+    calculator = COMCalculatorMock(body_mass=70.0)
+
+    if not test_mass_ratios():
+        sys.exit(1)
+
+    t_pose_com = test_t_pose(calculator)
+
+    if not test_touchdown(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_squat(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_pike(calculator, t_pose_com):
+        sys.exit(1)
+
+    print("\n✅ All CoM Logic Tests Passed")
 
     # 2. Touchdown (Arms up)
     nodes_td = create_base_nodes()

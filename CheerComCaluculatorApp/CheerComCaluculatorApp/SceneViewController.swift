@@ -14,6 +14,8 @@ class SceneViewController: UIViewController {
     var jointControlPanel: JointControlPanel!
     var transformControlPanel: TransformControlPanel!
     var poseLibraryPanel: PoseLibraryPanel!
+    private var poseLibraryToggleButton: UIButton!
+    private var resetTPoseButton: UIButton!
     var viewLabel: UILabel!
 
     // State
@@ -27,12 +29,16 @@ class SceneViewController: UIViewController {
     // Transform State
     var currentTransformMode: TransformMode = .position
     var transformStep: Float = 5.0
+    var transformStepMultiplier: Float = 1.0
     var fineTransform: Bool = false
 
 
     // Joint Control State
     var selectedJoint: SCNNode?
     var jointControlMode: JointAxis = .x
+    private var selectedJointMarkerNode: SCNNode?
+    private weak var highlightedJointMaterial: SCNMaterial?
+    private var highlightedJointOriginalEmission: Any?
 
     // Continuous control support
     private var continuousRotationTimer: Timer?
@@ -100,13 +106,37 @@ class SceneViewController: UIViewController {
         // Pose Library Panel (initially hidden)
         poseLibraryPanel = PoseLibraryPanel(width: view.bounds.width)
         poseLibraryPanel.delegate = self
-        poseLibraryPanel.isHidden = false
+        poseLibraryPanel.isHidden = true
         view.addSubview(poseLibraryPanel)
 
         // Transform Control Panel
         transformControlPanel = TransformControlPanel(width: view.bounds.width)
         transformControlPanel.delegate = self
         view.addSubview(transformControlPanel)
+        transformControlPanel.updateStepMultiplierSelection(transformStepMultiplier)
+
+        poseLibraryToggleButton = UIButton(type: .system)
+        poseLibraryToggleButton.frame = CGRect(x: 20, y: 60, width: 130, height: 40)
+        poseLibraryToggleButton.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.85)
+        poseLibraryToggleButton.setTitleColor(.white, for: .normal)
+        poseLibraryToggleButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
+        poseLibraryToggleButton.layer.cornerRadius = 10
+        poseLibraryToggleButton.addTarget(
+            self, action: #selector(didTapPoseLibraryToggleButton), for: .touchUpInside)
+        view.addSubview(poseLibraryToggleButton)
+
+        resetTPoseButton = UIButton(type: .system)
+        resetTPoseButton.frame = CGRect(x: 20, y: 105, width: 130, height: 40)
+        resetTPoseButton.backgroundColor = UIColor.systemRed.withAlphaComponent(0.85)
+        resetTPoseButton.setTitle("Reset T-Pose", for: .normal)
+        resetTPoseButton.setTitleColor(.white, for: .normal)
+        resetTPoseButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
+        resetTPoseButton.layer.cornerRadius = 10
+        resetTPoseButton.addTarget(
+            self, action: #selector(didTapResetTPoseButton), for: .touchUpInside)
+        view.addSubview(resetTPoseButton)
+
+        updatePoseLibraryToggleButton()
 
         // Validation Button
         let validationBtn = UIButton(type: .system)
@@ -117,6 +147,33 @@ class SceneViewController: UIViewController {
         validationBtn.layer.cornerRadius = 10
         validationBtn.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
         view.addSubview(validationBtn)
+
+        setTransformMode(currentTransformMode)
+    }
+
+    @objc private func didTapPoseLibraryToggleButton() {
+        setPoseLibraryVisible(poseLibraryPanel.isHidden)
+    }
+
+    @objc private func didTapResetTPoseButton() {
+        didTapResetPose()
+    }
+
+    private func setPoseLibraryVisible(_ isVisible: Bool) {
+        poseLibraryPanel.isHidden = !isVisible
+        updatePoseLibraryToggleButton()
+        print("🎭 Pose library \(isVisible ? "shown" : "hidden")")
+    }
+
+    private func updatePoseLibraryToggleButton() {
+        let isVisible = !poseLibraryPanel.isHidden
+        poseLibraryToggleButton?.setTitle(
+            isVisible ? "Hide Pose Library" : "Show Pose Library",
+            for: .normal
+        )
+        poseLibraryToggleButton?.backgroundColor = isVisible
+            ? UIColor.systemPurple.withAlphaComponent(0.95)
+            : UIColor.systemPurple.withAlphaComponent(0.75)
     }
 
     @objc func didTapRunDiagnostics() {
@@ -195,6 +252,7 @@ class SceneViewController: UIViewController {
 
         // Update Visuals
         visualizationsManager.updateCOM(result: result)
+        updateSelectedJointHighlightPosition()
 
         // Throttle UI updates
         updateCounter += 1
@@ -276,13 +334,12 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func selectJoint(named name: String) {
-        // Reset previous highlight
-        selectedJoint?.geometry?.firstMaterial?.emission.contents = UIColor.black
+        clearSelectedJointHighlight()
+        selectedJoint = nil
 
         if let joint = sceneManager.findBone(named: name) {
             selectedJoint = joint
-            // Highlight new joint
-            selectedJoint?.geometry?.firstMaterial?.emission.contents = UIColor.yellow
+            applySelectedJointHighlight(for: joint)
 
             let displayName = formatJointName(name)
 
@@ -378,9 +435,7 @@ extension SceneViewController: JointControlPanelDelegate {
 
     // Pose Library
     func didTapPoseLibrary() {
-        // Toggle pose library visibility
-        poseLibraryPanel.isHidden = !poseLibraryPanel.isHidden
-        print("🎭 Pose library \(poseLibraryPanel.isHidden ? "hidden" : "shown")")
+        setPoseLibraryVisible(poseLibraryPanel.isHidden)
     }
 
     func didTapResetPose() {
@@ -435,6 +490,60 @@ extension SceneViewController: JointControlPanelDelegate {
             result.append(char)
         }
         return result
+    }
+
+    private func applySelectedJointHighlight(for joint: SCNNode) {
+        if let material = joint.geometry?.firstMaterial {
+            highlightedJointOriginalEmission = material.emission.contents
+            material.emission.contents = UIColor.systemYellow
+            highlightedJointMaterial = material
+        } else {
+            highlightedJointMaterial = nil
+            highlightedJointOriginalEmission = nil
+        }
+
+        let markerGeometry = SCNSphere(radius: 1.8)
+        markerGeometry.segmentCount = 18
+        markerGeometry.firstMaterial?.diffuse.contents = UIColor.systemYellow.withAlphaComponent(0.45)
+        markerGeometry.firstMaterial?.emission.contents = UIColor.systemYellow
+        markerGeometry.firstMaterial?.lightingModel = .constant
+        markerGeometry.firstMaterial?.isDoubleSided = true
+
+        let markerNode = SCNNode(geometry: markerGeometry)
+        markerNode.position = joint.presentation.worldPosition
+        markerNode.name = "selected_joint_marker"
+        sceneManager.scene.rootNode.addChildNode(markerNode)
+
+        let pulseAnimation = CABasicAnimation(keyPath: "opacity")
+        pulseAnimation.fromValue = 0.2
+        pulseAnimation.toValue = 0.9
+        pulseAnimation.duration = 0.65
+        pulseAnimation.autoreverses = true
+        pulseAnimation.repeatCount = .infinity
+        markerNode.addAnimation(pulseAnimation, forKey: "pulse")
+
+        selectedJointMarkerNode = markerNode
+    }
+
+    private func clearSelectedJointHighlight() {
+        if let material = highlightedJointMaterial {
+            material.emission.contents = highlightedJointOriginalEmission
+        }
+        highlightedJointMaterial = nil
+        highlightedJointOriginalEmission = nil
+
+        selectedJointMarkerNode?.removeAllAnimations()
+        selectedJointMarkerNode?.removeFromParentNode()
+        selectedJointMarkerNode = nil
+    }
+
+    private func updateSelectedJointHighlightPosition() {
+        guard let selectedJoint = selectedJoint,
+            let markerNode = selectedJointMarkerNode
+        else {
+            return
+        }
+        markerNode.position = selectedJoint.presentation.worldPosition
     }
 }
 
@@ -528,8 +637,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
     }
 
     func didTapClosePoseLibrary() {
-        poseLibraryPanel.isHidden = false
-        print("🎭 Pose library closed")
+        setPoseLibraryVisible(false)
     }
 
     private func applyPose(_ pose: PoseType) {
@@ -574,22 +682,16 @@ extension SceneViewController: TransformControlPanelDelegate {
 
     func setTransformMode(_ mode: TransformMode) {
         currentTransformMode = mode
-        let baseStep: Float = fineTransform ? 1.0 : 5.0
-        switch mode {
-        case .position: transformStep = baseStep
-        case .rotation: transformStep = baseStep
-        case .scale: transformStep = fineTransform ? 0.05 : 0.1
-        }
-        transformControlPanel.updateModeDisplay(mode: mode)
+        transformStep = baseTransformStep(for: mode) * transformStepMultiplier
+        transformControlPanel.updateModeDisplay(mode: mode, step: transformStep)
+        print("Mode: \(mode), step: \(transformStep)")
+    }
 
-        currentTransformMode = mode
-        switch mode {
-        case .position: transformStep = 5.0
-        case .rotation: transformStep = 5.0
-        case .scale: transformStep = 0.1
-        }
-        transformControlPanel.updateModeDisplay(mode: mode)
-        print("Mode: \(mode)")
+    func didChangeTransformStepMultiplier(_ multiplier: Float) {
+        transformStepMultiplier = multiplier
+        transformStep = baseTransformStep(for: currentTransformMode) * transformStepMultiplier
+        transformControlPanel.updateModeDisplay(mode: currentTransformMode, step: transformStep)
+        print("Step multiplier: \(multiplier)x (step: \(transformStep))")
     }
 
     func didTapTransform(direction: TransformDirection) {
@@ -653,5 +755,14 @@ extension SceneViewController: TransformControlPanelDelegate {
         case .scale: break
         }
         scheduleUpdateCOM()
+    }
+
+    private func baseTransformStep(for mode: TransformMode) -> Float {
+        switch mode {
+        case .position, .rotation:
+            return fineTransform ? 1.0 : 5.0
+        case .scale:
+            return fineTransform ? 0.05 : 0.1
+        }
     }
 }

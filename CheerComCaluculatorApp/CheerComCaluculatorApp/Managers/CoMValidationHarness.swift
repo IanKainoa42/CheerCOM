@@ -12,7 +12,8 @@ class CoMValidationHarness {
         .squat,
         .pike,
         .layout,
-        .sideLean
+        .sideLean,
+        .bowAndArrow
     ]
 
     private struct ValidationOutcome {
@@ -298,6 +299,16 @@ class CoMValidationHarness {
                 return (true, "CoM shifted laterally by \(String(format: "%.1f", diff)) units (Expected > 2.0)")
             }
             return (false, "CoM did not shift laterally significantly (Diff: \(String(format: "%.1f", diff)), Expected > 2.0)")
+
+        case .bowAndArrow:
+            // Bow and arrow is asymmetric -> CoM should shift in X away from baseline
+            // Since right arm is straight (-X direction usually) and left arm is pulled back,
+            // we should see a noticeable X shift.
+            let diff = abs(com.x - baseline.x)
+            if diff > 1.0 {
+                return (true, "CoM shifted laterally by \(String(format: "%.1f", diff)) units due to asymmetric arm pose (Expected > 1.0)")
+            }
+            return (false, "CoM did not shift laterally significantly for asymmetric arm pose (Diff: \(String(format: "%.1f", diff)), Expected > 1.0)")
 
         default:
             return (true, "No specific criteria")
