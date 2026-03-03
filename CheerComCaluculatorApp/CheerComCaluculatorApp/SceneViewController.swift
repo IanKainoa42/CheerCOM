@@ -394,6 +394,9 @@ extension SceneViewController: JointControlPanelDelegate {
         case .z: joint.eulerAngles.z += delta
         }
 
+        // Apply joint limits
+        joint.eulerAngles = JointLimits.clampEulerAngles(forJoint: joint.name ?? "", angles: joint.eulerAngles)
+
         let newAngle = getAngleForCurrentAxis(joint: joint)
         print("🎮 Rotated joint on \(jointControlMode.rawValue)-axis: \(oldAngle)° → \(newAngle)°")
 
@@ -428,7 +431,14 @@ extension SceneViewController: JointControlPanelDelegate {
         case .z: joint.eulerAngles.z = angle
         }
 
+        // Apply joint limits
+        joint.eulerAngles = JointLimits.clampEulerAngles(forJoint: joint.name ?? "", angles: joint.eulerAngles)
+
         print("🎚️ Set \(jointControlMode.rawValue)-axis angle to \(value)°")
+
+        // Update UI with clamped value
+        let newAngle = getAngleForCurrentAxis(joint: joint)
+        jointControlPanel.updateAngleDisplay(angle: newAngle)
 
         scheduleUpdateCOM()
     }
@@ -662,7 +672,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         // Apply joint angles
         for (jointName, angles) in jointAngles {
             if let bone = sceneManager.findBone(named: jointName) {
-                bone.eulerAngles = angles
+                bone.eulerAngles = JointLimits.clampEulerAngles(forJoint: jointName, angles: angles)
             }
         }
 

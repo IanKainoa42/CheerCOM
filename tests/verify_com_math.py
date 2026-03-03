@@ -151,11 +151,11 @@ def create_t_pose_nodes():
     nodes["mixamorig_RightHand"] = SCNNode("RHand", SCNVector3(80, 130, 0))
     # Missing Hand Tip to test fallback for Right Hand
 
-        # Left Arm
-        nodes["mixamorig_LeftArm"] = SCNNode("LArm", SCNVector3(-20, 130, 0))
-        nodes["mixamorig_LeftForeArm"] = SCNNode("LForeArm", SCNVector3(-50, 130, 0))
-        nodes["mixamorig_LeftHand"] = SCNNode("LHand", SCNVector3(-80, 130, 0))
-        nodes["mixamorig_LeftHandMiddle1"] = SCNNode("LHandTip", SCNVector3(-90, 130, 0))
+    # Left Arm
+    nodes["mixamorig_LeftArm"] = SCNNode("LArm", SCNVector3(-20, 130, 0))
+    nodes["mixamorig_LeftForeArm"] = SCNNode("LForeArm", SCNVector3(-50, 130, 0))
+    nodes["mixamorig_LeftHand"] = SCNNode("LHand", SCNVector3(-80, 130, 0))
+    nodes["mixamorig_LeftHandMiddle1"] = SCNNode("LHandTip", SCNVector3(-90, 130, 0))
 
     # Legs
     nodes["mixamorig_RightUpLeg"] = SCNNode("RUpLeg", SCNVector3(10, 100, 0))
@@ -163,11 +163,11 @@ def create_t_pose_nodes():
     nodes["mixamorig_RightFoot"] = SCNNode("RFoot", SCNVector3(10, 10, 0))
     nodes["mixamorig_RightToeBase"] = SCNNode("RToe", SCNVector3(10, 0, 10))
 
-        nodes["mixamorig_LeftUpLeg"] = SCNNode("LUpLeg", SCNVector3(-10, 100, 0))
-        nodes["mixamorig_LeftLeg"] = SCNNode("LLeg", SCNVector3(-10, 50, 0))
-        nodes["mixamorig_LeftFoot"] = SCNNode("LFoot", SCNVector3(-10, 10, 0))
-        nodes["mixamorig_LeftToeBase"] = SCNNode("LToe", SCNVector3(-10, 0, 10))
-        return nodes
+    nodes["mixamorig_LeftUpLeg"] = SCNNode("LUpLeg", SCNVector3(-10, 100, 0))
+    nodes["mixamorig_LeftLeg"] = SCNNode("LLeg", SCNVector3(-10, 50, 0))
+    nodes["mixamorig_LeftFoot"] = SCNNode("LFoot", SCNVector3(-10, 10, 0))
+    nodes["mixamorig_LeftToeBase"] = SCNNode("LToe", SCNVector3(-10, 0, 10))
+    return nodes
 
     return nodes
 
@@ -316,10 +316,91 @@ def test_pike(calculator, t_pose_com):
         print("❌ FAIL: CoM did not shift forward significantly")
         return False
 
+def clamp_euler_angles(joint_name, angles):
+    # Port of JointLimits.swift logic
+    # Knees: Hinge joint, flexes backward. X-axis limited to [-160°, 0°]
+    if joint_name in ["mixamorig_RightLeg", "mixamorig_LeftLeg"]:
+        min_rad = -160.0 * math.pi / 180.0
+        max_rad = 0.0 * math.pi / 180.0
+        angles.x = max(min_rad, min(max_rad, angles.x))
+
+    # Right Elbow: Hinge joint, flexes forward. Z-axis limited to [0°, 160°]
+    elif joint_name == "mixamorig_RightForeArm":
+        min_rad = 0.0 * math.pi / 180.0
+        max_rad = 160.0 * math.pi / 180.0
+        angles.z = max(min_rad, min(max_rad, angles.z))
+
+    # Left Elbow: Hinge joint, flexes forward. Z-axis limited to [-160°, 0°]
+    elif joint_name == "mixamorig_LeftForeArm":
+        min_rad = -160.0 * math.pi / 180.0
+        max_rad = 0.0 * math.pi / 180.0
+        angles.z = max(min_rad, min(max_rad, angles.z))
+
+    return angles
+
+def test_joint_limits():
+    print("\nTest: Joint Limits")
+
+    # Test Right Knee (mixamorig_RightLeg)
+    # Exceeding negative limit (-180 degrees -> clamped to -160)
+    angles = SCNVector3(-180.0 * math.pi / 180.0, 0, 0)
+    clamped = clamp_euler_angles("mixamorig_RightLeg", angles)
+    expected_x = -160.0 * math.pi / 180.0
+    if abs(clamped.x - expected_x) < 0.001:
+        print("✅ PASS: Right Knee clamped correctly at lower bound")
+    else:
+        print(f"❌ FAIL: Right Knee failed lower bound clamping. Expected: {expected_x}, Got: {clamped.x}")
+        return False
+
+    # Exceeding positive limit (20 degrees -> clamped to 0)
+    angles = SCNVector3(20.0 * math.pi / 180.0, 0, 0)
+    clamped = clamp_euler_angles("mixamorig_RightLeg", angles)
+    if abs(clamped.x - 0.0) < 0.001:
+        print("✅ PASS: Right Knee clamped correctly at upper bound")
+    else:
+        print(f"❌ FAIL: Right Knee failed upper bound clamping. Expected: 0.0, Got: {clamped.x}")
+        return False
+
+    # Test Right Elbow (mixamorig_RightForeArm)
+    # Exceeding positive limit (180 degrees -> clamped to 160)
+    angles = SCNVector3(0, 0, 180.0 * math.pi / 180.0)
+    clamped = clamp_euler_angles("mixamorig_RightForeArm", angles)
+    expected_z = 160.0 * math.pi / 180.0
+    if abs(clamped.z - expected_z) < 0.001:
+        print("✅ PASS: Right Elbow clamped correctly at upper bound")
+    else:
+        print(f"❌ FAIL: Right Elbow failed upper bound clamping. Expected: {expected_z}, Got: {clamped.z}")
+        return False
+
+    # Exceeding negative limit (-20 degrees -> clamped to 0)
+    angles = SCNVector3(0, 0, -20.0 * math.pi / 180.0)
+    clamped = clamp_euler_angles("mixamorig_RightForeArm", angles)
+    if abs(clamped.z - 0.0) < 0.001:
+        print("✅ PASS: Right Elbow clamped correctly at lower bound")
+    else:
+        print(f"❌ FAIL: Right Elbow failed lower bound clamping. Expected: 0.0, Got: {clamped.z}")
+        return False
+
+    # Test Left Elbow (mixamorig_LeftForeArm)
+    # Exceeding negative limit (-180 degrees -> clamped to -160)
+    angles = SCNVector3(0, 0, -180.0 * math.pi / 180.0)
+    clamped = clamp_euler_angles("mixamorig_LeftForeArm", angles)
+    expected_z = -160.0 * math.pi / 180.0
+    if abs(clamped.z - expected_z) < 0.001:
+        print("✅ PASS: Left Elbow clamped correctly at lower bound")
+    else:
+        print(f"❌ FAIL: Left Elbow failed lower bound clamping. Expected: {expected_z}, Got: {clamped.z}")
+        return False
+
+    return True
+
 def run_verification():
     print("🧪 Running CoM Verification Harness (Python)\n")
 
     calculator = COMCalculatorMock(body_mass=70.0)
+
+    if not test_joint_limits():
+        sys.exit(1)
 
     if not test_mass_ratios():
         sys.exit(1)
@@ -336,100 +417,6 @@ def run_verification():
         sys.exit(1)
 
     print("\n✅ All CoM Logic Tests Passed")
-
-    # --- Test Touchdown ---
-    print("\n--- Testing Touchdown Pose ---")
-    # Touchdown: Arms straight up. Y should be higher.
-    nodes["mixamorig_RightArm"].position = SCNVector3(10, 160, 0)
-    nodes["mixamorig_RightForeArm"].position = SCNVector3(10, 190, 0)
-    nodes["mixamorig_RightHand"].position = SCNVector3(10, 220, 0)
-
-    nodes["mixamorig_LeftArm"].position = SCNVector3(-10, 160, 0)
-    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-10, 190, 0)
-    nodes["mixamorig_LeftHand"].position = SCNVector3(-10, 220, 0)
-    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-10, 230, 0)
-
-    # We update worldPosition as it is the property the calculator uses
-    for n in nodes.values():
-        n.worldPosition = n.position
-
-    total_com_touchdown, _ = calculator.calculate_detailed_body_com()
-    print(f"Total CoM (Touchdown): {total_com_touchdown}")
-
-    if total_com_touchdown.y > total_com_t_pose.y + 5.0:
-        print(f"✅ PASS: Touchdown CoM Y ({total_com_touchdown.y:.2f}) is significantly higher than T-Pose Y ({total_com_t_pose.y:.2f})")
-    else:
-        print(f"❌ FAIL: Touchdown CoM Y ({total_com_touchdown.y:.2f}) did not rise enough compared to T-Pose Y ({total_com_t_pose.y:.2f})")
-
-    # --- Test Squat ---
-    print("\n--- Testing Squat Pose ---")
-    # Restore arms to T-Poseish (for simple comparison, just lower hips/legs)
-    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
-    nodes["mixamorig_RightForeArm"].position = SCNVector3(50, 130, 0)
-    nodes["mixamorig_RightHand"].position = SCNVector3(80, 130, 0)
-
-    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
-    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-50, 130, 0)
-    nodes["mixamorig_LeftHand"].position = SCNVector3(-80, 130, 0)
-    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-90, 130, 0)
-
-    # Lower hips and legs
-    squat_drop = 30
-    nodes["mixamorig_Hips"].position = SCNVector3(0, 100 - squat_drop, 0)
-    nodes["mixamorig_Spine"].position = SCNVector3(0, 110 - squat_drop, 0)
-    nodes["mixamorig_Spine1"].position = SCNVector3(0, 120 - squat_drop, 0)
-    nodes["mixamorig_Spine2"].position = SCNVector3(0, 130 - squat_drop, 0)
-    nodes["mixamorig_Neck"].position = SCNVector3(0, 140 - squat_drop, 0)
-    nodes["mixamorig_Head"].position = SCNVector3(0, 150 - squat_drop, 0)
-
-    nodes["mixamorig_RightUpLeg"].position = SCNVector3(10, 100 - squat_drop, 0)
-    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 50 - squat_drop/2, 20) # knees forward
-
-    nodes["mixamorig_LeftUpLeg"].position = SCNVector3(-10, 100 - squat_drop, 0)
-    nodes["mixamorig_LeftLeg"].position = SCNVector3(-10, 50 - squat_drop/2, 20) # knees forward
-
-    for n in nodes.values():
-        n.worldPosition = n.position
-
-    total_com_squat, _ = calculator.calculate_detailed_body_com()
-    print(f"Total CoM (Squat): {total_com_squat}")
-
-    if total_com_t_pose.y - total_com_squat.y > 10.0:
-        print(f"✅ PASS: Squat CoM Y ({total_com_squat.y:.2f}) is significantly lower than T-Pose Y ({total_com_t_pose.y:.2f})")
-    else:
-        print(f"❌ FAIL: Squat CoM Y ({total_com_squat.y:.2f}) did not lower enough compared to T-Pose Y ({total_com_t_pose.y:.2f})")
-
-    # --- Test Pike ---
-    print("\n--- Testing Pike Pose ---")
-    # Restore hips/spine
-    nodes["mixamorig_Hips"].position = SCNVector3(0, 100, 0)
-    nodes["mixamorig_Spine"].position = SCNVector3(0, 110, 0)
-    nodes["mixamorig_Spine1"].position = SCNVector3(0, 120, 0)
-    nodes["mixamorig_Spine2"].position = SCNVector3(0, 130, 0)
-    nodes["mixamorig_Neck"].position = SCNVector3(0, 140, 0)
-    nodes["mixamorig_Head"].position = SCNVector3(0, 150, 0)
-
-    # Pike: legs straight forward (Z increases)
-    nodes["mixamorig_RightUpLeg"].position = SCNVector3(10, 100, 0)
-    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 100, 50)
-    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 100, 90)
-    nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 100, 100)
-
-    nodes["mixamorig_LeftUpLeg"].position = SCNVector3(-10, 100, 0)
-    nodes["mixamorig_LeftLeg"].position = SCNVector3(-10, 100, 50)
-    nodes["mixamorig_LeftFoot"].position = SCNVector3(-10, 100, 90)
-    nodes["mixamorig_LeftToeBase"].position = SCNVector3(-10, 100, 100)
-
-    for n in nodes.values():
-        n.worldPosition = n.position
-
-    total_com_pike, _ = calculator.calculate_detailed_body_com()
-    print(f"Total CoM (Pike): {total_com_pike}")
-
-    if abs(total_com_pike.z - total_com_t_pose.z) > 5.0:
-        print(f"✅ PASS: Pike CoM Z ({total_com_pike.z:.2f}) shifted significantly forward compared to T-Pose Z ({total_com_t_pose.z:.2f})")
-    else:
-        print(f"❌ FAIL: Pike CoM Z ({total_com_pike.z:.2f}) did not shift forward enough compared to T-Pose Z ({total_com_t_pose.z:.2f})")
 
 if __name__ == "__main__":
     run_verification()
