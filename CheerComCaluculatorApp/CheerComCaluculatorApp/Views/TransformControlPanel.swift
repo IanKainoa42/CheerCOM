@@ -4,6 +4,7 @@ protocol TransformControlPanelDelegate: AnyObject {
     func didChangeTransformMode(_ mode: TransformMode)
     func didTapTransform(direction: TransformDirection)
     func didTapResetTransform()
+    func didChangeTransformStepMultiplier(_ multiplier: Float)
 }
 
 class TransformControlPanel: UIView {
@@ -12,6 +13,8 @@ class TransformControlPanel: UIView {
 
     private var transformModeLabel: UILabel!
     private var panel: UIVisualEffectView!
+    private var stepSegmentedControl: UISegmentedControl!
+    private let stepMultipliers: [Float] = [0.5, 1.0, 2.0, 5.0]
 
     init(width: CGFloat) {
         super.init(frame: .zero)  // Frame will be set by parent or constraints
@@ -37,12 +40,12 @@ class TransformControlPanel: UIView {
 
         // Add transform control panel
         panel = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
-        panel.frame = CGRect(x: 0, y: 40, width: 220, height: 200)
+        panel.frame = CGRect(x: 0, y: 40, width: 220, height: 240)
         panel.layer.cornerRadius = 15
         panel.layer.masksToBounds = true
         addSubview(panel)
 
-        self.frame = CGRect(x: width - 240, y: 110, width: 220, height: 240)
+        self.frame = CGRect(x: width - 240, y: 110, width: 220, height: 280)
         self.autoresizingMask = [.flexibleLeftMargin]
 
         // Transform mode buttons
@@ -98,22 +101,51 @@ class TransformControlPanel: UIView {
         rightBtn.titleLabel?.font = .systemFont(ofSize: 24)
         panel.contentView.addSubview(rightBtn)
 
+        let stepLabel = UILabel(frame: CGRect(x: 10, y: 152, width: 200, height: 16))
+        stepLabel.text = "Step Size"
+        stepLabel.textColor = UIColor.white.withAlphaComponent(0.9)
+        stepLabel.font = .systemFont(ofSize: 12, weight: .semibold)
+        stepLabel.textAlignment = .center
+        panel.contentView.addSubview(stepLabel)
+
+        stepSegmentedControl = UISegmentedControl(items: ["0.5x", "1x", "2x", "5x"])
+        stepSegmentedControl.frame = CGRect(x: 10, y: 170, width: 200, height: 28)
+        stepSegmentedControl.selectedSegmentIndex = 1
+        stepSegmentedControl.backgroundColor = UIColor.white.withAlphaComponent(0.2)
+        stepSegmentedControl.selectedSegmentTintColor = UIColor.systemTeal.withAlphaComponent(0.9)
+        stepSegmentedControl.setTitleTextAttributes(
+            [.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 11, weight: .bold)],
+            for: .normal
+        )
+        stepSegmentedControl.setTitleTextAttributes(
+            [.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 11, weight: .bold)],
+            for: .selected
+        )
+        stepSegmentedControl.addTarget(self, action: #selector(stepSizeChanged), for: .valueChanged)
+        panel.contentView.addSubview(stepSegmentedControl)
+
         // Reset transform button
         let resetTransformBtn = createButton(
-            title: "Reset Position", x: 10, y: 155, width: 200, height: 35,
+            title: "Reset Position", x: 10, y: 205, width: 200, height: 30,
             action: #selector(resetTapped))
         resetTransformBtn.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.8)
         panel.contentView.addSubview(resetTransformBtn)
     }
 
-    func updateModeDisplay(mode: TransformMode) {
+    func updateModeDisplay(mode: TransformMode, step: Float) {
         switch mode {
         case .position:
-            transformModeLabel.text = "Transform: Position"
+            transformModeLabel.text = "Transform: Position (\(formattedStep(step)))"
         case .rotation:
-            transformModeLabel.text = "Transform: Rotation"
+            transformModeLabel.text = "Transform: Rotation (\(formattedStep(step)))"
         case .scale:
-            transformModeLabel.text = "Transform: Scale"
+            transformModeLabel.text = "Transform: Scale (\(formattedStep(step)))"
+        }
+    }
+
+    func updateStepMultiplierSelection(_ multiplier: Float) {
+        if let index = stepMultipliers.firstIndex(where: { abs($0 - multiplier) < 0.001 }) {
+            stepSegmentedControl.selectedSegmentIndex = index
         }
     }
 
@@ -129,6 +161,10 @@ class TransformControlPanel: UIView {
     @objc private func rightTapped() { delegate?.didTapTransform(direction: .right) }
 
     @objc private func resetTapped() { delegate?.didTapResetTransform() }
+    @objc private func stepSizeChanged() {
+        let multiplier = stepMultipliers[stepSegmentedControl.selectedSegmentIndex]
+        delegate?.didChangeTransformStepMultiplier(multiplier)
+    }
 
     // MARK: - Helper
 
@@ -163,5 +199,12 @@ class TransformControlPanel: UIView {
         UIView.animate(withDuration: 0.1) {
             sender.transform = .identity
         }
+    }
+
+    private func formattedStep(_ step: Float) -> String {
+        if step >= 1 {
+            return String(format: "%.1f", step)
+        }
+        return String(format: "%.2f", step)
     }
 }

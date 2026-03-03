@@ -1,31 +1,42 @@
 # Architecture Summary
 
-This document summarizes the current architecture of the CheerCOM application, as discovered during the Baseline Audit.
+This document summarizes the current architecture of the CheerCom Calculator App, specifically focusing on the 3D body model, posing system, and Center of Mass (CoM) calculation logic.
 
-## Where the code lives
-* **App Entry & UI**: `CheerComCaluculatorApp/CheerComCaluculatorApp/`
-* **Scene and Visuals**: `SceneViewController.swift` and `Managers/CheerCOMSceneManager.swift`, `Managers/VisualizationsManager.swift`
-* **CoM Calculation**: `COMCalculator.swift`
-* **Pose Management**: `Managers/PosePresets.swift` and `Managers/PoseStorageManager.swift`
-* **Validation Harness**: `Managers/CoMValidationHarness.swift` and `tests/verify_com_math.py`
+## 1. Body Model Representation
 
-## How the model is represented
-The 3D character is represented as a SceneKit (`SCNNode`) hierarchy, loaded from a Collada (`.dae`) file containing a Mixamo-compatible rig. The `CheerCOMSceneManager` finds and caches standard `mixamorig_` bones. The model does not use active animations; instead, it relies entirely on explicit Euler angle definitions to set poses.
+The application uses Apple's **SceneKit** framework for 3D rendering.
 
-## How a "pose" is defined
-A pose is defined as a dictionary of bone names mapping to explicit Euler angles (`SCNVector3`) in radians (e.g. `["mixamorig_RightArm": SCNVector3(x, y, z)]`). These definitions live in `PosePresets.swift` (for preset poses like T-Pose, Touchdown, etc.) and can be modified or saved via user interactions. A pose is applied by writing these Euler angles directly to the local transforms (`eulerAngles`) of the corresponding `SCNNode` bones.
+*   **Mesh & Rig**: The character model is loaded from a Collada (`.dae`) file (`art.scnassets/character.dae`).
+*   **Skeleton**: The model uses a standard **Mixamo** skeletal rig. All controllable joints are represented as `SCNNode` objects whose names are prefixed with `mixamorig_` (e.g., `mixamorig_Hips`, `mixamorig_RightArm`).
+*   **Hierarchy**: The joint hierarchy follows a standard bipedal structure originating from the `Hips` root node.
+*   **Scene Manager**: The `CheerCOMSceneManager` class is responsible for loading the scene, caching bone nodes for fast access, and managing the 3D environment.
 
-## How CoM is computed
-CoM is computed in `COMCalculator.swift` using a 17-segment anthropometric model.
-1. The human body is divided into 17 segments (Head, Thorax, Abdomen Upper/Lower, Pelvis, Thighs, Shanks, Feet, Upper Arms, Forearms, Hands).
-2. Each segment has a predefined mass percentage of the total body mass and a center-of-mass location (represented as a percentage distance along the segment from the proximal joint to the distal joint).
-3. The calculation fetches the absolute 3D position in world space (`worldPosition`) for every joint.
-4. For each segment, it calculates the segment's CoM in 3D space, multiplies by the segment's mass to find the weighted position, and accumulates this to find the total weighted position.
-5. The final total CoM is the sum of weighted positions divided by the total mass.
+## 2. Posing System
 
-The `COMCalculator` handles fallbacks (e.g., if a hand tip joint is missing, it places the CoM directly at the wrist).
+A "pose" in the application is defined as a specific configuration of joint angles.
 
-## Validation Harness
-The CoM model is validated via a two-pronged approach:
-1. **In-App (Swift)**: `CoMValidationHarness.swift` applies deterministic poses to the SceneKit model and verifies the CoM shifts relative to a baseline T-Pose. It logs detailed tables of segment coordinates and masses.
-2. **Offline (Python)**: `tests/verify_com_math.py` creates a mocked vector space to simulate SceneKit logic, mathematically asserting the correctness of the total mass distribution and the resulting CoM calculations for the deterministic poses.
+*   **Definition**: The `PoseDefinition` struct in `PosePresets.swift` maps joint names (strings) to `SCNVector3` objects representing Euler angles (in radians).
+*   **Application**: Poses are applied by iterating through the definition dictionary and directly setting the `eulerAngles` property of the corresponding `SCNNode` in the SceneKit hierarchy.
+*   **Animation**: Poses are applied within an `SCNTransaction` to allow for smooth interpolation (animation) between states.
+*   **Presets**: `PosePresets.swift` contains a library of predefined cheerleading and gymnastic poses (e.g., T-Pose, Touchdown, Squat, Pike, Layout).
+
+## 3. Center of Mass (CoM) Computation
+
+The total body Center of Mass is calculated dynamically based on the current 3D pose.
+
+*   **Model**: The calculation relies on a **17-segment anthropometric model** (detailed in `docs/com_model.md`), primarily based on data from Winter (2009) and de Leva (1996).
+*   **Method**:
+    1.  The body is divided into 17 segments (e.g., Pelvis, Thorax, Thigh, Upper Arm).
+    2.  Each segment is defined by a proximal (start) and distal (end) joint node.
+    3.  A segment's individual CoM is calculated as a fixed percentage along the 3D line connecting its proximal and distal joints in world space.
+    4.  The total body CoM is the weighted average of all segment CoMs, multiplied by their respective mass ratios (percentages of total body mass).
+*   **Formula**: $CoM_{total} = \frac{\sum (m_i \times p_i)}{\sum m_i}$
+*   **Execution**: The `COMCalculator` class performs this math. It uses a `bind` method to cache references to the specific `SCNNode` joints to optimize the per-frame calculation loop.
+
+## 4. CoM Validation Harness
+
+To ensure the CoM calculation remains accurate as the model evolves, a validation harness is included.
+
+*   **Harness**: `CoMValidationHarness.swift` systematically cycles the character through a set of deterministic baseline poses.
+*   **Verification**: For each pose, it verifies specific CoM displacement criteria (e.g., ensuring the CoM rises significantly during a "Touchdown" pose compared to a "T-Pose").
+*   **Offline Testing**: A Python script (`tests/verify_com_math.py`) allows for independent mathematical verification of the mass ratios and fallback logic without running the SceneKit app.

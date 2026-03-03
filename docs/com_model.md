@@ -69,6 +69,7 @@ To verify the CoM calculation in the app:
     *   **Pike**: Legs forward. CoM should shift forward (Z+).
     *   **Layout**: Straight body. CoM similar to Touchdown/T-Pose but higher than T-Pose.
     *   **Side Lean**: Trunk lateral flexion. CoM should shift laterally (X-axis).
+    *   **Bow and Arrow**: Asymmetric arm extension. CoM should shift laterally (X-axis) away from the baseline.
 4.  A detailed report is printed to the console and the on-screen overlay.
 
 ### Verification Script (Python)
@@ -76,9 +77,11 @@ To verify the CoM calculation in the app:
 For independent verification of the mathematical model (segment mass ratios, fallbacks) without running the app:
 1.  Run `python3 tests/verify_com_math.py`
 2.  This script mocks the SceneKit vector math and verifies that:
-    *   Total mass ratio sums to exactly 1.0.
-    *   Hand segment fallback logic works correctly.
-    *   Coordinate calculations match expected values for a T-Pose.
+    *   **Mass Ratios**: Total mass ratio sums to exactly 1.0.
+    *   **Hand Fallback**: Correctly defaults to proximal joint if distal tip is missing.
+    *   **T-Pose**: Baseline CoM calculation is reasonable.
+    *   **Touchdown**: CoM rises significantly when arms are raised.
+    *   **Squat**: CoM lowers significantly when hips are lowered.
 
 ## Known Limitations
 
