@@ -54,6 +54,8 @@ class JointControlPanel: UIVisualEffectView {
         jointSelectionButton.titleLabel?.font = .boldSystemFont(ofSize: 16)
         jointSelectionButton.backgroundColor = UIColor.systemTeal.withAlphaComponent(0.8)
         jointSelectionButton.layer.cornerRadius = 8
+        jointSelectionButton.accessibilityLabel = "Select Joint"
+        jointSelectionButton.accessibilityHint = "Opens a list of joints to control"
         jointSelectionButton.addTarget(
             self, action: #selector(jointSelectionTapped), for: .touchUpInside)
         contentView.addSubview(jointSelectionButton)
@@ -67,6 +69,8 @@ class JointControlPanel: UIVisualEffectView {
             action: #selector(resetJointTapped)
         )
         resetJointBtn.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.8)
+        resetJointBtn.accessibilityLabel = "Reset Joint"
+        resetJointBtn.accessibilityHint = "Resets the selected joint to zero rotation"
         contentView.addSubview(resetJointBtn)
 
         // 2. Axis Selection Row
@@ -91,6 +95,8 @@ class JointControlPanel: UIVisualEffectView {
             title: "-", x: padding, y: row3Y, width: 40, height: 40,
             action: #selector(decrementTapped))
         decBtn.titleLabel?.font = .boldSystemFont(ofSize: 24)
+        decBtn.accessibilityLabel = "Decrease angle"
+        decBtn.accessibilityHint = "Decreases the joint angle by one degree"
         contentView.addSubview(decBtn)
 
         // Increment Button
@@ -98,6 +104,8 @@ class JointControlPanel: UIVisualEffectView {
             title: "+", x: width - padding - 40, y: row3Y, width: 40, height: 40,
             action: #selector(incrementTapped))
         incBtn.titleLabel?.font = .boldSystemFont(ofSize: 24)
+        incBtn.accessibilityLabel = "Increase angle"
+        incBtn.accessibilityHint = "Increases the joint angle by one degree"
         contentView.addSubview(incBtn)
 
         // Slider

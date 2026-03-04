@@ -121,6 +121,8 @@ class SceneViewController: UIViewController {
         poseLibraryToggleButton.setTitleColor(.white, for: .normal)
         poseLibraryToggleButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
         poseLibraryToggleButton.layer.cornerRadius = 10
+        poseLibraryToggleButton.accessibilityLabel = "Toggle Pose Library"
+        poseLibraryToggleButton.accessibilityHint = "Shows or hides the pose library panel"
         poseLibraryToggleButton.addTarget(
             self, action: #selector(didTapPoseLibraryToggleButton), for: .touchUpInside)
         view.addSubview(poseLibraryToggleButton)
@@ -132,6 +134,8 @@ class SceneViewController: UIViewController {
         resetTPoseButton.setTitleColor(.white, for: .normal)
         resetTPoseButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
         resetTPoseButton.layer.cornerRadius = 10
+        resetTPoseButton.accessibilityLabel = "Reset to T-Pose"
+        resetTPoseButton.accessibilityHint = "Resets all joints to the default T-Pose position"
         resetTPoseButton.addTarget(
             self, action: #selector(didTapResetTPoseButton), for: .touchUpInside)
         view.addSubview(resetTPoseButton)
@@ -145,6 +149,8 @@ class SceneViewController: UIViewController {
         validationBtn.setTitle("Run Diagnostics", for: .normal)
         validationBtn.setTitleColor(.white, for: .normal)
         validationBtn.layer.cornerRadius = 10
+        validationBtn.accessibilityLabel = "Run Diagnostics"
+        validationBtn.accessibilityHint = "Runs center-of-mass validation across preset poses"
         validationBtn.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
         view.addSubview(validationBtn)
 

@@ -78,6 +78,7 @@ class TransformControlPanel: UIView {
             title: "↑", x: centerX - arrowSize / 2, y: centerY - arrowSize - 5, width: arrowSize,
             height: arrowSize, action: #selector(upTapped))
         upBtn.titleLabel?.font = .systemFont(ofSize: 24)
+        upBtn.accessibilityLabel = "Move up"
         panel.contentView.addSubview(upBtn)
 
         // Down arrow
@@ -85,6 +86,7 @@ class TransformControlPanel: UIView {
             title: "↓", x: centerX - arrowSize / 2, y: centerY + 5, width: arrowSize,
             height: arrowSize, action: #selector(downTapped))
         downBtn.titleLabel?.font = .systemFont(ofSize: 24)
+        downBtn.accessibilityLabel = "Move down"
         panel.contentView.addSubview(downBtn)
 
         // Left arrow
@@ -92,6 +94,7 @@ class TransformControlPanel: UIView {
             title: "←", x: centerX - arrowSize - arrowSize / 2 - 5, y: centerY - arrowSize / 2,
             width: arrowSize, height: arrowSize, action: #selector(leftTapped))
         leftBtn.titleLabel?.font = .systemFont(ofSize: 24)
+        leftBtn.accessibilityLabel = "Move left"
         panel.contentView.addSubview(leftBtn)
 
         // Right arrow
@@ -99,6 +102,7 @@ class TransformControlPanel: UIView {
             title: "→", x: centerX + arrowSize / 2 + 5, y: centerY - arrowSize / 2,
             width: arrowSize, height: arrowSize, action: #selector(rightTapped))
         rightBtn.titleLabel?.font = .systemFont(ofSize: 24)
+        rightBtn.accessibilityLabel = "Move right"
         panel.contentView.addSubview(rightBtn)
 
         let stepLabel = UILabel(frame: CGRect(x: 10, y: 152, width: 200, height: 16))
@@ -111,6 +115,7 @@ class TransformControlPanel: UIView {
         stepSegmentedControl = UISegmentedControl(items: ["0.5x", "1x", "2x", "5x"])
         stepSegmentedControl.frame = CGRect(x: 10, y: 170, width: 200, height: 28)
         stepSegmentedControl.selectedSegmentIndex = 1
+        stepSegmentedControl.accessibilityLabel = "Step size multiplier"
         stepSegmentedControl.backgroundColor = UIColor.white.withAlphaComponent(0.2)
         stepSegmentedControl.selectedSegmentTintColor = UIColor.systemTeal.withAlphaComponent(0.9)
         stepSegmentedControl.setTitleTextAttributes(
