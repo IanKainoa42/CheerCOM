@@ -62,7 +62,7 @@ class CoMValidationHarness {
     }
 
     private func log(_ message: String) {
-        print(message)
+        DebugLogger.log(message)
         logger?(message)
     }
 

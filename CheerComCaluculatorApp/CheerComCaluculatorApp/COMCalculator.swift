@@ -70,7 +70,7 @@ class COMCalculator {
 
         for segment in segments {
             guard let proxNode = jointNodes[segment.prox] else {
-                print("⚠️ Missing proximal joint for binding: \(segment.prox)")
+                DebugLogger.warn("Missing proximal joint for binding: \(segment.prox)")
                 missingCount += 1
                 continue
             }
@@ -79,10 +79,10 @@ class COMCalculator {
             if distNode == nil {
                 // Special handling for Hand tips: use proximal if distal is missing (CoM at wrist)
                 if segment.name.contains("Hand") {
-                    print("⚠️ Hand distal \(segment.dist) missing, using proximal as fallback (CoM at wrist)")
+                    DebugLogger.warn("Hand distal \(segment.dist) missing, using proximal as fallback (CoM at wrist)")
                     distNode = proxNode
                 } else {
-                    print("⚠️ Missing distal joint for binding: \(segment.dist)")
+                    DebugLogger.warn("Missing distal joint for binding: \(segment.dist)")
                     missingCount += 1
                     continue
                 }
@@ -98,7 +98,7 @@ class COMCalculator {
         }
 
         if missingCount == 0 {
-            print("✅ COMCalculator bound to \(boundSegments.count) segments")
+            DebugLogger.log("✅ COMCalculator bound to \(boundSegments.count) segments")
         }
     }
 
@@ -112,7 +112,7 @@ class COMCalculator {
     func calculateDetailedBodyCOM(detailed: Bool = true) -> CalculationResult {
         // Fallback or warning if not bound?
         if boundSegments.isEmpty {
-             print("⚠️ COMCalculator: No segments bound. Did you call bind(jointNodes:)?")
+             DebugLogger.warn("COMCalculator: No segments bound. Did you call bind(jointNodes:)?")
              return CalculationResult(totalCOM: SCNVector3Zero, segmentCOMs: [])
         }
 
@@ -158,7 +158,7 @@ class COMCalculator {
         
         for segment in segments {
             guard let proxPos = jointPositions[segment.prox] else {
-                print("⚠️ Missing proximal joint: \(segment.prox)")
+                DebugLogger.warn("Missing proximal joint: \(segment.prox)")
                 continue
             }
             
@@ -181,7 +181,7 @@ class COMCalculator {
         if totalMass > 0 {
             totalCOM = totalWeighted * Float(1.0 / totalMass)
         } else {
-            print("⚠️ Warning: Total mass is zero, returning origin")
+            DebugLogger.warn("Warning: Total mass is zero, returning origin")
             totalCOM = SCNVector3Zero
         }
 

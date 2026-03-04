@@ -30,7 +30,7 @@ class CameraManager {
         cameraNode.look(at: initialPos.lookAt)
         scene.rootNode.addChildNode(cameraNode)
 
-        print("📷 Camera positioned at: \(initialPos.name)")
+        DebugLogger.log("📷 Camera positioned at: \(initialPos.name)")
     }
 
     func switchToCamera(index: Int) -> String {
@@ -52,7 +52,7 @@ class CameraManager {
 
         SCNTransaction.commit()
 
-        print("📷 Switched to: \(newPos.name) - Pos: \(newPos.position), LookAt: \(newPos.lookAt)")
+        DebugLogger.log("📷 Switched to: \(newPos.name) - Pos: \(newPos.position), LookAt: \(newPos.lookAt)")
         return newPos.name
     }
 

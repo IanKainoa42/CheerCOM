@@ -133,7 +133,7 @@ class VisualizationsManager {
         comMarker = SCNNode(geometry: sphere)
         scene.rootNode.addChildNode(comMarker)
 
-        print("🔴 COM marker created")
+        DebugLogger.log("🔴 COM marker created")
     }
 
     private func setupSegmentMarkers(in scene: SCNScene) {
@@ -144,7 +144,7 @@ class VisualizationsManager {
     private func setupCOMTrail(in scene: SCNScene) {
         comTrailNode = SCNNode()
         scene.rootNode.addChildNode(comTrailNode)
-        print("🔵 COM trail initialized")
+        DebugLogger.log("🔵 COM trail initialized")
     }
 
     private func setupVisualAids(in scene: SCNScene) {

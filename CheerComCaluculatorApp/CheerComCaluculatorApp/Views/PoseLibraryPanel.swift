@@ -292,7 +292,7 @@ class PoseLibraryPanel: UIVisualEffectView {
 
         animateButton(sender)
         delegate?.didSelectPose(pose)
-        print("🎭 Selected pose: \(pose.displayName)")
+        DebugLogger.log("🎭 Selected pose: \(pose.displayName)")
     }
 
     @objc private func savedPoseTapped(_ sender: UIButton) {
@@ -303,7 +303,7 @@ class PoseLibraryPanel: UIVisualEffectView {
         if let pose = savedPoses.first(where: { $0.id == uuid }) {
             animateButton(sender)
             delegate?.didSelectSavedPose(pose)
-            print("💾 Selected saved pose: \(pose.name)")
+            DebugLogger.log("💾 Selected saved pose: \(pose.name)")
         }
     }
 
