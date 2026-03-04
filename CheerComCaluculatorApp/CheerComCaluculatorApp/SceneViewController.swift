@@ -603,9 +603,22 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 
         present(alert, animated: true)
 
-        // Add observer to enable button only when text is present
-        NotificationCenter.default.addObserver(forName: UITextField.textDidChangeNotification, object: alert.textFields?.first, queue: OperationQueue.main) { notification in
-            if let textField = notification.object as? UITextField,
+        // Enable save button only when text is present.
+        // Use block-based observer and capture the token for cleanup.
+        var textObserver: NSObjectProtocol?
+        textObserver = NotificationCenter.default.addObserver(
+            forName: UITextField.textDidChangeNotification,
+            object: alert.textFields?.first,
+            queue: .main
+        ) { [weak alert] notification in
+            guard let alert = alert else {
+                // Alert dismissed — remove ourselves
+                if let obs = textObserver {
+                    NotificationCenter.default.removeObserver(obs)
+                }
+                return
+            }
+            if let textField = alert.textFields?.first,
                let text = textField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
                !text.isEmpty {
                 saveAction.isEnabled = true
