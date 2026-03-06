@@ -388,10 +388,17 @@ extension SceneViewController: JointControlPanelDelegate {
 
         let oldAngle = getAngleForCurrentAxis(joint: joint)
 
+        var newAngles = joint.eulerAngles
         switch jointControlMode {
-        case .x: joint.eulerAngles.x += delta
-        case .y: joint.eulerAngles.y += delta
-        case .z: joint.eulerAngles.z += delta
+        case .x: newAngles.x += delta
+        case .y: newAngles.y += delta
+        case .z: newAngles.z += delta
+        }
+
+        if let jointName = joint.name {
+            joint.eulerAngles = JointLimits.clampAngles(for: jointName, angles: newAngles)
+        } else {
+            joint.eulerAngles = newAngles
         }
 
         let newAngle = getAngleForCurrentAxis(joint: joint)
@@ -422,10 +429,17 @@ extension SceneViewController: JointControlPanelDelegate {
         }
         let angle = value * .pi / 180
 
+        var newAngles = joint.eulerAngles
         switch jointControlMode {
-        case .x: joint.eulerAngles.x = angle
-        case .y: joint.eulerAngles.y = angle
-        case .z: joint.eulerAngles.z = angle
+        case .x: newAngles.x = angle
+        case .y: newAngles.y = angle
+        case .z: newAngles.z = angle
+        }
+
+        if let jointName = joint.name {
+            joint.eulerAngles = JointLimits.clampAngles(for: jointName, angles: newAngles)
+        } else {
+            joint.eulerAngles = newAngles
         }
 
         print("🎚️ Set \(jointControlMode.rawValue)-axis angle to \(value)°")
@@ -451,7 +465,7 @@ extension SceneViewController: JointControlPanelDelegate {
         // Apply T-Pose joint angles
         for (jointName, angles) in tPoseDefinition.jointAngles {
             if let bone = sceneManager.findBone(named: jointName) {
-                bone.eulerAngles = angles
+                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
             }
         }
 
@@ -662,7 +676,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         // Apply joint angles
         for (jointName, angles) in jointAngles {
             if let bone = sceneManager.findBone(named: jointName) {
-                bone.eulerAngles = angles
+                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
             }
         }
 
