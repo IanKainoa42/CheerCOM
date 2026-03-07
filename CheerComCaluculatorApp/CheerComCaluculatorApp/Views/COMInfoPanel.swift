@@ -10,6 +10,12 @@ class COMInfoPanel: UIVisualEffectView {
     private var stabilityLabel: UILabel!
     private var marginLabel: UILabel!
     private var feedbackLabel: UILabel!
+    private var copyButton: UIButton!
+
+    // Cached values for copy export
+    private var lastCOM: SCNVector3 = SCNVector3Zero
+    private var lastIsStable: Bool = false
+    private var lastMargin: Float = 0
 
     init() {
         let blurEffect = UIBlurEffect(style: .dark)
@@ -22,7 +28,7 @@ class COMInfoPanel: UIVisualEffectView {
     }
 
     private func setupUI() {
-        self.frame = CGRect(x: 20, y: 60, width: 220, height: 200)
+        self.frame = CGRect(x: 20, y: 60, width: 220, height: 225)
         self.layer.cornerRadius = 15
         self.layer.masksToBounds = true
 
@@ -83,9 +89,24 @@ class COMInfoPanel: UIVisualEffectView {
         feedbackLabel.font = .italicSystemFont(ofSize: 14)
         feedbackLabel.textAlignment = .center
         contentView.addSubview(feedbackLabel)
+
+        // Copy COM Data Button
+        copyButton = UIButton(type: .system)
+        copyButton.frame = CGRect(x: 10, y: 197, width: 200, height: 22)
+        copyButton.setTitle("📋 Copy COM Data", for: .normal)
+        copyButton.setTitleColor(UIColor.systemCyan, for: .normal)
+        copyButton.titleLabel?.font = .systemFont(ofSize: 12, weight: .medium)
+        copyButton.accessibilityLabel = "Copy COM Data"
+        copyButton.accessibilityHint = "Copies center of mass coordinates and stability to clipboard"
+        copyButton.addTarget(self, action: #selector(copyDataTapped), for: .touchUpInside)
+        contentView.addSubview(copyButton)
     }
 
     func update(com: SCNVector3, isStable: Bool, margin: Float) {
+        lastCOM = com
+        lastIsStable = isStable
+        lastMargin = margin
+
         xLabel.text = String(format: "X: %.2f cm", com.x)
         yLabel.text = String(format: "Y: %.2f cm", com.y)
         zLabel.text = String(format: "Z: %.2f cm", com.z)
@@ -108,6 +129,26 @@ class COMInfoPanel: UIVisualEffectView {
             stabilityLabel.textColor = .red
             feedbackLabel.text = "Shift Weight Back"
             feedbackLabel.textColor = .red
+        }
+    }
+
+    // MARK: - Export
+
+    @objc private func copyDataTapped() {
+        let stabilityStr = lastIsStable ? "Stable" : "Unstable"
+        let text = String(
+            format: "COM X: %.2f cm, Y: %.2f cm, Z: %.2f cm | %@ | Margin: %.1f cm",
+            lastCOM.x, lastCOM.y, lastCOM.z, stabilityStr, lastMargin
+        )
+        UIPasteboard.general.string = text
+
+        // Brief visual confirmation
+        let original = copyButton.title(for: .normal)
+        copyButton.setTitle("✅ Copied!", for: .normal)
+        copyButton.setTitleColor(.green, for: .normal)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            self?.copyButton.setTitle(original, for: .normal)
+            self?.copyButton.setTitleColor(.systemCyan, for: .normal)
         }
     }
 }

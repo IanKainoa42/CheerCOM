@@ -16,6 +16,7 @@ class SceneViewController: UIViewController {
     var poseLibraryPanel: PoseLibraryPanel!
     private var poseLibraryToggleButton: UIButton!
     private var resetTPoseButton: UIButton!
+    private var keyboardHelpButton: UIButton!
     var viewLabel: UILabel!
 
     // State
@@ -154,6 +155,19 @@ class SceneViewController: UIViewController {
         validationBtn.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
         view.addSubview(validationBtn)
 
+        // Keyboard Shortcuts Help Button
+        keyboardHelpButton = UIButton(type: .system)
+        keyboardHelpButton.frame = CGRect(x: view.bounds.width - 160, y: 105, width: 140, height: 40)
+        keyboardHelpButton.backgroundColor = UIColor.systemGray.withAlphaComponent(0.6)
+        keyboardHelpButton.setTitle("⌨️ Shortcuts", for: .normal)
+        keyboardHelpButton.setTitleColor(.white, for: .normal)
+        keyboardHelpButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
+        keyboardHelpButton.layer.cornerRadius = 10
+        keyboardHelpButton.accessibilityLabel = "Keyboard Shortcuts"
+        keyboardHelpButton.accessibilityHint = "Shows available keyboard shortcuts"
+        keyboardHelpButton.addTarget(self, action: #selector(didTapKeyboardHelp), for: .touchUpInside)
+        view.addSubview(keyboardHelpButton)
+
         setTransformMode(currentTransformMode)
     }
 
@@ -218,6 +232,22 @@ class SceneViewController: UIViewController {
             DebugLogger.log("🏁 Diagnostics Finished")
             self?.validationHarness = nil
         }
+    }
+
+    @objc func didTapKeyboardHelp() {
+        let shortcuts = """
+        ↑ ↓ ← →  — Transform in current mode
+        Space       — Cycle mode: Position → Rotation → Scale
+        F           — Toggle fine / coarse step
+        """
+
+        let alert = UIAlertController(
+            title: "⌨️ Keyboard Shortcuts",
+            message: shortcuts,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Got it", style: .default))
+        present(alert, animated: true)
     }
 
     // MARK: - Update Loop
