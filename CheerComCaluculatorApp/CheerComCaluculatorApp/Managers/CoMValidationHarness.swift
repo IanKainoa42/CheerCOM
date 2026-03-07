@@ -323,7 +323,7 @@ class CoMValidationHarness {
 
         for (jointName, angles) in poseDef.jointAngles {
             if let bone = sceneManager.findBone(named: jointName) {
-                bone.eulerAngles = angles
+                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
             }
         }
 
