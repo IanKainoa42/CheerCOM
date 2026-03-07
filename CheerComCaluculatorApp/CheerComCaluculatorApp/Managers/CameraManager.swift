@@ -67,6 +67,7 @@ class CameraManager {
         return switchToCamera(index: currentCameraIndex)
     }
 
+    @discardableResult
     func fitToView() -> String {
         // Reset to current camera position (smooth re-center)
         return switchToCamera(index: currentCameraIndex)
