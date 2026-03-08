@@ -13,6 +13,9 @@ protocol JointControlPanelDelegate: AnyObject {
 
     func didTapFitView()
     func didTapToggleVisualizations()
+
+    func didTapPreviousView()
+    func didTapNextView()
 }
 
 class JointControlPanel: UIVisualEffectView {
@@ -24,6 +27,7 @@ class JointControlPanel: UIVisualEffectView {
     private var axisSegmentedControl: UISegmentedControl!
     private var jointAngleSlider: UISlider!
     private var jointAngleLabel: UILabel!
+    private var cameraViewLabel: UILabel!
 
     init(width: CGFloat) {
         let blurEffect = UIBlurEffect(style: .dark)
@@ -37,7 +41,6 @@ class JointControlPanel: UIVisualEffectView {
     }
 
     private func setupUI(width: CGFloat) {
-        let controlHeight: CGFloat = 180  // Reduced height with fewer buttons
         self.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
 
         let padding: CGFloat = 20
@@ -158,12 +161,42 @@ class JointControlPanel: UIVisualEffectView {
             width: bottomBtnWidth * 0.7, height: 35, action: #selector(toggleVisualsTapped))
         visualsBtn.backgroundColor = UIColor.systemIndigo.withAlphaComponent(0.8)
         contentView.addSubview(visualsBtn)
+
+        // 5. Camera view controls row
+        let row5Y = row4Y + 45
+        let camBtnW: CGFloat = 50
+        let camLabelW: CGFloat = contentWidth - camBtnW * 2 - 20
+
+        let prevViewBtn = createButton(
+            title: "◀", x: padding, y: row5Y, width: camBtnW, height: 32,
+            action: #selector(prevViewTapped))
+        prevViewBtn.backgroundColor = UIColor.systemGray.withAlphaComponent(0.6)
+        prevViewBtn.accessibilityLabel = "Previous camera view"
+        contentView.addSubview(prevViewBtn)
+
+        cameraViewLabel = UILabel(
+            frame: CGRect(x: padding + camBtnW + 10, y: row5Y, width: camLabelW, height: 32))
+        cameraViewLabel.text = "📷 Front"
+        cameraViewLabel.textColor = .white
+        cameraViewLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        cameraViewLabel.textAlignment = .center
+        cameraViewLabel.backgroundColor = UIColor.white.withAlphaComponent(0.1)
+        cameraViewLabel.layer.cornerRadius = 6
+        cameraViewLabel.layer.masksToBounds = true
+        contentView.addSubview(cameraViewLabel)
+
+        let nextViewBtn = createButton(
+            title: "▶", x: padding + camBtnW + 10 + camLabelW + 10, y: row5Y,
+            width: camBtnW, height: 32, action: #selector(nextViewTapped))
+        nextViewBtn.backgroundColor = UIColor.systemGray.withAlphaComponent(0.6)
+        nextViewBtn.accessibilityLabel = "Next camera view"
+        contentView.addSubview(nextViewBtn)
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
         // Determine control height to match setupUI
-        let controlHeight: CGFloat = 180
+        let controlHeight: CGFloat = 240
 
         // Determine available width from current bounds or superview
         let availableWidth: CGFloat
@@ -203,6 +236,10 @@ class JointControlPanel: UIVisualEffectView {
         jointAngleLabel.text = String(format: "%.1f°", angle)
     }
 
+    func updateCameraView(name: String) {
+        cameraViewLabel.text = "📷 \(name)"
+    }
+
     func updateSelectedAxis(_ axis: JointAxis) {
         switch axis {
         case .x: axisSegmentedControl.selectedSegmentIndex = 0
@@ -236,6 +273,8 @@ class JointControlPanel: UIVisualEffectView {
     @objc private func resetPoseTapped() { delegate?.didTapResetPose() }
     @objc private func fitViewTapped() { delegate?.didTapFitView() }
     @objc private func toggleVisualsTapped() { delegate?.didTapToggleVisualizations() }
+    @objc private func prevViewTapped() { delegate?.didTapPreviousView() }
+    @objc private func nextViewTapped() { delegate?.didTapNextView() }
 
     // MARK: - Helper
 

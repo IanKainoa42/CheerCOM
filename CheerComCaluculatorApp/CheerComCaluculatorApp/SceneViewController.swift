@@ -500,11 +500,24 @@ extension SceneViewController: JointControlPanelDelegate {
 
     // View Controls
     func didTapFitView() {
-        cameraManager.fitToView()
+        let name = cameraManager.fitToView()
+        jointControlPanel.updateCameraView(name: name)
     }
 
     func didTapToggleVisualizations() {
         visualizationsManager.toggleVisualizations()
+    }
+
+    func didTapPreviousView() {
+        let name = cameraManager.previousView()
+        jointControlPanel.updateCameraView(name: name)
+        DebugLogger.log("📷 Camera: \(name)")
+    }
+
+    func didTapNextView() {
+        let name = cameraManager.nextView()
+        jointControlPanel.updateCameraView(name: name)
+        DebugLogger.log("📷 Camera: \(name)")
     }
 
     // Helpers
