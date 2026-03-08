@@ -16,7 +16,9 @@ class JointLimits {
         "mixamorig_RightLeg": JointLimit(minX: -160, maxX: 0, minY: -360, maxY: 360, minZ: -360, maxZ: 360),
         "mixamorig_LeftLeg": JointLimit(minX: -160, maxX: 0, minY: -360, maxY: 360, minZ: -360, maxZ: 360),
         "mixamorig_RightForeArm": JointLimit(minX: -360, maxX: 360, minY: -360, maxY: 360, minZ: 0, maxZ: 160),
-        "mixamorig_LeftForeArm": JointLimit(minX: -360, maxX: 360, minY: -360, maxY: 360, minZ: -160, maxZ: 0)
+        "mixamorig_LeftForeArm": JointLimit(minX: -360, maxX: 360, minY: -360, maxY: 360, minZ: -160, maxZ: 0),
+        "mixamorig_RightArm": JointLimit(minX: -180, maxX: 90, minY: -90, maxY: 90, minZ: -180, maxZ: 0),
+        "mixamorig_LeftArm": JointLimit(minX: -180, maxX: 90, minY: -90, maxY: 90, minZ: 0, maxZ: 180)
     ]
 
     static func clampAngles(for jointName: String, angles: SCNVector3) -> SCNVector3 {
