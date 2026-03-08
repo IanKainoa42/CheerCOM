@@ -45,6 +45,11 @@ class SceneViewController: UIViewController {
     private var continuousRotationTimer: Timer?
     private var currentRotationDirection: RotationDirection?
 
+    // FPS tracking
+    private var fpsLabel: UILabel!
+    private var fpsFrameCount: Int = 0
+    private var fpsLastTimestamp: TimeInterval = 0
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -169,6 +174,18 @@ class SceneViewController: UIViewController {
         view.addSubview(keyboardHelpButton)
 
         setTransformMode(currentTransformMode)
+
+        // FPS indicator (debug overlay — top-right below keyboard help button)
+        fpsLabel = UILabel(frame: CGRect(x: view.bounds.width - 160, y: 150, width: 140, height: 24))
+        fpsLabel.text = "FPS: --"
+        fpsLabel.textColor = UIColor.white.withAlphaComponent(0.75)
+        fpsLabel.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        fpsLabel.textAlignment = .center
+        fpsLabel.backgroundColor = UIColor.black.withAlphaComponent(0.35)
+        fpsLabel.layer.cornerRadius = 6
+        fpsLabel.layer.masksToBounds = true
+        fpsLabel.accessibilityLabel = "Frames per second indicator"
+        view.addSubview(fpsLabel)
     }
 
     @objc private func didTapPoseLibraryToggleButton() {
@@ -253,9 +270,11 @@ class SceneViewController: UIViewController {
     // MARK: - Update Loop
 
     func startUpdateTimer() {
+        fpsLastTimestamp = Date.timeIntervalSinceReferenceDate
         updateTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) {
             [weak self] _ in
             guard let self = self else { return }
+            self.trackFPS()
             if self.needsCOMUpdate {
                 self.performCOMUpdate()
                 // Reset flag only after update is done
@@ -264,6 +283,20 @@ class SceneViewController: UIViewController {
         }
         updateTimer?.tolerance = 0.002
         DebugLogger.log("⏱️ Update timer started")
+    }
+
+    private func trackFPS() {
+        fpsFrameCount += 1
+        let now = Date.timeIntervalSinceReferenceDate
+        let elapsed = now - fpsLastTimestamp
+        if elapsed >= 1.0 {
+            let fps = Double(fpsFrameCount) / elapsed
+            fpsFrameCount = 0
+            fpsLastTimestamp = now
+            DispatchQueue.main.async { [weak self] in
+                self?.fpsLabel.text = String(format: "FPS: %.0f", fps)
+            }
+        }
     }
 
     func stopUpdateTimer() {
