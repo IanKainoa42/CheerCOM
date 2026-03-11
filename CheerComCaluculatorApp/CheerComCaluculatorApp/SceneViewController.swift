@@ -637,8 +637,62 @@ extension SceneViewController: PoseLibraryPanelDelegate {
     }
 
     func didTapMirrorPose() {
-        DebugLogger.log("↔️ Mirror pose functionality coming soon")
-        // TODO: Implement pose mirroring
+        DebugLogger.log("↔️ Mirroring pose...")
+        
+        // Define left↔right joint pairs (without the mixamorig_ prefix for matching)
+        let jointPairs: [(String, String)] = [
+            ("mixamorig_LeftShoulder", "mixamorig_RightShoulder"),
+            ("mixamorig_LeftArm", "mixamorig_RightArm"),
+            ("mixamorig_LeftForeArm", "mixamorig_RightForeArm"),
+            ("mixamorig_LeftHand", "mixamorig_RightHand"),
+            ("mixamorig_LeftUpLeg", "mixamorig_RightUpLeg"),
+            ("mixamorig_LeftLeg", "mixamorig_RightLeg"),
+            ("mixamorig_LeftFoot", "mixamorig_RightFoot"),
+        ]
+        
+        // Collect current angles for all joints
+        var currentAngles: [String: SCNVector3] = [:]
+        for jointName in sceneManager.controllableJoints {
+            if let bone = sceneManager.findBone(named: jointName) {
+                currentAngles[jointName] = bone.eulerAngles
+            }
+        }
+        
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = 0.3
+        
+        // Swap angles between paired joints and mirror them
+        for (leftJoint, rightJoint) in jointPairs {
+            guard let leftAngles = currentAngles[leftJoint],
+                  let rightAngles = currentAngles[rightJoint],
+                  let leftBone = sceneManager.findBone(named: leftJoint),
+                  let rightBone = sceneManager.findBone(named: rightJoint) else {
+                continue
+            }
+            
+            // Mirror: swap left↔right and negate Y and Z rotations for reflection
+            // X rotation stays the same (forward/back bend)
+            // Y rotation negated (twist direction)
+            // Z rotation negated (side tilt direction)
+            leftBone.eulerAngles = SCNVector3(rightAngles.x, -rightAngles.y, -rightAngles.z)
+            rightBone.eulerAngles = SCNVector3(leftAngles.x, -leftAngles.y, -leftAngles.z)
+        }
+        
+        // For center joints (Hips, Spine, Neck, Head), mirror by negating Y and Z
+        let centerJoints = ["mixamorig_Hips", "mixamorig_Spine", "mixamorig_Spine1", 
+                            "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head"]
+        for jointName in centerJoints {
+            if let angles = currentAngles[jointName],
+               let bone = sceneManager.findBone(named: jointName) {
+                bone.eulerAngles = SCNVector3(angles.x, -angles.y, -angles.z)
+            }
+        }
+        
+        SCNTransaction.completionBlock = { [weak self] in
+            self?.scheduleUpdateCOM()
+            DebugLogger.log("✅ Pose mirrored successfully")
+        }
+        SCNTransaction.commit()
     }
 
     func didSelectSavedPose(_ pose: SavedPose) {
