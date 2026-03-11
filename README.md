@@ -33,7 +33,11 @@ CheerComCaluculatorApp/
     *   CoM Trail.
     *   Gravity Line.
 *   **Pose Library**: Apply preset poses (Liberty, Scale, Squat, etc.) or save custom poses.
-*   **Joint Control**: Manually rotate individual joints.
+*   **Pose Mirroring**: Flip any pose left↔right with one tap.
+*   **Joint Control**: Manually rotate individual joints with visual highlighting.
+*   **Keyboard Shortcuts**: Arrow keys for transform, M to mirror, R to reset, F for fine control.
+*   **Copy CoM Data**: Export coordinates to clipboard for external use.
+*   **FPS Overlay**: Debug performance indicator.
 *   **Diagnostics**: Built-in validation harness to audit the CoM model.
 
 ## 📊 CoM Model
