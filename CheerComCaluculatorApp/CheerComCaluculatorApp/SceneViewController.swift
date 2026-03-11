@@ -256,6 +256,8 @@ class SceneViewController: UIViewController {
         ↑ ↓ ← →  — Transform in current mode
         Space       — Cycle mode: Position → Rotation → Scale
         F           — Toggle fine / coarse step
+        M           — Mirror pose (swap left ↔ right)
+        R           — Reset to T-Pose
         """
 
         let alert = UIAlertController(
@@ -370,6 +372,10 @@ class SceneViewController: UIViewController {
             case .scale:
                 setTransformMode(.position)
             }
+        case .keyboardM:
+            didTapMirrorPose()
+        case .keyboardR:
+            didTapResetPose()
         default:
             super.pressesBegan(presses, with: event)
         }
