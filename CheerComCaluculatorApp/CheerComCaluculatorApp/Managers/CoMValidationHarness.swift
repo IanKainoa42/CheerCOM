@@ -181,6 +181,13 @@ class CoMValidationHarness {
              log("✅ All BOS joints found.")
         }
 
+        // 4. Log Joint Limits configuration
+        log("\n--- Joint Limits Enforced ---")
+        log("Configured Joints: \(JointLimits.limits.keys.count)")
+        for (joint, _) in JointLimits.limits {
+            log(" - \(joint)")
+        }
+
         log("-------------------\n")
     }
 

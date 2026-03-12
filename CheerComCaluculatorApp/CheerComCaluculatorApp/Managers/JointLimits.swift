@@ -18,7 +18,20 @@ class JointLimits {
         "mixamorig_RightForeArm": JointLimit(minX: -360, maxX: 360, minY: -360, maxY: 360, minZ: 0, maxZ: 160),
         "mixamorig_LeftForeArm": JointLimit(minX: -360, maxX: 360, minY: -360, maxY: 360, minZ: -160, maxZ: 0),
         "mixamorig_RightArm": JointLimit(minX: -180, maxX: 90, minY: -90, maxY: 90, minZ: -180, maxZ: 0),
-        "mixamorig_LeftArm": JointLimit(minX: -180, maxX: 90, minY: -90, maxY: 90, minZ: 0, maxZ: 180)
+        "mixamorig_LeftArm": JointLimit(minX: -180, maxX: 90, minY: -90, maxY: 90, minZ: 0, maxZ: 180),
+
+        // Spine limits
+        "mixamorig_Spine": JointLimit(minX: -45, maxX: 45, minY: -45, maxY: 45, minZ: -45, maxZ: 45),
+        "mixamorig_Spine1": JointLimit(minX: -45, maxX: 45, minY: -45, maxY: 45, minZ: -45, maxZ: 45),
+        "mixamorig_Spine2": JointLimit(minX: -45, maxX: 45, minY: -45, maxY: 45, minZ: -45, maxZ: 45),
+
+        // Neck/Head limits
+        "mixamorig_Neck": JointLimit(minX: -60, maxX: 60, minY: -80, maxY: 80, minZ: -45, maxZ: 45),
+        "mixamorig_Head": JointLimit(minX: -60, maxX: 60, minY: -80, maxY: 80, minZ: -45, maxZ: 45),
+
+        // Hip limits (UpLeg)
+        "mixamorig_RightUpLeg": JointLimit(minX: -180, maxX: 90, minY: -90, maxY: 90, minZ: -180, maxZ: 180),
+        "mixamorig_LeftUpLeg": JointLimit(minX: -180, maxX: 90, minY: -90, maxY: 90, minZ: -180, maxZ: 180)
     ]
 
     static func clampAngles(for jointName: String, angles: SCNVector3) -> SCNVector3 {

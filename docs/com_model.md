@@ -83,6 +83,16 @@ For independent verification of the mathematical model (segment mass ratios, fal
     *   **Touchdown**: CoM rises significantly when arms are raised.
     *   **Squat**: CoM lowers significantly when hips are lowered.
 
+## Joint Constraints
+
+Realistic joint limits are enforced within the application to prevent impossible poses that would otherwise invalidate the CoM calculation. The following primary limits are currently implemented:
+-   **Knees (`mixamorig_RightLeg`, `mixamorig_LeftLeg`)**: Hinge joint. X-axis limited to [-160°, 0°].
+-   **Elbows (`mixamorig_RightForeArm`, `mixamorig_LeftForeArm`)**: Hinge joint. Z-axis limited (Right: [0°, 160°], Left: [-160°, 0°]).
+-   **Shoulders (`mixamorig_RightArm`, `mixamorig_LeftArm`)**: Ball-and-socket. Bounded ranges across X, Y, and Z to prevent hyper-extension.
+-   **Spine (`mixamorig_Spine`, `mixamorig_Spine1`, `mixamorig_Spine2`)**: Segmented limits. Each bounded to [-45°, 45°] across all axes.
+-   **Neck/Head (`mixamorig_Neck`, `mixamorig_Head`)**: Limited range of motion to simulate physiological boundaries.
+-   **Hips (`mixamorig_RightUpLeg`, `mixamorig_LeftUpLeg`)**: Broad ball-and-socket constraints bounding extreme internal/external rotation and hyper-extension.
+
 ## Known Limitations
 
 1.  **Clavicle Segment**: The shoulder girdle (clavicle) is not modeled as a separate moving segment. Its mass is effectively lumped into the Thorax.
