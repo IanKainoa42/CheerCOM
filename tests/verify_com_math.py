@@ -320,7 +320,9 @@ class JointLimitsMock:
         "mixamorig_RightLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
         "mixamorig_LeftLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
         "mixamorig_RightForeArm": {"min": SCNVector3(-360, -360, 0), "max": SCNVector3(360, 360, 160)},
-        "mixamorig_LeftForeArm": {"min": SCNVector3(-360, -360, -160), "max": SCNVector3(360, 360, 0)}
+        "mixamorig_LeftForeArm": {"min": SCNVector3(-360, -360, -160), "max": SCNVector3(360, 360, 0)},
+        "mixamorig_RightArm": {"min": SCNVector3(-180, -90, -180), "max": SCNVector3(90, 90, 0)},
+        "mixamorig_LeftArm": {"min": SCNVector3(-180, -90, 0), "max": SCNVector3(90, 90, 180)}
     }
 
     @staticmethod
@@ -377,6 +379,23 @@ def test_joint_limits():
         print("✅ PASS: Left Elbow Z clamped to -160 degrees")
     else:
         print(f"❌ FAIL: Left Elbow Z not clamped. Got {math.degrees(clamped_l_elbow.z)}")
+        return False
+
+    # Test Shoulder limits
+    r_shoulder = SCNVector3(math.radians(-200), 0, math.radians(10))
+    clamped_r_shoulder = JointLimitsMock.clamp_angles("mixamorig_RightArm", r_shoulder)
+    if abs(clamped_r_shoulder.x - math.radians(-180)) < 0.001 and abs(clamped_r_shoulder.z - 0) < 0.001:
+        print("✅ PASS: Right Shoulder clamped properly")
+    else:
+        print(f"❌ FAIL: Right Shoulder not clamped. Got X: {math.degrees(clamped_r_shoulder.x)}, Z: {math.degrees(clamped_r_shoulder.z)}")
+        return False
+
+    l_shoulder = SCNVector3(math.radians(-200), 0, math.radians(-10))
+    clamped_l_shoulder = JointLimitsMock.clamp_angles("mixamorig_LeftArm", l_shoulder)
+    if abs(clamped_l_shoulder.x - math.radians(-180)) < 0.001 and abs(clamped_l_shoulder.z - 0) < 0.001:
+        print("✅ PASS: Left Shoulder clamped properly")
+    else:
+        print(f"❌ FAIL: Left Shoulder not clamped. Got X: {math.degrees(clamped_l_shoulder.x)}, Z: {math.degrees(clamped_l_shoulder.z)}")
         return False
 
     return True
