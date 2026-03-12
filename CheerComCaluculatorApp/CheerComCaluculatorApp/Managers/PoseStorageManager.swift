@@ -53,7 +53,7 @@ class PoseStorageManager {
             let poses = try JSONDecoder().decode([SavedPose].self, from: data)
             return poses.sorted(by: { $0.timestamp > $1.timestamp }) // Newest first
         } catch {
-            print("❌ Failed to load poses: \(error)")
+            Debug.log("❌ Failed to load poses: \(error)")
             return []
         }
     }
@@ -68,9 +68,9 @@ class PoseStorageManager {
         do {
             let data = try JSONEncoder().encode(poses)
             UserDefaults.standard.set(data, forKey: userDefaultsKey)
-            print("✅ Saved \(poses.count) poses to storage")
+            Debug.log("✅ Saved \(poses.count) poses to storage")
         } catch {
-            print("❌ Failed to save poses: \(error)")
+            Debug.log("❌ Failed to save poses: \(error)")
         }
     }
 }

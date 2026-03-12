@@ -83,7 +83,6 @@ class CoMValidationHarness {
             // Reset to T-Pose
             applyPose(.tPose, sceneManager: sceneManager)
             // Update visuals one last time
-            sceneManager.characterNode.updateTransform()
             let result = calculator.calculateDetailedBodyCOM()
             visualizationsManager.updateCOM(result: result)
 
@@ -94,8 +93,6 @@ class CoMValidationHarness {
         // Ensure deterministic start state by resetting to T-Pose first
         if index > 0 { // Skip for first one as it might be T-Pose or we want to see transition from T-Pose
              applyPose(.tPose, sceneManager: sceneManager)
-             // Force update
-             sceneManager.characterNode.updateTransform()
         }
 
         let poseType = posesToValidate[index]
@@ -197,9 +194,6 @@ class CoMValidationHarness {
         // Apply Pose
         // Use duration 0.0 to ensure model is updated immediately before calculation
         applyPose(poseType, sceneManager: sceneManager, duration: 0.0)
-
-        // Force Scene Update
-        sceneManager.characterNode.updateTransform()
 
         // Calculate CoM
         let result = calculator.calculateDetailedBodyCOM()

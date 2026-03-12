@@ -47,7 +47,7 @@ class SceneViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        print("🚀 SceneViewController loaded")
+        Debug.log("🚀 SceneViewController loaded")
 
         // 1. Setup Managers
         sceneManager = CheerCOMSceneManager(view: view)
@@ -75,7 +75,7 @@ class SceneViewController: UIViewController {
         startUpdateTimer()
         scheduleUpdateCOM()
 
-        print("✅ Scene setup complete")
+        Debug.log("✅ Scene setup complete")
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -162,7 +162,7 @@ class SceneViewController: UIViewController {
     private func setPoseLibraryVisible(_ isVisible: Bool) {
         poseLibraryPanel.isHidden = !isVisible
         updatePoseLibraryToggleButton()
-        print("🎭 Pose library \(isVisible ? "shown" : "hidden")")
+        Debug.log("🎭 Pose library \(isVisible ? "shown" : "hidden")")
     }
 
     private func updatePoseLibraryToggleButton() {
@@ -179,7 +179,7 @@ class SceneViewController: UIViewController {
     @objc func didTapRunDiagnostics() {
         if validationHarness != nil { return } // Already running
 
-        print("▶️ Starting Diagnostics...")
+        Debug.log("▶️ Starting Diagnostics...")
 
         // Show Diagnostics Overlay
         let overlay = DiagnosticsOverlay(frame: view.bounds)
@@ -209,7 +209,7 @@ class SceneViewController: UIViewController {
                 overlay.log(message)
             }
         ) { [weak self] in
-            print("🏁 Diagnostics Finished")
+            Debug.log("🏁 Diagnostics Finished")
             self?.validationHarness = nil
         }
     }
@@ -227,13 +227,13 @@ class SceneViewController: UIViewController {
             }
         }
         updateTimer?.tolerance = 0.002
-        print("⏱️ Update timer started")
+        Debug.log("⏱️ Update timer started")
     }
 
     func stopUpdateTimer() {
         updateTimer?.invalidate()
         updateTimer = nil
-        print("⏱️ Update timer stopped")
+        Debug.log("⏱️ Update timer stopped")
     }
 
     func scheduleUpdateCOM() {
@@ -289,7 +289,7 @@ class SceneViewController: UIViewController {
         case .keyboardF:
             fineTransform.toggle()
             setTransformMode(currentTransformMode)
-            print("Fine transform: \(fineTransform)")
+            Debug.log("Fine transform: \(fineTransform)")
 
         case .keyboardSpacebar:
             // Cycle through transform modes
@@ -348,24 +348,24 @@ extension SceneViewController: JointControlPanelDelegate {
             jointControlPanel.updateJointSelection(name: displayName, angle: currentAngle)
             jointControlPanel.updateSelectedAxis(jointControlMode)
 
-            print("✅ Selected joint: \(displayName)")
+            Debug.log("✅ Selected joint: \(displayName)")
             print(
                 "   Current euler angles: x=\(joint.eulerAngles.x * 180 / .pi)°, y=\(joint.eulerAngles.y * 180 / .pi)°, z=\(joint.eulerAngles.z * 180 / .pi)°"
             )
-            print("   World position: \(joint.worldPosition)")
+            Debug.log("   World position: \(joint.worldPosition)")
         } else {
-            print("❌ Failed to find joint: \(name)")
+            Debug.log("❌ Failed to find joint: \(name)")
         }
     }
 
     func didSelectAxis(_ axis: JointAxis) {
         jointControlMode = axis
-        print("🔄 Switched to \(axis.rawValue)-axis control")
+        Debug.log("🔄 Switched to \(axis.rawValue)-axis control")
         if let joint = selectedJoint {
             let angle = getAngleForCurrentAxis(joint: joint)
             jointControlPanel.updateAngleDisplay(angle: angle)
             jointControlPanel.updateSelectedAxis(axis)
-            print("   Current \(axis.rawValue) angle: \(angle)°")
+            Debug.log("   Current \(axis.rawValue) angle: \(angle)°")
         }
     }
 
@@ -379,7 +379,7 @@ extension SceneViewController: JointControlPanelDelegate {
 
     func didRotateJoint(direction: RotationDirection) {
         guard let joint = selectedJoint else {
-            print("⚠️ No joint selected for rotation")
+            Debug.log("⚠️ No joint selected for rotation")
             return
         }
 
@@ -402,7 +402,7 @@ extension SceneViewController: JointControlPanelDelegate {
         }
 
         let newAngle = getAngleForCurrentAxis(joint: joint)
-        print("🎮 Rotated joint on \(jointControlMode.rawValue)-axis: \(oldAngle)° → \(newAngle)°")
+        Debug.log("🎮 Rotated joint on \(jointControlMode.rawValue)-axis: \(oldAngle)° → \(newAngle)°")
 
         jointControlPanel.updateAngleDisplay(angle: newAngle)
         scheduleUpdateCOM()
@@ -424,7 +424,7 @@ extension SceneViewController: JointControlPanelDelegate {
 
     func didChangeJointAngle(value: Float) {
         guard let joint = selectedJoint else {
-            print("⚠️ No joint selected for angle change")
+            Debug.log("⚠️ No joint selected for angle change")
             return
         }
         let angle = value * .pi / 180
@@ -442,7 +442,7 @@ extension SceneViewController: JointControlPanelDelegate {
             joint.eulerAngles = newAngles
         }
 
-        print("🎚️ Set \(jointControlMode.rawValue)-axis angle to \(value)°")
+        Debug.log("🎚️ Set \(jointControlMode.rawValue)-axis angle to \(value)°")
 
         scheduleUpdateCOM()
     }
@@ -453,7 +453,7 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func didTapResetPose() {
-        print("🔄 Resetting to T-Pose...")
+        Debug.log("🔄 Resetting to T-Pose...")
 
         // Apply T-Pose instead of just zeroing joints
         let tPose = PoseType.tPose
@@ -471,7 +471,7 @@ extension SceneViewController: JointControlPanelDelegate {
 
         SCNTransaction.completionBlock = { [weak self] in
             self?.scheduleUpdateCOM()
-            print("✅ Reset to T-Pose complete")
+            Debug.log("✅ Reset to T-Pose complete")
         }
         SCNTransaction.commit()
     }
@@ -564,17 +564,17 @@ extension SceneViewController: JointControlPanelDelegate {
 // MARK: - PoseLibraryPanelDelegate
 extension SceneViewController: PoseLibraryPanelDelegate {
     func didSelectPose(_ pose: PoseType) {
-        print("🎭 Applying pose: \(pose.displayName)")
+        Debug.log("🎭 Applying pose: \(pose.displayName)")
         applyPose(pose)
     }
 
     func didTapMirrorPose() {
-        print("↔️ Mirror pose functionality coming soon")
+        Debug.log("↔️ Mirror pose functionality coming soon")
         // TODO: Implement pose mirroring
     }
 
     func didSelectSavedPose(_ pose: SavedPose) {
-        print("💾 Applying saved pose: \(pose.name)")
+        Debug.log("💾 Applying saved pose: \(pose.name)")
         applySavedPose(pose)
     }
 
@@ -589,7 +589,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
             PoseStorageManager.shared.deletePose(id: pose.id)
             self?.poseLibraryPanel.refreshPoses()
-            print("🗑️ Deleted pose: \(pose.name)")
+            Debug.log("🗑️ Deleted pose: \(pose.name)")
         })
 
         present(alert, animated: true)
@@ -640,7 +640,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         }
 
         PoseStorageManager.shared.savePose(name: name, jointPositions: jointPositions)
-        print("💾 Saved pose '\(name)' with \(jointPositions.count) joints")
+        Debug.log("💾 Saved pose '\(name)' with \(jointPositions.count) joints")
 
         // Refresh library if it's showing saved poses
         poseLibraryPanel.refreshPoses()
@@ -682,7 +682,7 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 
         SCNTransaction.completionBlock = { [weak self] in
             self?.scheduleUpdateCOM()
-            print("✅ Applied \(name)")
+            Debug.log("✅ Applied \(name)")
         }
         SCNTransaction.commit()
     }
@@ -698,14 +698,14 @@ extension SceneViewController: TransformControlPanelDelegate {
         currentTransformMode = mode
         transformStep = baseTransformStep(for: mode) * transformStepMultiplier
         transformControlPanel.updateModeDisplay(mode: mode, step: transformStep)
-        print("Mode: \(mode), step: \(transformStep)")
+        Debug.log("Mode: \(mode), step: \(transformStep)")
     }
 
     func didChangeTransformStepMultiplier(_ multiplier: Float) {
         transformStepMultiplier = multiplier
         transformStep = baseTransformStep(for: currentTransformMode) * transformStepMultiplier
         transformControlPanel.updateModeDisplay(mode: currentTransformMode, step: transformStep)
-        print("Step multiplier: \(multiplier)x (step: \(transformStep))")
+        Debug.log("Step multiplier: \(multiplier)x (step: \(transformStep))")
     }
 
     func didTapTransform(direction: TransformDirection) {
@@ -725,7 +725,7 @@ extension SceneViewController: TransformControlPanelDelegate {
         sceneManager.characterNode.scale = SCNVector3(1, 1, 1)
         SCNTransaction.completionBlock = { [weak self] in
             self?.scheduleUpdateCOM()
-            print("✅ Transform reset")
+            Debug.log("✅ Transform reset")
         }
         SCNTransaction.commit()
     }

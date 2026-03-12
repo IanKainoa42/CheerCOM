@@ -53,7 +53,7 @@ class CheerCOMSceneManager {
         // Show statistics (FPS, etc)
         sceneView.showsStatistics = false
 
-        print("📷 Scene view frame: \(view.bounds)")
+        Debug.log("📷 Scene view frame: \(view.bounds)")
 
         setupLighting()
         setupGround()
@@ -97,7 +97,7 @@ class CheerCOMSceneManager {
 
     func loadCharacter() {
         guard let modelScene = SCNScene(named: "art.scnassets/character.dae") else {
-            print("ERROR: Model not found")
+            Debug.log("ERROR: Model not found")
             return
         }
 
@@ -112,10 +112,10 @@ class CheerCOMSceneManager {
             node.removeAllAnimations()
             node.removeAllActions()
         }
-        print("✅ Removed all animations from character model")
+        Debug.log("✅ Removed all animations from character model")
 
         scene.rootNode.addChildNode(characterNode)
-        print("✅ Character loaded successfully")
+        Debug.log("✅ Character loaded successfully")
 
         applyBodyPartColors()
         cacheBoneNodes()
@@ -144,7 +144,7 @@ class CheerCOMSceneManager {
                 }
             }
         }
-        print("🎨 Body part colors applied")
+        Debug.log("🎨 Body part colors applied")
     }
 
     func cacheBoneNodes() {
@@ -168,12 +168,12 @@ class CheerCOMSceneManager {
         }
 
         if !missingJoints.isEmpty {
-            print("⚠️ Missing expected joints:")
+            Debug.log("⚠️ Missing expected joints:")
             for missing in missingJoints {
-                print("   ❌ \(missing)")
+                Debug.log("   ❌ \(missing)")
             }
         }
-        print("✅ Found \(foundJoints)/\(allJoints.count) expected joints")
+        Debug.log("✅ Found \(foundJoints)/\(allJoints.count) expected joints")
 
         // Cache all nodes for COM calculation
         characterNode.enumerateChildNodes { [weak self] (node, _) in
@@ -188,7 +188,7 @@ class CheerCOMSceneManager {
             }
         }
 
-        print("✅ Cached \(cachedBoneNodes.count) total bone nodes")
+        Debug.log("✅ Cached \(cachedBoneNodes.count) total bone nodes")
     }
 
     func findBone(named name: String) -> SCNNode? {
@@ -214,6 +214,6 @@ class CheerCOMSceneManager {
         cameraNode.position = SCNVector3(
             center.x, center.y, center.z + Float(characterHeight) * 1.5)
         cameraNode.look(at: center)
-        print("✅ Character automatically framed.")
+        Debug.log("✅ Character automatically framed.")
     }
 }
