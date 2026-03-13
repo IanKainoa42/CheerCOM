@@ -8,6 +8,7 @@ class CoMValidationHarness {
     // Poses to validate
     private let posesToValidate: [PoseType] = [
         .tPose,
+        .highV,
         .touchdown,
         .squat,
         .pike,
@@ -263,6 +264,14 @@ class CoMValidationHarness {
         }
 
         switch poseType {
+        case .highV:
+            // Y should be higher than T-Pose, but typically less than Touchdown
+            let diff = com.y - baseline.y
+            if diff > 1.0 {
+                return (true, "CoM rose by \(String(format: "%.1f", diff)) units (Expected > 1.0)")
+            }
+            return (false, "CoM failed to rise significantly (Diff: \(String(format: "%.1f", diff)), Expected > 1.0)")
+
         case .touchdown:
             // Y should be significantly higher than T-Pose
             let diff = com.y - baseline.y
