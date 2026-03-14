@@ -348,6 +348,41 @@ def test_pike(calculator, t_pose_com):
         print("❌ FAIL: CoM did not shift forward significantly")
         return False
 
+def test_lunge(calculator, t_pose_com):
+    print("\nTest: Lunge Pose (Asymmetric Stance, Lower Hips)")
+    nodes = create_t_pose_nodes()
+
+    # Lower hips
+    drop = 15.0
+    for key in nodes:
+        nodes[key].position.y -= drop
+
+    # Keep feet on ground, but spread them
+    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 10, 20)
+    nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 0, 30)
+
+    nodes["mixamorig_LeftFoot"].position = SCNVector3(-10, 10, -20)
+    nodes["mixamorig_LeftToeBase"].position = SCNVector3(-10, 0, -10)
+
+    # Adjust knees
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 50, 20)
+    nodes["mixamorig_LeftLeg"].position = SCNVector3(-10, 50, -20)
+
+    calculator.bind(nodes)
+    lunge_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Lunge CoM: {lunge_com}")
+
+    diff = t_pose_com.y - lunge_com.y
+    print(f"   Drop from T-Pose: {diff:.2f}")
+
+    if diff > 5.0:
+        print("✅ PASS: CoM lowered significantly in lunge")
+        return True
+    else:
+        print("❌ FAIL: CoM did not lower significantly in lunge")
+        return False
+
 class JointLimitsMock:
     limits = {
         "mixamorig_RightLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
@@ -487,6 +522,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_pike(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_lunge(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():
