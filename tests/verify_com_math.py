@@ -238,6 +238,39 @@ def test_touchdown(calculator, t_pose_com):
         print("❌ FAIL: CoM did not rise significantly")
         return False
 
+def test_high_v(calculator, t_pose_com):
+    print("\nTest: High V Pose (Arms Diagonally Up)")
+    nodes = create_t_pose_nodes()
+
+    # Raise Arms in High V (diagonally up)
+    # Right Arm High V
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(35, 150, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(50, 170, 0)
+    # Right hand is missing the distal tip in create_t_pose_nodes to test the fallback,
+    # so we don't need to position mixamorig_RightHandMiddle1 here.
+
+    # Left Arm High V
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-35, 150, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-50, 170, 0)
+    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-55, 175, 0)
+
+    calculator.bind(nodes)
+    highv_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   High V CoM: {highv_com}")
+
+    diff = highv_com.y - t_pose_com.y
+    print(f"   Rise from T-Pose: {diff:.2f}")
+
+    if diff > 0.5:
+        print("✅ PASS: CoM rose")
+        return True
+    else:
+        print("❌ FAIL: CoM did not rise")
+        return False
+
 def test_squat(calculator, t_pose_com):
     print("\nTest: Squat Pose (Hips Lowered)")
     nodes = create_t_pose_nodes()
@@ -443,6 +476,9 @@ def run_verification():
         sys.exit(1)
 
     t_pose_com = test_t_pose(calculator)
+
+    if not test_high_v(calculator, t_pose_com):
+        sys.exit(1)
 
     if not test_touchdown(calculator, t_pose_com):
         sys.exit(1)

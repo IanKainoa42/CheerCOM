@@ -18,3 +18,10 @@
   - A segment's local CoM position is computed as a fixed percentage along the vector from its proximal joint to its distal joint (`proxPos + (distPos - proxPos) * comRatio`).
   - Total CoM is the mass-weighted average of all 17 segment CoMs: `Sum(segMass * segCOM) / TotalMass`.
   - The coordinate system uses Y-up, X-right, Z-forward. CoM vectors are in world coordinates.
+
+## 3. First PR: Baseline Audit and CoM Validation Harness
+- **CoM Validation Harness**: Implemented in `CoMValidationHarness.swift` and `verify_com_math.py`.
+- **Deterministic Poses**: Added a small set of deterministic pose presets (T-Pose, High V, Touchdown, Squat, Pike, Layout, Side Lean, Bow and Arrow).
+- **Debug Screen**: `DiagnosticsOverlay.swift` outputs segment masses, segment COM points, and final CoM.
+- **Visible CoM Marker**: A prominent green sphere in `VisualizationsManager.swift`.
+- **Documentation**: `docs/com_model.md` describes the segment list, coordinate space, assumptions, and how to verify correctness.

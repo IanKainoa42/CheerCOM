@@ -125,15 +125,16 @@ class VisualizationsManager {
     }
 
     private func setupCOMMarker(in scene: SCNScene) {
-        let sphere = SCNSphere(radius: 8)
+        // Visible CoM marker
+        let sphere = SCNSphere(radius: 10) // Slightly larger to make it very prominent
         sphere.firstMaterial?.diffuse.contents = UIColor.green
-        sphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.5)
+        sphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.6)
         sphere.firstMaterial?.lightingModel = .constant
 
         comMarker = SCNNode(geometry: sphere)
         scene.rootNode.addChildNode(comMarker)
 
-        print("🔴 COM marker created")
+        print("🔴 Visible COM marker created")
     }
 
     private func setupSegmentMarkers(in scene: SCNScene) {

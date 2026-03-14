@@ -64,13 +64,16 @@ To verify the CoM calculation in the app:
 2.  Tap the **"Run Diagnostics"** button in the top-right corner.
 3.  The app will cycle through standard poses:
     *   **T-Pose**: Baseline. CoM should be symmetric (X ≈ 0, Z ≈ 0) and above hips.
-    *   **Touchdown**: Arms up. CoM should rise significantly (~5-10 units).
+    *   **High V**: Arms raised in V shape. CoM should rise compared to T-Pose, but less than Touchdown.
+    *   **Touchdown**: Arms straight up. CoM should rise significantly (~5-10 units).
     *   **Squat**: Hips lower. CoM should lower significantly (~10-20 units).
     *   **Pike**: Legs forward. CoM should shift forward (Z+).
     *   **Layout**: Straight body. CoM similar to Touchdown/T-Pose but higher than T-Pose.
     *   **Side Lean**: Trunk lateral flexion. CoM should shift laterally (X-axis).
     *   **Bow and Arrow**: Asymmetric arm extension. CoM should shift laterally (X-axis) away from the baseline.
-4.  A detailed report is printed to the console and the on-screen overlay.
+
+    These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, and asymmetry).
+4.  A detailed report is printed to the console and the on-screen overlay, verifying segment masses, individual segment COM points, and the final CoM.
 
 ### Verification Script (Python)
 
@@ -80,8 +83,12 @@ For independent verification of the mathematical model (segment mass ratios, fal
     *   **Mass Ratios**: Total mass ratio sums to exactly 1.0.
     *   **Hand Fallback**: Correctly defaults to proximal joint if distal tip is missing.
     *   **T-Pose**: Baseline CoM calculation is reasonable.
+    *   **High V**: CoM rises when arms are raised diagonally.
     *   **Touchdown**: CoM rises significantly when arms are raised.
     *   **Squat**: CoM lowers significantly when hips are lowered.
+
+## Visible CoM Marker
+Within the SceneKit view, a prominent bright green sphere (radius 10) dynamically tracks the total body Center of Mass. Auxiliary cyan spheres represent individual segment COMs.
 
 ## Joint Constraints
 
