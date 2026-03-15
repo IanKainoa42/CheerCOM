@@ -53,6 +53,11 @@ class VisualizationsManager {
     var axesNode: SCNNode!
     var segmentCOMNodes: SCNNode!
 
+    // Caches to avoid accessing sceneKit's childNodes property, which reallocates an array every time
+    private var cachedSegmentNodes: [SCNNode] = []
+    private var cachedTrailNodes: [SCNNode] = []
+    private var cachedBosNodes: [SCNNode] = []
+
     var showAdvancedVisualizations = false {
         didSet {
             // Update visibility of nodes when property changes
@@ -238,35 +243,32 @@ class VisualizationsManager {
         // Clear existing nodes if count mismatch (simple approach) or update them
         // For performance, we should reuse nodes.
 
-        var currentNodes = segmentCOMNodes.childNodes
-
         // Ensure we have enough nodes
-        if currentNodes.count < segmentResults.count {
-            for _ in currentNodes.count..<segmentResults.count {
+        if cachedSegmentNodes.count < segmentResults.count {
+            for _ in cachedSegmentNodes.count..<segmentResults.count {
                 let sphere = SCNSphere(radius: 3) // Smaller than main COM
                 sphere.firstMaterial?.diffuse.contents = UIColor.cyan.withAlphaComponent(0.8)
                 sphere.firstMaterial?.lightingModel = .constant
                 let node = SCNNode(geometry: sphere)
                 segmentCOMNodes.addChildNode(node)
+                cachedSegmentNodes.append(node)
             }
-            // Refresh cache after adding nodes
-            currentNodes = segmentCOMNodes.childNodes
         }
 
         // Update positions
         for (index, result) in segmentResults.enumerated() {
-            if index < currentNodes.count {
+            if index < cachedSegmentNodes.count {
                 // Use cached currentNodes to avoid repeated childNodes array creation
-                let node = currentNodes[index]
+                let node = cachedSegmentNodes[index]
                 node.position = result.position
                 node.isHidden = !showAdvancedVisualizations // Only show in advanced mode?
             }
         }
 
         // Hide extra nodes if any
-        if currentNodes.count > segmentResults.count {
-            for index in segmentResults.count..<currentNodes.count {
-                currentNodes[index].isHidden = true
+        if cachedSegmentNodes.count > segmentResults.count {
+            for index in segmentResults.count..<cachedSegmentNodes.count {
+                cachedSegmentNodes[index].isHidden = true
             }
         }
     }
@@ -285,7 +287,10 @@ class VisualizationsManager {
     }
 
     func updateBOS() {
-        bosNode.childNodes.forEach { $0.removeFromParentNode() }
+        for node in cachedBosNodes {
+            node.removeFromParentNode()
+        }
+        cachedBosNodes.removeAll()
 
         guard let points = getBOSPoints() else { return }
 
@@ -311,6 +316,7 @@ class VisualizationsManager {
         node.addChildNode(outline)
 
         bosNode.addChildNode(node)
+        cachedBosNodes.append(node)
     }
 
     private func getBOSPoints() -> [CGPoint]? {
@@ -343,9 +349,8 @@ class VisualizationsManager {
     }
 
     private func updateTrailVisualizationOptimized() {
-        var currentNodes = comTrailNode.childNodes
         let needed = trailPositions.count
-        let existing = currentNodes.count
+        let existing = cachedTrailNodes.count
 
         // Add new nodes if we need more
         if existing < needed {
@@ -355,23 +360,21 @@ class VisualizationsManager {
                 sphere.firstMaterial?.lightingModel = .constant
                 let node = SCNNode(geometry: sphere)
                 comTrailNode.addChildNode(node)
+                cachedTrailNodes.append(node)
             }
-            // Refresh cache after adding nodes
-            currentNodes = comTrailNode.childNodes
         }
         // Remove excess nodes if we have too many
         else if existing > needed {
             for i in (needed..<existing).reversed() {
-                currentNodes[i].removeFromParentNode()
+                cachedTrailNodes[i].removeFromParentNode()
+                cachedTrailNodes.remove(at: i)
             }
-            // Refresh cache after removing nodes
-            currentNodes = comTrailNode.childNodes
         }
 
         // Update positions and alpha for all nodes
         for (i, pos) in trailPositions.enumerated() {
             // Use cached currentNodes to avoid repeated childNodes array creation
-            let node = currentNodes[i]
+            let node = cachedTrailNodes[i]
             node.position = pos
 
             // Update alpha

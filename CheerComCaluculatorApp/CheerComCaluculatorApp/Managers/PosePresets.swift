@@ -319,6 +319,21 @@ class PosePresets {
                 description: "Side lean with T-arms"
             )
 
+        case .lunge:
+            return PoseDefinition(
+                name: "Lunge",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-90)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(90)),
+                    "mixamorig_RightUpLeg": SCNVector3(deg(-60), deg(0), deg(0)),
+                    "mixamorig_RightLeg": SCNVector3(deg(60), deg(0), deg(0)),
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(30), deg(0), deg(0)),
+                    "mixamorig_LeftLeg": SCNVector3(deg(0), deg(0), deg(0)),
+                ],
+                description: "Lunge position with one leg forward and one back"
+            )
+
         // MARK: - Arms Only Poses
 
         case .armsHighV:
@@ -570,7 +585,7 @@ class PosePresets {
         let allPoses: [PoseType] = [
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean,
+            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lunge,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,

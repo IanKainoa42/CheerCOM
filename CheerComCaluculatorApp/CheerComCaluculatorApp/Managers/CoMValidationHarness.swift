@@ -14,7 +14,8 @@ class CoMValidationHarness {
         .pike,
         .layout,
         .sideLean,
-        .bowAndArrow
+        .bowAndArrow,
+        .lunge
     ]
 
     private struct ValidationOutcome {
@@ -325,6 +326,14 @@ class CoMValidationHarness {
                 return (true, "CoM shifted laterally by \(String(format: "%.1f", diff)) units due to asymmetric arm pose (Expected > 1.0)")
             }
             return (false, "CoM did not shift laterally significantly for asymmetric arm pose (Diff: \(String(format: "%.1f", diff)), Expected > 1.0)")
+
+        case .lunge:
+            // Lunge has one leg forward (-Z usually) and one back (+Z), hips lower
+            let drop = baseline.y - com.y
+            if drop > 5.0 {
+                return (true, "CoM lowered by \(String(format: "%.1f", drop)) units due to lunge stance (Expected > 5.0)")
+            }
+            return (false, "CoM did not lower significantly in lunge stance (Drop: \(String(format: "%.1f", drop)), Expected > 5.0)")
 
         default:
             return (true, "No specific criteria")
