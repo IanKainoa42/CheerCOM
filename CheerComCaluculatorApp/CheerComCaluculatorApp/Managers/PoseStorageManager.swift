@@ -73,4 +73,39 @@ class PoseStorageManager {
             print("❌ Failed to save poses: \(error)")
         }
     }
+
+    // MARK: - Import/Export JSON
+
+    func exportPosesToJSON() -> String? {
+        let poses = loadPoses()
+        let encoder = JSONEncoder()
+        do {
+            let data = try encoder.encode(poses)
+            return String(data: data, encoding: .utf8)
+        } catch {
+            print("❌ Failed to export poses: \(error)")
+            return nil
+        }
+    }
+
+    func importPosesFromJSON(jsonString: String) {
+        guard let data = jsonString.data(using: .utf8) else { return }
+        do {
+            let importedPoses = try JSONDecoder().decode([SavedPose].self, from: data)
+            var currentPoses = loadPoses()
+
+            // Merge poses, preferring imported ones if IDs collide, or just append
+            for pose in importedPoses {
+                if let index = currentPoses.firstIndex(where: { $0.id == pose.id }) {
+                    currentPoses[index] = pose
+                } else {
+                    currentPoses.append(pose)
+                }
+            }
+            persist(currentPoses)
+            print("✅ Imported \(importedPoses.count) poses from JSON")
+        } catch {
+            print("❌ Failed to import poses from JSON: \(error)")
+        }
+    }
 }
