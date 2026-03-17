@@ -650,6 +650,39 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         feedback.notificationOccurred(.success)
     }
 
+    func didTapExportPoses() {
+        guard let jsonString = PoseStorageManager.shared.exportPosesToJSON() else {
+            print("❌ Nothing to export or export failed.")
+            return
+        }
+
+        let alert = UIAlertController(title: "Export Poses", message: "Copy the JSON below to save your poses.", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.text = jsonString
+        }
+        alert.addAction(UIAlertAction(title: "Copy & Close", style: .default, handler: { _ in
+            UIPasteboard.general.string = jsonString
+            print("✅ Poses copied to clipboard")
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
+    }
+
+    func didTapImportPoses() {
+        let alert = UIAlertController(title: "Import Poses", message: "Paste pose JSON below", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = "Paste JSON here"
+        }
+        alert.addAction(UIAlertAction(title: "Import", style: .default, handler: { [weak self] _ in
+            if let text = alert.textFields?.first?.text, !text.isEmpty {
+                PoseStorageManager.shared.importPosesFromJSON(jsonString: text)
+                self?.poseLibraryPanel.refreshPoses()
+            }
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
+    }
+
     func didTapClosePoseLibrary() {
         setPoseLibraryVisible(false)
     }

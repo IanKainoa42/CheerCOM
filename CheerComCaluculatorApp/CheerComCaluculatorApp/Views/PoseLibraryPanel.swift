@@ -8,6 +8,8 @@ protocol PoseLibraryPanelDelegate: AnyObject {
     func didTapMirrorPose()
     func didTapSavePose()
     func didTapClosePoseLibrary()
+    func didTapExportPoses()
+    func didTapImportPoses()
 }
 
 class PoseLibraryPanel: UIVisualEffectView {
@@ -67,7 +69,7 @@ class PoseLibraryPanel: UIVisualEffectView {
         // Mirror button
         let mirrorBtn = createUtilityButton(
             title: "↔️ Mirror",
-            x: width - 200,
+            x: width - 360,
             y: 10,
             width: 80,
             action: #selector(mirrorTapped)
@@ -77,12 +79,32 @@ class PoseLibraryPanel: UIVisualEffectView {
         // Save button
         let saveBtn = createUtilityButton(
             title: "💾 Save",
-            x: width - 110,
+            x: width - 270,
             y: 10,
-            width: 90,
+            width: 80,
             action: #selector(saveTapped)
         )
         contentView.addSubview(saveBtn)
+
+        // Export button
+        let exportBtn = createUtilityButton(
+            title: "📤 Export",
+            x: width - 180,
+            y: 10,
+            width: 80,
+            action: #selector(exportTapped)
+        )
+        contentView.addSubview(exportBtn)
+
+        // Import button
+        let importBtn = createUtilityButton(
+            title: "📥 Import",
+            x: width - 90,
+            y: 10,
+            width: 80,
+            action: #selector(importTapped)
+        )
+        contentView.addSubview(importBtn)
 
         // Category tabs
         let categoryY = headerHeight + 5
@@ -342,6 +364,14 @@ class PoseLibraryPanel: UIVisualEffectView {
 
     @objc private func saveTapped() {
         delegate?.didTapSavePose()
+    }
+
+    @objc private func exportTapped() {
+        delegate?.didTapExportPoses()
+    }
+
+    @objc private func importTapped() {
+        delegate?.didTapImportPoses()
     }
 
     @objc private func closeTapped() {
