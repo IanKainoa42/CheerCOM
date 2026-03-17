@@ -11,8 +11,30 @@ struct CalculationResult {
     let segmentCOMs: [SegmentResult]
 }
 
+enum BodyPreset {
+    case averageNeutral
+    case athleticFemale
+    case athleticMale
+
+    /// Multipliers for specific body regions relative to the average neutral build.
+    /// (Trunk, UpperLimbs, LowerLimbs)
+    var multipliers: (trunk: Double, upper: Double, lower: Double) {
+        switch self {
+        case .averageNeutral:
+            return (1.0, 1.0, 1.0)
+        case .athleticFemale:
+            // Athletic females typically have slightly lower upper body mass ratio and higher lower body mass ratio
+            return (0.95, 0.95, 1.08)
+        case .athleticMale:
+            // Athletic males typically have higher upper body and trunk mass ratios
+            return (1.05, 1.15, 0.95)
+        }
+    }
+}
+
 class COMCalculator {
     var bodyMass: Double  // kg
+    var preset: BodyPreset
     
     // 17 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
     // Based on anthropometric data from Winter (2009) and de Leva (1996)
@@ -52,14 +74,16 @@ class COMCalculator {
         let name: String
         let prox: SCNNode
         let dist: SCNNode
-        let massRatio: Double
+        let baseMassRatio: Double
         let comRatio: Double
+        var currentMassRatio: Double
     }
 
     private var boundSegments: [BoundSegment] = []
 
-    init(bodyMass: Double) {
+    init(bodyMass: Double, preset: BodyPreset = .averageNeutral) {
         self.bodyMass = bodyMass
+        self.preset = preset
     }
     
     /// Binds the calculator to the specific SCNNodes for direct access.
@@ -92,14 +116,54 @@ class COMCalculator {
                 name: segment.name, // Use descriptive segment name
                 prox: proxNode,
                 dist: distNode!,
-                massRatio: segment.mass,
-                comRatio: segment.com
+                baseMassRatio: segment.mass,
+                comRatio: segment.com,
+                currentMassRatio: segment.mass
             ))
         }
+
+        applyPreset()
 
         if missingCount == 0 {
             print("✅ COMCalculator bound to \(boundSegments.count) segments")
         }
+    }
+
+    /// Applies the current body preset multipliers to the bound segments,
+    /// and normalizes them so they still sum exactly to 1.0.
+    func applyPreset() {
+        if boundSegments.isEmpty { return }
+
+        var totalMassRatio = 0.0
+
+        for i in 0..<boundSegments.count {
+            let segment = boundSegments[i]
+            var multiplier = 1.0
+
+            if segment.name.contains("Arm") || segment.name.contains("Forearm") || segment.name.contains("Hand") {
+                multiplier = preset.multipliers.upper
+            } else if segment.name.contains("Thigh") || segment.name.contains("Shank") || segment.name.contains("Foot") {
+                multiplier = preset.multipliers.lower
+            } else {
+                multiplier = preset.multipliers.trunk
+            }
+
+            boundSegments[i].currentMassRatio = segment.baseMassRatio * multiplier
+            totalMassRatio += boundSegments[i].currentMassRatio
+        }
+
+        // Normalize back to 1.0
+        for i in 0..<boundSegments.count {
+            boundSegments[i].currentMassRatio /= totalMassRatio
+        }
+
+        print("✅ Applied \(preset) preset, total normalized mass ratio: \(boundSegments.reduce(0.0) { $0 + $1.currentMassRatio })")
+    }
+
+    /// Updates the body preset and recalculates mass ratios.
+    func setPreset(_ newPreset: BodyPreset) {
+        self.preset = newPreset
+        applyPreset()
     }
 
     /// Optimized calculation using bound nodes directly.
@@ -132,7 +196,7 @@ class COMCalculator {
 
             // COM = proximal + (distal - proximal) * %
             let segCOM = proxPos + ((distPos - proxPos) * Float(segment.comRatio))
-            let segMass = bodyMass * segment.massRatio
+            let segMass = bodyMass * segment.currentMassRatio
 
             totalWeighted = totalWeighted + (segCOM * Float(segMass))
             totalMass += segMass

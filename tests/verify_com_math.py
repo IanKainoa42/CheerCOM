@@ -39,8 +39,9 @@ class SCNNode:
         self.position = value
 
 class COMCalculatorMock:
-    def __init__(self, body_mass):
+    def __init__(self, body_mass, preset="averageNeutral"):
         self.body_mass = body_mass
+        self.preset = preset
 
         # 17 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
         # Based on COMCalculator.swift
@@ -75,6 +76,15 @@ class COMCalculatorMock:
 
         self.bound_segments = []
 
+    def get_multipliers(self):
+        if self.preset == "averageNeutral":
+            return {"trunk": 1.0, "upper": 1.0, "lower": 1.0}
+        elif self.preset == "athleticFemale":
+            return {"trunk": 0.95, "upper": 0.95, "lower": 1.08}
+        elif self.preset == "athleticMale":
+            return {"trunk": 1.05, "upper": 1.15, "lower": 0.95}
+        return {"trunk": 1.0, "upper": 1.0, "lower": 1.0}
+
     def bind(self, joint_nodes):
         self.bound_segments = []
         missing_count = 0
@@ -101,9 +111,38 @@ class COMCalculatorMock:
                 "name": name,
                 "prox": prox_node,
                 "dist": dist_node,
-                "mass_ratio": mass_ratio,
-                "com_ratio": com_ratio
+                "base_mass_ratio": mass_ratio,
+                "com_ratio": com_ratio,
+                "current_mass_ratio": mass_ratio
             })
+
+        self.apply_preset()
+
+    def apply_preset(self):
+        if not self.bound_segments:
+            return
+
+        multipliers = self.get_multipliers()
+        total_mass_ratio = 0.0
+
+        for segment in self.bound_segments:
+            multiplier = 1.0
+            if "Arm" in segment["name"] or "Forearm" in segment["name"] or "Hand" in segment["name"]:
+                multiplier = multipliers["upper"]
+            elif "Thigh" in segment["name"] or "Shank" in segment["name"] or "Foot" in segment["name"]:
+                multiplier = multipliers["lower"]
+            else:
+                multiplier = multipliers["trunk"]
+
+            segment["current_mass_ratio"] = segment["base_mass_ratio"] * multiplier
+            total_mass_ratio += segment["current_mass_ratio"]
+
+        for segment in self.bound_segments:
+            segment["current_mass_ratio"] /= total_mass_ratio
+
+    def set_preset(self, preset):
+        self.preset = preset
+        self.apply_preset()
 
     def calculate_detailed_body_com(self):
         if not self.bound_segments:
@@ -120,7 +159,7 @@ class COMCalculatorMock:
 
             # COM = proximal + (distal - proximal) * %
             seg_com = prox_pos + ((dist_pos - prox_pos) * segment["com_ratio"])
-            seg_mass = self.body_mass * segment["mass_ratio"]
+            seg_mass = self.body_mass * segment["current_mass_ratio"]
 
             total_weighted = total_weighted + (seg_com * seg_mass)
             total_mass += seg_mass
@@ -173,12 +212,59 @@ def create_t_pose_nodes():
 def test_mass_ratios():
     print("Test: Mass Ratios Sum to 1.0")
     calculator = COMCalculatorMock(body_mass=70.0)
+    # Total ratio on unbound baseline segments
     total_ratio = sum(s[3] for s in calculator.segments)
     if abs(total_ratio - 1.0) > 0.001:
         print(f"❌ FAIL: Mass ratios sum to {total_ratio:.4f}")
         return False
-    print(f"✅ PASS: Mass ratios sum to {total_ratio:.4f}")
+    print(f"✅ PASS: Base mass ratios sum to {total_ratio:.4f}")
     return True
+
+def test_body_presets():
+    print("\nTest: Body Presets Mass Normalization")
+    calculator = COMCalculatorMock(body_mass=70.0)
+    nodes = create_t_pose_nodes()
+
+    # Test averageNeutral
+    calculator.set_preset("averageNeutral")
+    calculator.bind(nodes)
+    total_ratio_neutral = sum(s["current_mass_ratio"] for s in calculator.bound_segments)
+    if abs(total_ratio_neutral - 1.0) > 0.001:
+        print(f"❌ FAIL: Neutral preset mass ratio sum is {total_ratio_neutral:.4f}")
+        return False
+
+    neutral_lower_mass = sum(s["current_mass_ratio"] for s in calculator.bound_segments if "Thigh" in s["name"])
+
+    # Test athleticFemale
+    calculator.set_preset("athleticFemale")
+    total_ratio_female = sum(s["current_mass_ratio"] for s in calculator.bound_segments)
+    if abs(total_ratio_female - 1.0) > 0.001:
+        print(f"❌ FAIL: Athletic Female preset mass ratio sum is {total_ratio_female:.4f}")
+        return False
+
+    female_lower_mass = sum(s["current_mass_ratio"] for s in calculator.bound_segments if "Thigh" in s["name"])
+    if female_lower_mass <= neutral_lower_mass:
+        print(f"❌ FAIL: Athletic Female lower body mass should be greater than neutral. ({female_lower_mass:.4f} <= {neutral_lower_mass:.4f})")
+        return False
+
+    # Test athleticMale
+    calculator.set_preset("athleticMale")
+    total_ratio_male = sum(s["current_mass_ratio"] for s in calculator.bound_segments)
+    if abs(total_ratio_male - 1.0) > 0.001:
+        print(f"❌ FAIL: Athletic Male preset mass ratio sum is {total_ratio_male:.4f}")
+        return False
+
+    male_lower_mass = sum(s["current_mass_ratio"] for s in calculator.bound_segments if "Thigh" in s["name"])
+    if male_lower_mass >= neutral_lower_mass:
+        print(f"❌ FAIL: Athletic Male lower body mass should be less than neutral. ({male_lower_mass:.4f} >= {neutral_lower_mass:.4f})")
+        return False
+
+    print("✅ PASS: All body presets apply multipliers correctly and normalize to 1.0")
+
+    # Reset back to neutral for the rest of tests
+    calculator.set_preset("averageNeutral")
+    return True
+
 
 def test_t_pose(calculator):
     print("\nTest: T-Pose Baseline")
@@ -508,6 +594,9 @@ def run_verification():
     calculator = COMCalculatorMock(body_mass=70.0)
 
     if not test_mass_ratios():
+        sys.exit(1)
+
+    if not test_body_presets():
         sys.exit(1)
 
     t_pose_com = test_t_pose(calculator)
