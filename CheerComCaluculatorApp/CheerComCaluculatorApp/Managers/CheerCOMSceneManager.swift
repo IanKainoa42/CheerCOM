@@ -101,18 +101,25 @@ class CheerCOMSceneManager {
             return
         }
 
+        // CRITICAL FIX: Remove all animations from the source scene root
+        modelScene.rootNode.removeAllAnimations()
+        modelScene.rootNode.removeAllActions()
+
         characterNode = SCNNode()
         for child in modelScene.rootNode.childNodes {
             characterNode.addChildNode(child)
         }
 
-        // CRITICAL FIX: Remove all animations that could interfere with manual joint control
-        // The DAE file contains baked animations that override euler angle modifications
+        // Remove animations from the container node itself
+        characterNode.removeAllAnimations()
+        characterNode.removeAllActions()
+
+        // Remove from all descendants
         characterNode.enumerateChildNodes { (node, _) in
             node.removeAllAnimations()
             node.removeAllActions()
         }
-        print("✅ Removed all animations from character model")
+        print("✅ Removed all animations from character model and source scene")
 
         scene.rootNode.addChildNode(characterNode)
         print("✅ Character loaded successfully")
