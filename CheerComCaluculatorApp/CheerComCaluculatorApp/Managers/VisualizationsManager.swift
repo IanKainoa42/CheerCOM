@@ -408,30 +408,39 @@ class VisualizationsManager {
         }
 
         // Calculate distance to nearest edge
-        var minDistance: CGFloat = .greatestFiniteMagnitude
+        var minDistanceSq: CGFloat = .greatestFiniteMagnitude
 
         for i in 0..<points.count {
             let p1 = points[i]
             let p2 = points[(i + 1) % points.count]
 
-            let distance = distanceToSegment(p: comPoint, v: p1, w: p2)
-            if distance < minDistance {
-                minDistance = distance
+            let distSq = distanceSquaredToSegment(p: comPoint, v: p1, w: p2)
+            if distSq < minDistanceSq {
+                minDistanceSq = distSq
             }
         }
 
-        return (Float(minDistance), isInside)
+        return (Float(sqrt(minDistanceSq)), isInside)
     }
 
-    private func distanceToSegment(p: CGPoint, v: CGPoint, w: CGPoint) -> CGFloat {
-        let l2 = pow(v.x - w.x, 2) + pow(v.y - w.y, 2)
-        if l2 == 0 { return hypot(p.x - v.x, p.y - v.y) }
+    private func distanceSquaredToSegment(p: CGPoint, v: CGPoint, w: CGPoint) -> CGFloat {
+        let dvx = v.x - w.x
+        let dvy = v.y - w.y
+        let l2 = dvx * dvx + dvy * dvy
+        if l2 == 0 {
+            let dpx = p.x - v.x
+            let dpy = p.y - v.y
+            return dpx * dpx + dpy * dpy
+        }
 
         var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2
         t = max(0, min(1, t))
 
-        let projection = CGPoint(x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y))
-        return hypot(p.x - projection.x, p.y - projection.y)
+        let projX = v.x + t * (w.x - v.x)
+        let projY = v.y + t * (w.y - v.y)
+        let dpx = p.x - projX
+        let dpy = p.y - projY
+        return dpx * dpx + dpy * dpy
     }
 
     private func updateStabilityVisuals(margin: Float, isStable: Bool) {
