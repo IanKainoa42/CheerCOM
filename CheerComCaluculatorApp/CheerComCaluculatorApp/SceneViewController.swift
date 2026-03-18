@@ -136,6 +136,21 @@ class SceneViewController: UIViewController {
             self, action: #selector(didTapResetTPoseButton), for: .touchUpInside)
         view.addSubview(resetTPoseButton)
 
+        // Body Preset Selector
+        let presetSelector = UISegmentedControl(items: ["Neutral", "Athletic F", "Athletic M"])
+        presetSelector.frame = CGRect(x: 20, y: 155, width: 250, height: 35)
+        presetSelector.selectedSegmentIndex = 0
+        presetSelector.backgroundColor = UIColor.white.withAlphaComponent(0.2)
+        presetSelector.selectedSegmentTintColor = UIColor.systemBlue.withAlphaComponent(0.8)
+
+        let normalTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+        let selectedTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+        presetSelector.setTitleTextAttributes(normalTextAttributes, for: .normal)
+        presetSelector.setTitleTextAttributes(selectedTextAttributes, for: .selected)
+
+        presetSelector.addTarget(self, action: #selector(didChangeBodyPreset(_:)), for: .valueChanged)
+        view.addSubview(presetSelector)
+
         updatePoseLibraryToggleButton()
 
         // Validation Button
@@ -157,6 +172,18 @@ class SceneViewController: UIViewController {
 
     @objc private func didTapResetTPoseButton() {
         didTapResetPose()
+    }
+
+    @objc private func didChangeBodyPreset(_ sender: UISegmentedControl) {
+        let preset: BodyPreset
+        switch sender.selectedSegmentIndex {
+        case 1: preset = .athleticFemale
+        case 2: preset = .athleticMale
+        default: preset = .averageNeutral
+        }
+        calculator.setPreset(preset)
+        scheduleUpdateCOM()
+        print("👤 Body preset changed to: \(preset)")
     }
 
     private func setPoseLibraryVisible(_ isVisible: Bool) {
