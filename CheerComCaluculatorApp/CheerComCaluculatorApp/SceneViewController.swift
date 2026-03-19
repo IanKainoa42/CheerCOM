@@ -14,9 +14,17 @@ class SceneViewController: UIViewController {
     var jointControlPanel: JointControlPanel!
     var transformControlPanel: TransformControlPanel!
     var poseLibraryPanel: PoseLibraryPanel!
-    private var poseLibraryToggleButton: UIButton!
-    private var resetTPoseButton: UIButton!
-    var viewLabel: UILabel!
+    private var backdropView: CheerGradientBackdropView!
+    private var chromeScrollView: UIScrollView!
+    private var chromeContentView: UIView!
+    private var chromeStackView: UIStackView!
+    private var topCardsStackView: UIStackView!
+    private var headerPanel: CheerGlassPanel!
+    private var headerRowStack: UIStackView!
+    private var diagnosticsButton: CheerButton!
+    private var jointPanelHeightConstraint: NSLayoutConstraint!
+    private var poseLibraryHeightConstraint: NSLayoutConstraint!
+    private var poseLibraryVisible = false
 
     // State
     private var updateTimer: Timer?
@@ -48,6 +56,8 @@ class SceneViewController: UIViewController {
         super.viewDidLoad()
 
         print("🚀 SceneViewController loaded")
+
+        setupBackdrop()
 
         // 1. Setup Managers
         sceneManager = CheerCOMSceneManager(view: view)
@@ -83,6 +93,11 @@ class SceneViewController: UIViewController {
         becomeFirstResponder()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateAdaptiveLayout()
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         resignFirstResponder()
@@ -93,49 +108,82 @@ class SceneViewController: UIViewController {
         stopUpdateTimer()
     }
 
-    private func setupUI() {
-        // COM Info Panel
-        comInfoPanel = COMInfoPanel()
-        view.addSubview(comInfoPanel)
+    private func setupBackdrop() {
+        view.backgroundColor = CheerPalette.midnight
 
-        // Joint Control Panel
+        backdropView = CheerGradientBackdropView()
+        view.addSubview(backdropView)
+
+        NSLayoutConstraint.activate([
+            backdropView.topAnchor.constraint(equalTo: view.topAnchor),
+            backdropView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backdropView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backdropView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+
+    private func setupUI() {
+        chromeScrollView = UIScrollView()
+        chromeScrollView.translatesAutoresizingMaskIntoConstraints = false
+        chromeScrollView.alwaysBounceVertical = true
+        chromeScrollView.showsVerticalScrollIndicator = false
+        chromeScrollView.contentInsetAdjustmentBehavior = .never
+        view.addSubview(chromeScrollView)
+
+        chromeContentView = UIView()
+        chromeContentView.translatesAutoresizingMaskIntoConstraints = false
+        chromeScrollView.addSubview(chromeContentView)
+
+        chromeStackView = UIStackView()
+        chromeStackView.translatesAutoresizingMaskIntoConstraints = false
+        chromeStackView.axis = .vertical
+        chromeStackView.spacing = 14
+        chromeContentView.addSubview(chromeStackView)
+
+        headerPanel = makeHeaderPanel()
+        chromeStackView.addArrangedSubview(headerPanel)
+
+        topCardsStackView = UIStackView()
+        topCardsStackView.axis = .vertical
+        topCardsStackView.spacing = 14
+        topCardsStackView.alignment = .fill
+        chromeStackView.addArrangedSubview(topCardsStackView)
+
+        comInfoPanel = COMInfoPanel()
+        topCardsStackView.addArrangedSubview(comInfoPanel)
+
+        transformControlPanel = TransformControlPanel(width: view.bounds.width)
+        transformControlPanel.delegate = self
+        transformControlPanel.updateStepMultiplierSelection(transformStepMultiplier)
+        topCardsStackView.addArrangedSubview(transformControlPanel)
+
         jointControlPanel = JointControlPanel(width: view.bounds.width)
         jointControlPanel.delegate = self
         view.addSubview(jointControlPanel)
 
-        // Pose Library Panel (initially hidden)
         poseLibraryPanel = PoseLibraryPanel(width: view.bounds.width)
         poseLibraryPanel.delegate = self
-        poseLibraryPanel.isHidden = true
+        poseLibraryPanel.alpha = 0
+        poseLibraryPanel.transform = CGAffineTransform(translationX: 0, y: 24)
+        poseLibraryPanel.isUserInteractionEnabled = false
         view.addSubview(poseLibraryPanel)
 
-        // Transform Control Panel
-        transformControlPanel = TransformControlPanel(width: view.bounds.width)
-        transformControlPanel.delegate = self
-        view.addSubview(transformControlPanel)
-        transformControlPanel.updateStepMultiplierSelection(transformStepMultiplier)
+        jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 244)
+        poseLibraryHeightConstraint = poseLibraryPanel.heightAnchor.constraint(equalToConstant: 360)
 
-        poseLibraryToggleButton = UIButton(type: .system)
-        poseLibraryToggleButton.frame = CGRect(x: 20, y: 60, width: 130, height: 40)
-        poseLibraryToggleButton.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.85)
-        poseLibraryToggleButton.setTitleColor(.white, for: .normal)
-        poseLibraryToggleButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
-        poseLibraryToggleButton.layer.cornerRadius = 10
-        poseLibraryToggleButton.addTarget(
-            self, action: #selector(didTapPoseLibraryToggleButton), for: .touchUpInside)
-        view.addSubview(poseLibraryToggleButton)
+        NSLayoutConstraint.activate([
+            chromeScrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            chromeScrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            chromeScrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            chromeScrollView.bottomAnchor.constraint(equalTo: jointControlPanel.topAnchor, constant: -16),
 
-        resetTPoseButton = UIButton(type: .system)
-        resetTPoseButton.frame = CGRect(x: 20, y: 105, width: 130, height: 40)
-        resetTPoseButton.backgroundColor = UIColor.systemRed.withAlphaComponent(0.85)
-        resetTPoseButton.setTitle("Reset T-Pose", for: .normal)
-        resetTPoseButton.setTitleColor(.white, for: .normal)
-        resetTPoseButton.titleLabel?.font = .boldSystemFont(ofSize: 14)
-        resetTPoseButton.layer.cornerRadius = 10
-        resetTPoseButton.addTarget(
-            self, action: #selector(didTapResetTPoseButton), for: .touchUpInside)
-        view.addSubview(resetTPoseButton)
+            chromeContentView.topAnchor.constraint(equalTo: chromeScrollView.contentLayoutGuide.topAnchor),
+            chromeContentView.leadingAnchor.constraint(equalTo: chromeScrollView.contentLayoutGuide.leadingAnchor),
+            chromeContentView.trailingAnchor.constraint(equalTo: chromeScrollView.contentLayoutGuide.trailingAnchor),
+            chromeContentView.bottomAnchor.constraint(equalTo: chromeScrollView.contentLayoutGuide.bottomAnchor),
+            chromeContentView.widthAnchor.constraint(equalTo: chromeScrollView.frameLayoutGuide.widthAnchor),
 
+<<<<<<< HEAD
         // Body Preset Selector
         let presetSelector = UISegmentedControl(items: ["Neutral", "Athletic F", "Athletic M"])
         presetSelector.frame = CGRect(x: 20, y: 155, width: 250, height: 35)
@@ -152,28 +200,80 @@ class SceneViewController: UIViewController {
         view.addSubview(presetSelector)
 
         updatePoseLibraryToggleButton()
+=======
+            chromeStackView.topAnchor.constraint(equalTo: chromeContentView.topAnchor),
+            chromeStackView.leadingAnchor.constraint(equalTo: chromeContentView.leadingAnchor),
+            chromeStackView.trailingAnchor.constraint(equalTo: chromeContentView.trailingAnchor),
+            chromeStackView.bottomAnchor.constraint(equalTo: chromeContentView.bottomAnchor),
+>>>>>>> 1de3a06 (feat: Implement a new CheerUI framework and refactor existing panels to adopt a modern design language.)
 
-        // Validation Button
-        let validationBtn = UIButton(type: .system)
-        validationBtn.frame = CGRect(x: view.bounds.width - 160, y: 60, width: 140, height: 40)
-        validationBtn.backgroundColor = UIColor.white.withAlphaComponent(0.2)
-        validationBtn.setTitle("Run Diagnostics", for: .normal)
-        validationBtn.setTitleColor(.white, for: .normal)
-        validationBtn.layer.cornerRadius = 10
-        validationBtn.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
-        view.addSubview(validationBtn)
+            jointControlPanel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            jointControlPanel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            jointControlPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            jointPanelHeightConstraint,
+
+            poseLibraryPanel.leadingAnchor.constraint(equalTo: jointControlPanel.leadingAnchor),
+            poseLibraryPanel.trailingAnchor.constraint(equalTo: jointControlPanel.trailingAnchor),
+            poseLibraryPanel.bottomAnchor.constraint(equalTo: jointControlPanel.topAnchor, constant: -12),
+            poseLibraryHeightConstraint
+        ])
 
         setTransformMode(currentTransformMode)
     }
 
-    @objc private func didTapPoseLibraryToggleButton() {
-        setPoseLibraryVisible(poseLibraryPanel.isHidden)
+    private func makeHeaderPanel() -> CheerGlassPanel {
+        let panel = CheerGlassPanel(padding: .init(top: 16, leading: 18, bottom: 16, trailing: 18))
+
+        let eyebrowLabel = PaddingLabel()
+        eyebrowLabel.text = "CHEERCOM STUDIO"
+        eyebrowLabel.textColor = CheerPalette.midnight
+        eyebrowLabel.font = cheerRoundedFont(.caption1, weight: .bold)
+        eyebrowLabel.backgroundColor = CheerPalette.accentAmber
+
+        let titleLabel = UILabel()
+        titleLabel.text = "Refine posture, balance, and saved routines."
+        titleLabel.textColor = CheerPalette.textPrimary
+        titleLabel.font = cheerRoundedFont(.title3, weight: .bold)
+        titleLabel.numberOfLines = 0
+
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "Tune joints, transform the model, and keep diagnostics one tap away on every device."
+        subtitleLabel.textColor = CheerPalette.textSecondary
+        subtitleLabel.font = cheerRoundedFont(.subheadline, weight: .regular)
+        subtitleLabel.numberOfLines = 0
+
+        let textStack = UIStackView(arrangedSubviews: [eyebrowLabel, titleLabel, subtitleLabel])
+        textStack.axis = .vertical
+        textStack.spacing = 4
+        textStack.alignment = .leading
+
+        diagnosticsButton = CheerButton(title: "Diagnostics", symbol: "stethoscope", style: .neutral)
+        diagnosticsButton.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
+
+        headerRowStack = UIStackView(arrangedSubviews: [textStack, diagnosticsButton])
+        headerRowStack.axis = .horizontal
+        headerRowStack.spacing = 12
+        headerRowStack.alignment = .center
+        headerRowStack.distribution = .fill
+
+        panel.contentStack.addArrangedSubview(headerRowStack)
+        return panel
     }
 
-    @objc private func didTapResetTPoseButton() {
-        didTapResetPose()
+    private func updateAdaptiveLayout() {
+        let useHorizontalCards = view.bounds.width >= 820 || view.bounds.width > view.bounds.height
+        topCardsStackView.axis = useHorizontalCards ? .horizontal : .vertical
+        topCardsStackView.distribution = useHorizontalCards ? .fillEqually : .fill
+
+        let compactHeader = view.bounds.width < 560
+        headerRowStack.axis = compactHeader ? .vertical : .horizontal
+        headerRowStack.alignment = compactHeader ? .leading : .center
+
+        jointPanelHeightConstraint.constant = view.bounds.width < 430 ? 252 : (useHorizontalCards ? 228 : 242)
+        poseLibraryHeightConstraint.constant = min(max(view.bounds.height * 0.44, 310), 480)
     }
 
+<<<<<<< HEAD
     @objc private func didChangeBodyPreset(_ sender: UISegmentedControl) {
         let preset: BodyPreset
         switch sender.selectedSegmentIndex {
@@ -189,18 +289,31 @@ class SceneViewController: UIViewController {
     private func setPoseLibraryVisible(_ isVisible: Bool) {
         poseLibraryPanel.isHidden = !isVisible
         updatePoseLibraryToggleButton()
-        print("🎭 Pose library \(isVisible ? "shown" : "hidden")")
-    }
+=======
+    private func setPoseLibraryVisible(_ isVisible: Bool, animated: Bool = true) {
+        poseLibraryVisible = isVisible
+        poseLibraryPanel.isUserInteractionEnabled = isVisible
 
-    private func updatePoseLibraryToggleButton() {
-        let isVisible = !poseLibraryPanel.isHidden
-        poseLibraryToggleButton?.setTitle(
-            isVisible ? "Hide Pose Library" : "Show Pose Library",
-            for: .normal
-        )
-        poseLibraryToggleButton?.backgroundColor = isVisible
-            ? UIColor.systemPurple.withAlphaComponent(0.95)
-            : UIColor.systemPurple.withAlphaComponent(0.75)
+        let updates = {
+            self.poseLibraryPanel.alpha = isVisible ? 1 : 0
+            self.poseLibraryPanel.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: 24)
+        }
+
+        if animated {
+            UIView.animate(
+                withDuration: 0.28,
+                delay: 0,
+                usingSpringWithDamping: 0.9,
+                initialSpringVelocity: 0.4,
+                options: [.beginFromCurrentState, .curveEaseInOut],
+                animations: updates
+            )
+        } else {
+            updates()
+        }
+
+>>>>>>> 1de3a06 (feat: Implement a new CheerUI framework and refactor existing panels to adopt a modern design language.)
+        print("🎭 Pose library \(isVisible ? "shown" : "hidden")")
     }
 
     @objc func didTapRunDiagnostics() {
@@ -215,16 +328,16 @@ class SceneViewController: UIViewController {
 
         // Disable interaction with other controls while running
         sceneManager.sceneView.isUserInteractionEnabled = false
+        chromeScrollView.isUserInteractionEnabled = false
         jointControlPanel.isUserInteractionEnabled = false
-        transformControlPanel.isUserInteractionEnabled = false
         poseLibraryPanel.isUserInteractionEnabled = false
 
         // Handle close
         overlay.onClose = { [weak self] in
             self?.sceneManager.sceneView.isUserInteractionEnabled = true
+            self?.chromeScrollView.isUserInteractionEnabled = true
             self?.jointControlPanel.isUserInteractionEnabled = true
-            self?.transformControlPanel.isUserInteractionEnabled = true
-            self?.poseLibraryPanel.isUserInteractionEnabled = true
+            self?.poseLibraryPanel.isUserInteractionEnabled = self?.poseLibraryVisible ?? false
         }
 
         validationHarness = CoMValidationHarness()
@@ -476,7 +589,7 @@ extension SceneViewController: JointControlPanelDelegate {
 
     // Pose Library
     func didTapPoseLibrary() {
-        setPoseLibraryVisible(poseLibraryPanel.isHidden)
+        setPoseLibraryVisible(!poseLibraryVisible)
     }
 
     func didTapResetPose() {

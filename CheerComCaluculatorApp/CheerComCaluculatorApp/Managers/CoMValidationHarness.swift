@@ -1,5 +1,6 @@
 import SceneKit
 import Foundation
+import QuartzCore
 
 class CoMValidationHarness {
 
@@ -85,7 +86,7 @@ class CoMValidationHarness {
             // Reset to T-Pose
             applyPose(.tPose, sceneManager: sceneManager)
             // Update visuals one last time
-            sceneManager.characterNode.updateTransform()
+            refreshTransforms(for: sceneManager.characterNode)
             let result = calculator.calculateDetailedBodyCOM()
             visualizationsManager.updateCOM(result: result)
 
@@ -97,7 +98,7 @@ class CoMValidationHarness {
         if index > 0 { // Skip for first one as it might be T-Pose or we want to see transition from T-Pose
              applyPose(.tPose, sceneManager: sceneManager)
              // Force update
-             sceneManager.characterNode.updateTransform()
+             refreshTransforms(for: sceneManager.characterNode)
         }
 
         let poseType = posesToValidate[index]
@@ -208,7 +209,7 @@ class CoMValidationHarness {
         applyPose(poseType, sceneManager: sceneManager, duration: 0.0)
 
         // Force Scene Update
-        sceneManager.characterNode.updateTransform()
+        refreshTransforms(for: sceneManager.characterNode)
 
         // Calculate CoM
         let result = calculator.calculateDetailedBodyCOM()
@@ -353,6 +354,17 @@ class CoMValidationHarness {
         }
 
         SCNTransaction.commit()
+    }
+
+    private func refreshTransforms(for rootNode: SCNNode) {
+        CATransaction.flush()
+        _ = rootNode.presentation.worldTransform
+        _ = rootNode.worldTransform
+
+        rootNode.enumerateChildNodes { node, _ in
+            _ = node.presentation.worldTransform
+            _ = node.worldTransform
+        }
     }
 
     private func logDetailedSegments(result: CalculationResult) {

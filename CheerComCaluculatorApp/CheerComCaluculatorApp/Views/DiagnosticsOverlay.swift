@@ -1,29 +1,9 @@
 import UIKit
 
 class DiagnosticsOverlay: UIView {
-
-    private let textView: UITextView = {
-        let tv = UITextView()
-        tv.backgroundColor = UIColor.black.withAlphaComponent(0.8)
-        tv.textColor = .green
-        tv.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        tv.isEditable = false
-        tv.isSelectable = true
-        tv.layer.cornerRadius = 10
-        tv.layer.borderWidth = 1
-        tv.layer.borderColor = UIColor.white.withAlphaComponent(0.2).cgColor
-        tv.textContainerInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        return tv
-    }()
-
-    private let closeButton: UIButton = {
-        let btn = UIButton(type: .system)
-        btn.setTitle("Close", for: .normal)
-        btn.setTitleColor(.white, for: .normal)
-        btn.backgroundColor = .red
-        btn.layer.cornerRadius = 8
-        return btn
-    }()
+    private let panel = CheerGlassPanel(padding: .init(top: 20, leading: 20, bottom: 20, trailing: 20))
+    private let textView = UITextView()
+    private let closeButton = CheerButton(title: "Close", symbol: "xmark", style: .danger)
 
     var onClose: (() -> Void)?
 
@@ -37,33 +17,49 @@ class DiagnosticsOverlay: UIView {
     }
 
     private func setupUI() {
-        backgroundColor = UIColor.black.withAlphaComponent(0.5)
-
-        addSubview(textView)
-        addSubview(closeButton)
-
+        backgroundColor = CheerPalette.midnight.withAlphaComponent(0.42)
+        addSubview(panel)
         closeButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
-    }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
+        let titleLabel = UILabel()
+        titleLabel.text = "Diagnostics"
+        titleLabel.textColor = CheerPalette.textPrimary
+        titleLabel.font = cheerRoundedFont(.title3, weight: .bold)
 
-        let padding: CGFloat = 20
-        let buttonHeight: CGFloat = 44
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "Validation logs stream here in real time."
+        subtitleLabel.textColor = CheerPalette.textSecondary
+        subtitleLabel.font = cheerRoundedFont(.subheadline, weight: .regular)
 
-        textView.frame = CGRect(
-            x: padding,
-            y: padding + safeAreaInsets.top,
-            width: bounds.width - (padding * 2),
-            height: bounds.height - (padding * 3) - safeAreaInsets.top - buttonHeight
-        )
+        let titleStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        titleStack.axis = .vertical
+        titleStack.spacing = 2
 
-        closeButton.frame = CGRect(
-            x: bounds.width - padding - 100,
-            y: textView.frame.maxY + 10,
-            width: 100,
-            height: buttonHeight
-        )
+        let headerRow = UIStackView(arrangedSubviews: [titleStack, UIView(), closeButton])
+        headerRow.axis = .horizontal
+        headerRow.alignment = .center
+        headerRow.spacing = 12
+
+        textView.backgroundColor = UIColor.black.withAlphaComponent(0.32)
+        textView.textColor = CheerPalette.accentMint
+        textView.font = cheerMonospacedFont(size: 12, weight: .regular)
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.layer.cornerRadius = 18
+        textView.layer.borderWidth = 1
+        textView.layer.borderColor = UIColor.white.withAlphaComponent(0.08).cgColor
+        textView.textContainerInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+
+        panel.contentStack.addArrangedSubview(headerRow)
+        panel.contentStack.addArrangedSubview(textView)
+        textView.heightAnchor.constraint(greaterThanOrEqualToConstant: 260).isActive = true
+
+        NSLayoutConstraint.activate([
+            panel.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            panel.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -20),
+            panel.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
+            panel.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -20)
+        ])
     }
 
     @objc private func didTapClose() {

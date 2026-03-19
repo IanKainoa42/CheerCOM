@@ -12,7 +12,7 @@ protocol PoseLibraryPanelDelegate: AnyObject {
     func didTapImportPoses()
 }
 
-class PoseLibraryPanel: UIVisualEffectView {
+class PoseLibraryPanel: UIView {
 
     weak var delegate: PoseLibraryPanelDelegate?
 
@@ -20,145 +20,131 @@ class PoseLibraryPanel: UIVisualEffectView {
     private var scrollView: UIScrollView!
     private var poseButtonContainer: UIView!
     private var currentCategory: PoseCategory = .fullBody
-
-    private let panelHeight: CGFloat = 280
-    private let buttonSize: CGFloat = 70
-    private let buttonsPerRow: Int = 4
-    private let buttonSpacing: CGFloat = 10
+    private let panel = CheerGlassPanel(padding: .init(top: 20, leading: 20, bottom: 20, trailing: 20))
+    private var lastLaidOutWidth: CGFloat = 0
+    private let baseButtonSize: CGFloat = 92
+    private let buttonSpacing: CGFloat = 12
+    private let utilityGrid = UIStackView()
+    private let mirrorButton = CheerButton(title: "Mirror", symbol: "arrow.left.and.right", style: .secondary, compact: true)
+    private let saveButton = CheerButton(title: "Save", symbol: "square.and.arrow.down", style: .accent, compact: true)
+    private let exportButton = CheerButton(title: "Export", symbol: "square.and.arrow.up", style: .neutral, compact: true)
+    private let importButton = CheerButton(title: "Import", symbol: "tray.and.arrow.down", style: .positive, compact: true)
+    private var poseContainerHeightConstraint: NSLayoutConstraint!
 
     init(width: CGFloat) {
-        let blurEffect = UIBlurEffect(style: .dark)
-        super.init(effect: blurEffect)
-        setupUI(width: width)
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        setupUI()
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupUI(width: CGFloat) {
-        // Position above the Joint Control Panel (which is 180px tall)
-        let jointPanelHeight: CGFloat = 180
-        self.frame = CGRect(
-            x: 0,
-            y: UIScreen.main.bounds.height - panelHeight - jointPanelHeight,
-            width: width,
-            height: panelHeight
-        )
-        self.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
+    private func setupUI() {
+        addSubview(panel)
+        NSLayoutConstraint.activate([
+            panel.topAnchor.constraint(equalTo: topAnchor),
+            panel.leadingAnchor.constraint(equalTo: leadingAnchor),
+            panel.trailingAnchor.constraint(equalTo: trailingAnchor),
+            panel.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
 
-        // Header with title and utility buttons
-        let headerHeight: CGFloat = 40
+        let contentView = panel.contentView
 
-        // Close button (X)
-        let closeBtn = UIButton(frame: CGRect(x: 20, y: 10, width: 30, height: 30))
-        closeBtn.setTitle("✕", for: .normal)
-        closeBtn.setTitleColor(.white, for: .normal)
-        closeBtn.titleLabel?.font = .boldSystemFont(ofSize: 24)
-        closeBtn.backgroundColor = UIColor.systemRed.withAlphaComponent(0.8)
-        closeBtn.layer.cornerRadius = 15
-        closeBtn.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
-        contentView.addSubview(closeBtn)
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = "Pose Library"
+        titleLabel.textColor = CheerPalette.textPrimary
+        titleLabel.font = cheerRoundedFont(.title3, weight: .bold)
 
-        let headerLabel = UILabel(frame: CGRect(x: 60, y: 10, width: 150, height: 30))
-        headerLabel.text = "Pose Library"
-        headerLabel.textColor = .white
-        headerLabel.font = .boldSystemFont(ofSize: 18)
-        contentView.addSubview(headerLabel)
+        let subtitleLabel = UILabel()
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        subtitleLabel.text = "Presets and saved routines"
+        subtitleLabel.textColor = CheerPalette.textSecondary
+        subtitleLabel.font = cheerRoundedFont(.subheadline, weight: .regular)
 
-        // Mirror button
-        let mirrorBtn = createUtilityButton(
-            title: "↔️ Mirror",
-            x: width - 360,
-            y: 10,
-            width: 80,
-            action: #selector(mirrorTapped)
-        )
-        contentView.addSubview(mirrorBtn)
+        let titleStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        titleStack.translatesAutoresizingMaskIntoConstraints = false
+        titleStack.axis = .vertical
+        titleStack.spacing = 2
 
-        // Save button
-        let saveBtn = createUtilityButton(
-            title: "💾 Save",
-            x: width - 270,
-            y: 10,
-            width: 80,
-            action: #selector(saveTapped)
-        )
-        contentView.addSubview(saveBtn)
+        let closeButton = CheerButton(title: "Close", symbol: "xmark", style: .danger, compact: true)
+        closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
 
-        // Export button
-        let exportBtn = createUtilityButton(
-            title: "📤 Export",
-            x: width - 180,
-            y: 10,
-            width: 80,
-            action: #selector(exportTapped)
-        )
-        contentView.addSubview(exportBtn)
+        let headerRow = UIStackView(arrangedSubviews: [titleStack, UIView(), closeButton])
+        headerRow.translatesAutoresizingMaskIntoConstraints = false
+        headerRow.alignment = .center
+        headerRow.spacing = 12
+        contentView.addSubview(headerRow)
 
-        // Import button
-        let importBtn = createUtilityButton(
-            title: "📥 Import",
-            x: width - 90,
-            y: 10,
-            width: 80,
-            action: #selector(importTapped)
-        )
-        contentView.addSubview(importBtn)
+        utilityGrid.translatesAutoresizingMaskIntoConstraints = false
+        utilityGrid.axis = .vertical
+        utilityGrid.spacing = 10
+        contentView.addSubview(utilityGrid)
 
-        // Category tabs
-        let categoryY = headerHeight + 5
-        let categories = ["Full Body", "Arms", "Legs", "Saved"]
-        categorySegmentedControl = UISegmentedControl(items: categories)
-        categorySegmentedControl.frame = CGRect(
-            x: 20,
-            y: categoryY,
-            width: width - 40,
-            height: 32
-        )
-        categorySegmentedControl.selectedSegmentIndex = 0
-        categorySegmentedControl.backgroundColor = UIColor.white.withAlphaComponent(0.2)
-        categorySegmentedControl.selectedSegmentTintColor = UIColor.systemTeal
-        categorySegmentedControl.setTitleTextAttributes(
-            [.foregroundColor: UIColor.white], for: .normal)
-        categorySegmentedControl.setTitleTextAttributes(
-            [.foregroundColor: UIColor.white], for: .selected)
-        categorySegmentedControl.addTarget(
-            self, action: #selector(categoryChanged), for: .valueChanged)
+        let utilityRowOne = UIStackView(arrangedSubviews: [mirrorButton, saveButton])
+        utilityRowOne.axis = .horizontal
+        utilityRowOne.spacing = 10
+        utilityRowOne.distribution = .fillEqually
+
+        let utilityRowTwo = UIStackView(arrangedSubviews: [exportButton, importButton])
+        utilityRowTwo.axis = .horizontal
+        utilityRowTwo.spacing = 10
+        utilityRowTwo.distribution = .fillEqually
+
+        utilityGrid.addArrangedSubview(utilityRowOne)
+        utilityGrid.addArrangedSubview(utilityRowTwo)
+
+        mirrorButton.addTarget(self, action: #selector(mirrorTapped), for: .touchUpInside)
+        saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
+        exportButton.addTarget(self, action: #selector(exportTapped), for: .touchUpInside)
+        importButton.addTarget(self, action: #selector(importTapped), for: .touchUpInside)
+
+        categorySegmentedControl = makeCheerSegmentedControl(items: ["Full Body", "Arms", "Legs", "Saved"])
+        categorySegmentedControl.addTarget(self, action: #selector(categoryChanged), for: .valueChanged)
         contentView.addSubview(categorySegmentedControl)
 
-        // Scroll view for pose buttons
-        let scrollY = categoryY + 40
-        scrollView = UIScrollView(
-            frame: CGRect(
-                x: 0,
-                y: scrollY,
-                width: width,
-                height: panelHeight - scrollY
-            ))
+        scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.showsVerticalScrollIndicator = true
         scrollView.showsHorizontalScrollIndicator = false
+        scrollView.alwaysBounceVertical = true
         contentView.addSubview(scrollView)
 
-        // Container for pose buttons
-        poseButtonContainer = UIView(frame: CGRect(x: 0, y: 0, width: width, height: 400))
+        poseButtonContainer = UIView()
+        poseButtonContainer.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(poseButtonContainer)
 
-        // Load initial category
-        loadPosesForCategory(.fullBody)
-    }
+        poseContainerHeightConstraint = poseButtonContainer.heightAnchor.constraint(equalToConstant: 120)
 
-    private func createUtilityButton(
-        title: String, x: CGFloat, y: CGFloat, width: CGFloat, action: Selector
-    ) -> UIButton {
-        let button = UIButton(frame: CGRect(x: x, y: y, width: width, height: 30))
-        button.setTitle(title, for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 14)
-        button.backgroundColor = UIColor.systemIndigo.withAlphaComponent(0.8)
-        button.layer.cornerRadius = 6
-        button.addTarget(self, action: action, for: .touchUpInside)
-        return button
+        NSLayoutConstraint.activate([
+            headerRow.topAnchor.constraint(equalTo: contentView.layoutMarginsGuide.topAnchor),
+            headerRow.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            headerRow.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+
+            utilityGrid.topAnchor.constraint(equalTo: headerRow.bottomAnchor, constant: 14),
+            utilityGrid.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            utilityGrid.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+
+            categorySegmentedControl.topAnchor.constraint(equalTo: utilityGrid.bottomAnchor, constant: 14),
+            categorySegmentedControl.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            categorySegmentedControl.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+
+            scrollView.topAnchor.constraint(equalTo: categorySegmentedControl.bottomAnchor, constant: 14),
+            scrollView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: contentView.layoutMarginsGuide.bottomAnchor),
+
+            poseButtonContainer.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            poseButtonContainer.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            poseButtonContainer.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            poseButtonContainer.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            poseButtonContainer.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+            poseContainerHeightConstraint
+        ])
+
+        loadPosesForCategory(.fullBody)
     }
 
     @objc private func categoryChanged() {
@@ -185,11 +171,12 @@ class PoseLibraryPanel: UIVisualEffectView {
             subview.removeFromSuperview()
         }
 
-        // Calculate layout
-        let totalWidth = scrollView.frame.width
+        let availableWidth = max(scrollView.bounds.width - 8, 220)
+        let buttonSize = availableWidth < 420 ? 84 : baseButtonSize
+        let buttonsPerRow = max(2, Int((availableWidth + buttonSpacing) / (buttonSize + buttonSpacing)))
         let totalButtonWidth = CGFloat(buttonsPerRow) * buttonSize
-        let totalSpacing = CGFloat(buttonsPerRow - 1) * buttonSpacing
-        let startX = (totalWidth - totalButtonWidth - totalSpacing) / 2
+        let totalSpacing = CGFloat(max(0, buttonsPerRow - 1)) * buttonSpacing
+        let startX = max(0, (availableWidth - totalButtonWidth - totalSpacing) / 2)
 
         var itemCount = 0
 
@@ -198,10 +185,11 @@ class PoseLibraryPanel: UIVisualEffectView {
             itemCount = savedPoses.count
 
             if itemCount == 0 {
-                let emptyLabel = UILabel(frame: CGRect(x: 0, y: 50, width: totalWidth, height: 30))
+                let emptyLabel = UILabel(frame: CGRect(x: 0, y: 50, width: availableWidth, height: 30))
                 emptyLabel.text = "No saved poses yet"
-                emptyLabel.textColor = UIColor.white.withAlphaComponent(0.6)
+                emptyLabel.textColor = CheerPalette.textSecondary
                 emptyLabel.textAlignment = .center
+                emptyLabel.font = cheerRoundedFont(.headline, weight: .semibold)
                 poseButtonContainer.addSubview(emptyLabel)
             }
 
@@ -212,7 +200,7 @@ class PoseLibraryPanel: UIVisualEffectView {
                 let x = startX + CGFloat(col) * (buttonSize + buttonSpacing)
                 let y = 10 + CGFloat(row) * (buttonSize + buttonSpacing + 20)
 
-                let poseButton = createSavedPoseButton(pose: pose, x: x, y: y)
+                let poseButton = createSavedPoseButton(pose: pose, x: x, y: y, buttonSize: buttonSize)
                 poseButtonContainer.addSubview(poseButton)
             }
         } else {
@@ -226,7 +214,7 @@ class PoseLibraryPanel: UIVisualEffectView {
                 let x = startX + CGFloat(col) * (buttonSize + buttonSpacing)
                 let y = 10 + CGFloat(row) * (buttonSize + buttonSpacing + 20)
 
-                let poseButton = createPoseButton(pose: pose, x: x, y: y)
+                let poseButton = createPoseButton(pose: pose, x: x, y: y, buttonSize: buttonSize)
                 poseButtonContainer.addSubview(poseButton)
             }
         }
@@ -234,20 +222,30 @@ class PoseLibraryPanel: UIVisualEffectView {
         // Update scroll view content size
         let rows = (itemCount + buttonsPerRow - 1) / buttonsPerRow
         let contentHeight = 20 + CGFloat(rows) * (buttonSize + buttonSpacing + 20)
-        poseButtonContainer.frame.size.height = max(contentHeight, 100)
-        scrollView.contentSize = CGSize(width: scrollView.frame.width, height: poseButtonContainer.frame.size.height)
+        poseContainerHeightConstraint.constant = max(contentHeight, 120)
     }
 
-    private func createPoseButton(pose: PoseType, x: CGFloat, y: CGFloat) -> UIView {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        if abs(bounds.width - lastLaidOutWidth) > 1 {
+            lastLaidOutWidth = bounds.width
+            loadPosesForCategory(currentCategory)
+        }
+    }
+
+    private func createPoseButton(pose: PoseType, x: CGFloat, y: CGFloat, buttonSize: CGFloat) -> UIView {
         let container = UIView(
             frame: CGRect(x: x, y: y, width: buttonSize, height: buttonSize + 20))
 
         // Button
         let button = UIButton(frame: CGRect(x: 0, y: 0, width: buttonSize, height: buttonSize))
-        button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.8)
-        button.layer.cornerRadius = 12
+        button.backgroundColor = CheerPalette.accentBlue.withAlphaComponent(0.22)
+        button.layer.cornerCurve = .continuous
+        button.layer.cornerRadius = 20
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.white.withAlphaComponent(0.08).cgColor
         button.setTitle(pose.emoji, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 32)
+        button.titleLabel?.font = .systemFont(ofSize: buttonSize < 90 ? 32 : 36)
         button.tag = pose.hashValue
         button.addTarget(self, action: #selector(poseTapped(_:)), for: .touchUpInside)
         container.addSubview(button)
@@ -255,8 +253,8 @@ class PoseLibraryPanel: UIVisualEffectView {
         // Label
         let label = UILabel(frame: CGRect(x: 0, y: buttonSize + 2, width: buttonSize, height: 18))
         label.text = pose.displayName.components(separatedBy: " ").prefix(2).joined(separator: " ")
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 10)
+        label.textColor = CheerPalette.textPrimary
+        label.font = cheerRoundedFont(.caption2, weight: .semibold)
         label.textAlignment = .center
         label.numberOfLines = 1
         label.adjustsFontSizeToFitWidth = true
@@ -269,16 +267,19 @@ class PoseLibraryPanel: UIVisualEffectView {
         return container
     }
 
-    private func createSavedPoseButton(pose: SavedPose, x: CGFloat, y: CGFloat) -> UIView {
+    private func createSavedPoseButton(pose: SavedPose, x: CGFloat, y: CGFloat, buttonSize: CGFloat) -> UIView {
         let container = UIView(
             frame: CGRect(x: x, y: y, width: buttonSize, height: buttonSize + 20))
 
         // Button
         let button = UIButton(frame: CGRect(x: 0, y: 0, width: buttonSize, height: buttonSize))
-        button.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.8) // Green for saved
-        button.layer.cornerRadius = 12
+        button.backgroundColor = CheerPalette.accentMint.withAlphaComponent(0.24)
+        button.layer.cornerCurve = .continuous
+        button.layer.cornerRadius = 20
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.white.withAlphaComponent(0.08).cgColor
         button.setTitle("💾", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 32)
+        button.titleLabel?.font = .systemFont(ofSize: buttonSize < 90 ? 32 : 36)
         button.addTarget(self, action: #selector(savedPoseTapped(_:)), for: .touchUpInside)
 
         // Add long press to delete
@@ -290,8 +291,8 @@ class PoseLibraryPanel: UIVisualEffectView {
         // Label
         let label = UILabel(frame: CGRect(x: 0, y: buttonSize + 2, width: buttonSize, height: 18))
         label.text = pose.name
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 10)
+        label.textColor = CheerPalette.textPrimary
+        label.font = cheerRoundedFont(.caption2, weight: .semibold)
         label.textAlignment = .center
         label.numberOfLines = 1
         label.adjustsFontSizeToFitWidth = true
@@ -382,7 +383,7 @@ class PoseLibraryPanel: UIVisualEffectView {
     private func poseFromString(_ string: String) -> PoseType? {
         let allPoses: [PoseType] = [
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition,
+            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lunge,
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
             .legsStanding, .legsLibertyRight, .legsLibertyLeft, .legsScaleRight, .legsScaleLeft,
