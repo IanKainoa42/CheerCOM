@@ -483,7 +483,11 @@ class JointLimitsMock:
         "mixamorig_Neck": {"min": SCNVector3(-60, -80, -45), "max": SCNVector3(60, 80, 45)},
         "mixamorig_Head": {"min": SCNVector3(-60, -80, -45), "max": SCNVector3(60, 80, 45)},
         "mixamorig_RightUpLeg": {"min": SCNVector3(-180, -90, -180), "max": SCNVector3(90, 90, 180)},
-        "mixamorig_LeftUpLeg": {"min": SCNVector3(-180, -90, -180), "max": SCNVector3(90, 90, 180)}
+        "mixamorig_LeftUpLeg": {"min": SCNVector3(-180, -90, -180), "max": SCNVector3(90, 90, 180)},
+        "mixamorig_RightHand": {"min": SCNVector3(-90, -45, -45), "max": SCNVector3(90, 45, 45)},
+        "mixamorig_LeftHand": {"min": SCNVector3(-90, -45, -45), "max": SCNVector3(90, 45, 45)},
+        "mixamorig_RightFoot": {"min": SCNVector3(-45, -30, -30), "max": SCNVector3(45, 30, 30)},
+        "mixamorig_LeftFoot": {"min": SCNVector3(-45, -30, -30), "max": SCNVector3(45, 30, 30)}
     }
 
     @staticmethod
@@ -584,6 +588,24 @@ def test_joint_limits():
         print("✅ PASS: Right Hip clamped properly")
     else:
         print(f"❌ FAIL: Right Hip not clamped. Got X: {math.degrees(clamped_r_hip.x)}, Y: {math.degrees(clamped_r_hip.y)}")
+        return False
+
+    # Test Hand (Wrist) limits
+    r_hand = SCNVector3(math.radians(120), math.radians(60), math.radians(-60))
+    clamped_r_hand = JointLimitsMock.clamp_angles("mixamorig_RightHand", r_hand)
+    if abs(clamped_r_hand.x - math.radians(90)) < 0.001 and abs(clamped_r_hand.y - math.radians(45)) < 0.001 and abs(clamped_r_hand.z - math.radians(-45)) < 0.001:
+        print("✅ PASS: Right Hand (Wrist) clamped properly")
+    else:
+        print(f"❌ FAIL: Right Hand not clamped. Got X: {math.degrees(clamped_r_hand.x)}, Y: {math.degrees(clamped_r_hand.y)}, Z: {math.degrees(clamped_r_hand.z)}")
+        return False
+
+    # Test Foot (Ankle) limits
+    r_foot = SCNVector3(math.radians(-60), math.radians(-50), math.radians(40))
+    clamped_r_foot = JointLimitsMock.clamp_angles("mixamorig_RightFoot", r_foot)
+    if abs(clamped_r_foot.x - math.radians(-45)) < 0.001 and abs(clamped_r_foot.y - math.radians(-30)) < 0.001 and abs(clamped_r_foot.z - math.radians(30)) < 0.001:
+        print("✅ PASS: Right Foot (Ankle) clamped properly")
+    else:
+        print(f"❌ FAIL: Right Foot not clamped. Got X: {math.degrees(clamped_r_foot.x)}, Y: {math.degrees(clamped_r_foot.y)}, Z: {math.degrees(clamped_r_foot.z)}")
         return False
 
     return True
