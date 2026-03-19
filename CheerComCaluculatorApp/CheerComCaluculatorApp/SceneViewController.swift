@@ -22,9 +22,13 @@ class SceneViewController: UIViewController {
     private var headerPanel: CheerGlassPanel!
     private var headerRowStack: UIStackView!
     private var diagnosticsButton: CheerButton!
+    private var bodyPresetSelector: UISegmentedControl!
+    private var controlsToggleButton: CheerButton!
     private var jointPanelHeightConstraint: NSLayoutConstraint!
     private var poseLibraryHeightConstraint: NSLayoutConstraint!
     private var poseLibraryVisible = false
+    private var chromeVisible = true
+    private var didApplyInitialChromePreference = false
 
     // State
     private var updateTimer: Timer?
@@ -96,6 +100,11 @@ class SceneViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         updateAdaptiveLayout()
+
+        if !didApplyInitialChromePreference {
+            didApplyInitialChromePreference = true
+            setChromeVisible(!prefersFocusModeByDefault(), animated: false)
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -171,6 +180,11 @@ class SceneViewController: UIViewController {
         jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 244)
         poseLibraryHeightConstraint = poseLibraryPanel.heightAnchor.constraint(equalToConstant: 360)
 
+        controlsToggleButton = CheerButton(title: "Focus", style: .neutral, compact: true)
+        controlsToggleButton.addTarget(self, action: #selector(didTapToggleChromeVisibility), for: .touchUpInside)
+        controlsToggleButton.accessibilityHint = "Hide or show the interface controls."
+        view.addSubview(controlsToggleButton)
+
         NSLayoutConstraint.activate([
             chromeScrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
             chromeScrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
@@ -183,29 +197,10 @@ class SceneViewController: UIViewController {
             chromeContentView.bottomAnchor.constraint(equalTo: chromeScrollView.contentLayoutGuide.bottomAnchor),
             chromeContentView.widthAnchor.constraint(equalTo: chromeScrollView.frameLayoutGuide.widthAnchor),
 
-<<<<<<< HEAD
-        // Body Preset Selector
-        let presetSelector = UISegmentedControl(items: ["Neutral", "Athletic F", "Athletic M"])
-        presetSelector.frame = CGRect(x: 20, y: 155, width: 250, height: 35)
-        presetSelector.selectedSegmentIndex = 0
-        presetSelector.backgroundColor = UIColor.white.withAlphaComponent(0.2)
-        presetSelector.selectedSegmentTintColor = UIColor.systemBlue.withAlphaComponent(0.8)
-
-        let normalTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-        let selectedTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-        presetSelector.setTitleTextAttributes(normalTextAttributes, for: .normal)
-        presetSelector.setTitleTextAttributes(selectedTextAttributes, for: .selected)
-
-        presetSelector.addTarget(self, action: #selector(didChangeBodyPreset(_:)), for: .valueChanged)
-        view.addSubview(presetSelector)
-
-        updatePoseLibraryToggleButton()
-=======
             chromeStackView.topAnchor.constraint(equalTo: chromeContentView.topAnchor),
             chromeStackView.leadingAnchor.constraint(equalTo: chromeContentView.leadingAnchor),
             chromeStackView.trailingAnchor.constraint(equalTo: chromeContentView.trailingAnchor),
             chromeStackView.bottomAnchor.constraint(equalTo: chromeContentView.bottomAnchor),
->>>>>>> 1de3a06 (feat: Implement a new CheerUI framework and refactor existing panels to adopt a modern design language.)
 
             jointControlPanel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
             jointControlPanel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
@@ -215,9 +210,13 @@ class SceneViewController: UIViewController {
             poseLibraryPanel.leadingAnchor.constraint(equalTo: jointControlPanel.leadingAnchor),
             poseLibraryPanel.trailingAnchor.constraint(equalTo: jointControlPanel.trailingAnchor),
             poseLibraryPanel.bottomAnchor.constraint(equalTo: jointControlPanel.topAnchor, constant: -12),
-            poseLibraryHeightConstraint
+            poseLibraryHeightConstraint,
+
+            controlsToggleButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            controlsToggleButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
 
+        updateControlsToggleButton()
         setTransformMode(currentTransformMode)
     }
 
@@ -257,6 +256,21 @@ class SceneViewController: UIViewController {
         headerRowStack.distribution = .fill
 
         panel.contentStack.addArrangedSubview(headerRowStack)
+
+        let presetLabel = UILabel()
+        presetLabel.text = "Body Preset"
+        presetLabel.textColor = CheerPalette.textSecondary
+        presetLabel.font = cheerRoundedFont(.subheadline, weight: .semibold)
+
+        bodyPresetSelector = makeCheerSegmentedControl(items: ["Neutral", "Athletic F", "Athletic M"])
+        bodyPresetSelector.selectedSegmentIndex = 0
+        bodyPresetSelector.addTarget(self, action: #selector(didChangeBodyPreset(_:)), for: .valueChanged)
+
+        let presetStack = UIStackView(arrangedSubviews: [presetLabel, bodyPresetSelector])
+        presetStack.axis = .vertical
+        presetStack.spacing = 8
+        panel.contentStack.addArrangedSubview(presetStack)
+
         return panel
     }
 
@@ -273,7 +287,6 @@ class SceneViewController: UIViewController {
         poseLibraryHeightConstraint.constant = min(max(view.bounds.height * 0.44, 310), 480)
     }
 
-<<<<<<< HEAD
     @objc private func didChangeBodyPreset(_ sender: UISegmentedControl) {
         let preset: BodyPreset
         switch sender.selectedSegmentIndex {
@@ -286,13 +299,13 @@ class SceneViewController: UIViewController {
         print("👤 Body preset changed to: \(preset)")
     }
 
-    private func setPoseLibraryVisible(_ isVisible: Bool) {
-        poseLibraryPanel.isHidden = !isVisible
-        updatePoseLibraryToggleButton()
-=======
+    @objc private func didTapToggleChromeVisibility() {
+        setChromeVisible(!chromeVisible)
+    }
+
     private func setPoseLibraryVisible(_ isVisible: Bool, animated: Bool = true) {
         poseLibraryVisible = isVisible
-        poseLibraryPanel.isUserInteractionEnabled = isVisible
+        poseLibraryPanel.isUserInteractionEnabled = isVisible && chromeVisible
 
         let updates = {
             self.poseLibraryPanel.alpha = isVisible ? 1 : 0
@@ -311,9 +324,54 @@ class SceneViewController: UIViewController {
         } else {
             updates()
         }
-
->>>>>>> 1de3a06 (feat: Implement a new CheerUI framework and refactor existing panels to adopt a modern design language.)
         print("🎭 Pose library \(isVisible ? "shown" : "hidden")")
+    }
+
+    private func setChromeVisible(_ isVisible: Bool, animated: Bool = true) {
+        guard chromeVisible != isVisible || animated == false else { return }
+
+        chromeVisible = isVisible
+        if !isVisible && poseLibraryVisible {
+            setPoseLibraryVisible(false, animated: animated)
+        }
+
+        chromeScrollView.isUserInteractionEnabled = isVisible
+        jointControlPanel.isUserInteractionEnabled = isVisible
+
+        let updates = {
+            self.chromeScrollView.alpha = isVisible ? 1 : 0
+            self.chromeScrollView.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: -28)
+            self.jointControlPanel.alpha = isVisible ? 1 : 0
+            self.jointControlPanel.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: 36)
+            self.updateControlsToggleButton()
+        }
+
+        if animated {
+            UIView.animate(
+                withDuration: 0.25,
+                delay: 0,
+                usingSpringWithDamping: 0.94,
+                initialSpringVelocity: 0.4,
+                options: [.beginFromCurrentState, .curveEaseInOut],
+                animations: updates
+            )
+        } else {
+            updates()
+        }
+
+        print(isVisible ? "🧩 Controls shown" : "🎬 Focus mode enabled")
+    }
+
+    private func updateControlsToggleButton() {
+        let title = chromeVisible ? "Focus" : "Controls"
+        controlsToggleButton.setTitle(title, for: .normal)
+        controlsToggleButton.accessibilityLabel = chromeVisible ? "Hide controls" : "Show controls"
+    }
+
+    private func prefersFocusModeByDefault() -> Bool {
+        let shortSide = min(view.bounds.width, view.bounds.height)
+        let compactHeight = view.bounds.height < 760
+        return traitCollection.horizontalSizeClass == .compact && (shortSide < 430 || compactHeight)
     }
 
     @objc func didTapRunDiagnostics() {
@@ -335,9 +393,9 @@ class SceneViewController: UIViewController {
         // Handle close
         overlay.onClose = { [weak self] in
             self?.sceneManager.sceneView.isUserInteractionEnabled = true
-            self?.chromeScrollView.isUserInteractionEnabled = true
-            self?.jointControlPanel.isUserInteractionEnabled = true
-            self?.poseLibraryPanel.isUserInteractionEnabled = self?.poseLibraryVisible ?? false
+            self?.chromeScrollView.isUserInteractionEnabled = self?.chromeVisible ?? false
+            self?.jointControlPanel.isUserInteractionEnabled = self?.chromeVisible ?? false
+            self?.poseLibraryPanel.isUserInteractionEnabled = (self?.poseLibraryVisible ?? false) && (self?.chromeVisible ?? false)
         }
 
         validationHarness = CoMValidationHarness()
@@ -441,6 +499,8 @@ class SceneViewController: UIViewController {
             case .scale:
                 setTransformMode(.position)
             }
+        case .keyboardH:
+            setChromeVisible(!chromeVisible)
         default:
             super.pressesBegan(presses, with: event)
         }
@@ -618,7 +678,7 @@ extension SceneViewController: JointControlPanelDelegate {
 
     // View Controls
     func didTapFitView() {
-        cameraManager.fitToView()
+        _ = cameraManager.fitToView()
     }
 
     func didTapToggleVisualizations() {
