@@ -507,6 +507,15 @@ class JointLimitsMock:
         clamped_y = max(min_rad.y, min(max_rad.y, angles.y))
         clamped_z = max(min_rad.z, min(max_rad.z, angles.z))
 
+        if clamped_x != angles.x or clamped_y != angles.y or clamped_z != angles.z:
+            deg_x = math.degrees(angles.x)
+            deg_y = math.degrees(angles.y)
+            deg_z = math.degrees(angles.z)
+            c_x = math.degrees(clamped_x)
+            c_y = math.degrees(clamped_y)
+            c_z = math.degrees(clamped_z)
+            print(f"⚠️ POSE VALIDATOR WARNING: Out-of-range angle clamped on {joint_name}. Attempted: ({deg_x:.1f}°, {deg_y:.1f}°, {deg_z:.1f}°) -> Clamped: ({c_x:.1f}°, {c_y:.1f}°, {c_z:.1f}°)")
+
         return SCNVector3(clamped_x, clamped_y, clamped_z)
 
 def test_joint_limits():
