@@ -72,10 +72,6 @@ final class COMInfoPanel: CheerGlassPanel {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override var intrinsicContentSize: CGSize {
-        CGSize(width: UIView.noIntrinsicMetric, height: 222)
-    }
-
     private func setupUI() {
         contentStack.spacing = 16
 
