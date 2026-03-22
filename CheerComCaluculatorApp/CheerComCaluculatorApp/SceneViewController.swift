@@ -177,7 +177,7 @@ class SceneViewController: UIViewController {
         poseLibraryPanel.isUserInteractionEnabled = false
         view.addSubview(poseLibraryPanel)
 
-        jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 244)
+        jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 320)
         poseLibraryHeightConstraint = poseLibraryPanel.heightAnchor.constraint(equalToConstant: 360)
 
         controlsToggleButton = CheerButton(title: "Focus", style: .neutral, compact: true)
@@ -283,7 +283,7 @@ class SceneViewController: UIViewController {
         headerRowStack.axis = compactHeader ? .vertical : .horizontal
         headerRowStack.alignment = compactHeader ? .leading : .center
 
-        jointPanelHeightConstraint.constant = view.bounds.width < 430 ? 252 : (useHorizontalCards ? 228 : 242)
+        jointPanelHeightConstraint.constant = view.bounds.width < 430 ? 328 : (useHorizontalCards ? 304 : 318)
         poseLibraryHeightConstraint.constant = min(max(view.bounds.height * 0.44, 310), 480)
     }
 

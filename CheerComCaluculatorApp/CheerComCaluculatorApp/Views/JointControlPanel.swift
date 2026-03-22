@@ -38,7 +38,7 @@ class JointControlPanel: UIView {
     }
 
     override var intrinsicContentSize: CGSize {
-        CGSize(width: UIView.noIntrinsicMetric, height: 238)
+        CGSize(width: UIView.noIntrinsicMetric, height: 320)
     }
 
     private func setupUI() {

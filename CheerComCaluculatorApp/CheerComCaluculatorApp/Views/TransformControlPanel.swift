@@ -27,7 +27,7 @@ class TransformControlPanel: CheerGlassPanel {
     }
 
     override var intrinsicContentSize: CGSize {
-        CGSize(width: UIView.noIntrinsicMetric, height: 264)
+        CGSize(width: UIView.noIntrinsicMetric, height: 320)
     }
 
     private func setupUI() {
