@@ -24,7 +24,6 @@ class SceneViewController: UIViewController {
     private var diagnosticsButton: CheerButton!
     private var bodyPresetSelector: UISegmentedControl!
     private var controlsToggleButton: CheerButton!
-    private var jointPanelHeightConstraint: NSLayoutConstraint!
     private var poseLibraryHeightConstraint: NSLayoutConstraint!
     private var poseLibraryVisible = false
     private var chromeVisible = true
@@ -177,7 +176,6 @@ class SceneViewController: UIViewController {
         poseLibraryPanel.isUserInteractionEnabled = false
         view.addSubview(poseLibraryPanel)
 
-        jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 320)
         poseLibraryHeightConstraint = poseLibraryPanel.heightAnchor.constraint(equalToConstant: 360)
 
         controlsToggleButton = CheerButton(title: "Focus", style: .neutral, compact: true)
@@ -205,7 +203,6 @@ class SceneViewController: UIViewController {
             jointControlPanel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
             jointControlPanel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             jointControlPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            jointPanelHeightConstraint,
 
             poseLibraryPanel.leadingAnchor.constraint(equalTo: jointControlPanel.leadingAnchor),
             poseLibraryPanel.trailingAnchor.constraint(equalTo: jointControlPanel.trailingAnchor),
@@ -283,7 +280,6 @@ class SceneViewController: UIViewController {
         headerRowStack.axis = compactHeader ? .vertical : .horizontal
         headerRowStack.alignment = compactHeader ? .leading : .center
 
-        jointPanelHeightConstraint.constant = view.bounds.width < 430 ? 328 : (useHorizontalCards ? 304 : 318)
         poseLibraryHeightConstraint.constant = min(max(view.bounds.height * 0.44, 310), 480)
     }
 

@@ -26,10 +26,6 @@ class TransformControlPanel: CheerGlassPanel {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override var intrinsicContentSize: CGSize {
-        CGSize(width: UIView.noIntrinsicMetric, height: 320)
-    }
-
     private func setupUI() {
         contentStack.spacing = 14
 
