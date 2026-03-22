@@ -49,6 +49,17 @@ class JointLimits {
         let clampedY = max(limit.minAngle.y, min(limit.maxAngle.y, angles.y))
         let clampedZ = max(limit.minAngle.z, min(limit.maxAngle.z, angles.z))
 
+        // Pose Validator Warning: Log if any axis was clamped
+        if clampedX != angles.x || clampedY != angles.y || clampedZ != angles.z {
+            let degX = angles.x * 180 / .pi
+            let degY = angles.y * 180 / .pi
+            let degZ = angles.z * 180 / .pi
+            let cdX = clampedX * 180 / .pi
+            let cdY = clampedY * 180 / .pi
+            let cdZ = clampedZ * 180 / .pi
+            print("⚠️ POSE VALIDATOR WARNING: Out-of-range angle clamped on \(jointName). Attempted: (\(String(format: "%.1f", degX))°, \(String(format: "%.1f", degY))°, \(String(format: "%.1f", degZ))°) -> Clamped: (\(String(format: "%.1f", cdX))°, \(String(format: "%.1f", cdY))°, \(String(format: "%.1f", cdZ))°)")
+        }
+
         return SCNVector3(clampedX, clampedY, clampedZ)
     }
 }
