@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import ModelRigKit
 
 protocol PoseLibraryPanelDelegate: AnyObject {
     func didSelectPose(_ pose: PoseType)

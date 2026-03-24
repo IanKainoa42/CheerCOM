@@ -1,5 +1,6 @@
 import SceneKit
 import UIKit
+import ModelRigKit
 
 class VisualizationsManager {
     struct CircularVector3Buffer: RandomAccessCollection {
@@ -323,10 +324,10 @@ class VisualizationsManager {
         // Initialize cache if needed
         if leftFootNode == nil {
             guard let sceneManager = sceneManager else { return nil }
-            leftFootNode = sceneManager.findBone(named: "mixamorig_LeftFoot")
-            rightFootNode = sceneManager.findBone(named: "mixamorig_RightFoot")
-            leftToeNode = sceneManager.findBone(named: "mixamorig_LeftToeBase")
-            rightToeNode = sceneManager.findBone(named: "mixamorig_RightToeBase")
+            leftFootNode = sceneManager.findBone(.leftFoot)
+            rightFootNode = sceneManager.findBone(.rightFoot)
+            leftToeNode = sceneManager.findBone(.leftToeBase)
+            rightToeNode = sceneManager.findBone(.rightToeBase)
         }
 
         guard let leftFoot = leftFootNode,

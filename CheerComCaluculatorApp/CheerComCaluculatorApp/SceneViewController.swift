@@ -1,5 +1,6 @@
 import SceneKit
 import UIKit
+import ModelRigKit
 
 class SceneViewController: UIViewController {
 
@@ -76,7 +77,7 @@ class SceneViewController: UIViewController {
         // 2. Setup Calculator
         calculator = COMCalculator(bodyMass: 52.2)
         // Bind calculator to scene nodes for optimized access
-        calculator.bind(jointNodes: sceneManager.cachedBoneNodes)
+        calculator.bind(jointNodes: sceneManager.jointNodeMap)
 
         // 3. Setup UI
         setupUI()
@@ -510,10 +511,10 @@ extension SceneViewController: JointControlPanelDelegate {
             title: "Select Joint", message: "Choose a joint to control",
             preferredStyle: .actionSheet)
 
-        for jointName in sceneManager.controllableJoints {
-            let displayName = formatJointName(jointName)
+        for joint in sceneManager.controllableJoints {
+            let displayName = formatJointName(joint.rawValue)
             let action = UIAlertAction(title: displayName, style: .default) { [weak self] _ in
-                self?.selectJoint(named: jointName)
+                self?.selectJoint(named: joint.rawValue)
             }
             alert.addAction(action)
         }
@@ -591,8 +592,8 @@ extension SceneViewController: JointControlPanelDelegate {
         case .z: newAngles.z += delta
         }
 
-        if let jointName = joint.name {
-            joint.eulerAngles = JointLimits.clampAngles(for: jointName, angles: newAngles)
+        if let jointName = joint.name, let jointEnum = Joint(rawValue: jointName) {
+            joint.eulerAngles = JointLimits.clampAngles(for: jointEnum, angles: newAngles)
         } else {
             joint.eulerAngles = newAngles
         }
@@ -632,8 +633,8 @@ extension SceneViewController: JointControlPanelDelegate {
         case .z: newAngles.z = angle
         }
 
-        if let jointName = joint.name {
-            joint.eulerAngles = JointLimits.clampAngles(for: jointName, angles: newAngles)
+        if let jointName = joint.name, let jointEnum = Joint(rawValue: jointName) {
+            joint.eulerAngles = JointLimits.clampAngles(for: jointEnum, angles: newAngles)
         } else {
             joint.eulerAngles = newAngles
         }
@@ -659,9 +660,9 @@ extension SceneViewController: JointControlPanelDelegate {
         SCNTransaction.animationDuration = 0.3
 
         // Apply T-Pose joint angles
-        for (jointName, angles) in tPoseDefinition.jointAngles {
-            if let bone = sceneManager.findBone(named: jointName) {
-                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
+        for (joint, angles) in tPoseDefinition.jointAngles {
+            if let bone = sceneManager.findBone(joint) {
+                bone.eulerAngles = JointLimits.clampAngles(for: joint, angles: angles)
             }
         }
 
@@ -829,9 +830,9 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         var jointPositions: [String: SCNVector3] = [:]
 
         // Iterate through all controllable joints and capture their Euler angles
-        for jointName in sceneManager.controllableJoints {
-            if let joint = sceneManager.cachedBoneNodes[jointName] {
-                jointPositions[jointName] = joint.eulerAngles
+        for joint in sceneManager.controllableJoints {
+            if let node = sceneManager.cachedBoneNodes[joint.rawValue] {
+                jointPositions[joint.rawValue] = node.eulerAngles
             }
         }
 
@@ -889,29 +890,29 @@ extension SceneViewController: PoseLibraryPanelDelegate {
     }
 
     private func applySavedPose(_ pose: SavedPose) {
-        var jointAngles: [String: SCNVector3] = [:]
+        var jointAngles: [Joint: SCNVector3] = [:]
         for (name, _) in pose.jointAngles {
-            if let vector = pose.getVector(for: name) {
-                jointAngles[name] = vector
+            if let joint = Joint(rawValue: name), let vector = pose.getVector(for: joint) {
+                jointAngles[joint] = vector
             }
         }
         applyJointAngles(jointAngles, name: pose.name)
     }
 
-    private func applyJointAngles(_ jointAngles: [String: SCNVector3], name: String) {
+    private func applyJointAngles(_ jointAngles: [Joint: SCNVector3], name: String) {
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.3
 
         // Apply joint angles
-        for (jointName, angles) in jointAngles {
-            if let bone = sceneManager.findBone(named: jointName) {
-                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
+        for (joint, angles) in jointAngles {
+            if let bone = sceneManager.findBone(joint) {
+                bone.eulerAngles = JointLimits.clampAngles(for: joint, angles: angles)
             }
         }
 
         SCNTransaction.completionBlock = { [weak self] in
             self?.scheduleUpdateCOM()
-            print("✅ Applied \(name)")
+            print("Applied \(name)")
         }
         SCNTransaction.commit()
     }

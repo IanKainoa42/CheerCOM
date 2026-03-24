@@ -1,5 +1,6 @@
 import SceneKit
 import UIKit
+import ModelRigKit
 
 class CheerCOMSceneManager {
     var sceneView: SCNView!
@@ -9,28 +10,39 @@ class CheerCOMSceneManager {
     var feetAndToes = Set<SCNNode>()
 
     // List of controllable joints (in order from root to extremities)
-    let controllableJoints = [
-        "mixamorig_Hips",
-        "mixamorig_Spine",
-        "mixamorig_Spine1",
-        "mixamorig_Spine2",
-        "mixamorig_Neck",
-        "mixamorig_Head",
-        "mixamorig_RightShoulder",
-        "mixamorig_RightArm",
-        "mixamorig_RightForeArm",
-        "mixamorig_RightHand",
-        "mixamorig_LeftShoulder",
-        "mixamorig_LeftArm",
-        "mixamorig_LeftForeArm",
-        "mixamorig_LeftHand",
-        "mixamorig_RightUpLeg",
-        "mixamorig_RightLeg",
-        "mixamorig_RightFoot",
-        "mixamorig_LeftUpLeg",
-        "mixamorig_LeftLeg",
-        "mixamorig_LeftFoot",
+    let controllableJoints: [Joint] = [
+        .hips,
+        .spine,
+        .spine1,
+        .spine2,
+        .neck,
+        .head,
+        .rightShoulder,
+        .rightArm,
+        .rightForeArm,
+        .rightHand,
+        .leftShoulder,
+        .leftArm,
+        .leftForeArm,
+        .leftHand,
+        .rightUpLeg,
+        .rightLeg,
+        .rightFoot,
+        .leftUpLeg,
+        .leftLeg,
+        .leftFoot,
     ]
+
+    /// Returns a Joint-keyed dictionary of cached bone nodes suitable for COMCalculator.bind().
+    var jointNodeMap: [Joint: SCNNode] {
+        var map: [Joint: SCNNode] = [:]
+        for joint in Joint.allCases {
+            if let node = cachedBoneNodes[joint.rawValue] {
+                map[joint] = node
+            }
+        }
+        return map
+    }
 
     init(view: UIView) {
         setupScene(in: view)
@@ -56,7 +68,7 @@ class CheerCOMSceneManager {
         // Show statistics (FPS, etc)
         sceneView.showsStatistics = false
 
-        print("📷 Scene view frame: \(view.bounds)")
+        print("Scene view frame: \(view.bounds)")
 
         setupLighting()
         setupGround()
@@ -125,10 +137,10 @@ class CheerCOMSceneManager {
             node.removeAllAnimations()
             node.removeAllActions()
         }
-        print("✅ Removed all animations from character model and source scene")
+        print("Removed all animations from character model and source scene")
 
         scene.rootNode.addChildNode(characterNode)
-        print("✅ Character loaded successfully")
+        print("Character loaded successfully")
 
         applyBodyPartColors()
         cacheBoneNodes()
@@ -158,21 +170,21 @@ class CheerCOMSceneManager {
                 }
             }
         }
-        print("🎨 Body part colors applied")
+        print("Body part colors applied")
     }
 
     func cacheBoneNodes() {
         // Cache all the joints we'll be accessing frequently
-        let allJoints =
-            controllableJoints + [
-                "mixamorig_LeftToeBase", "mixamorig_RightToeBase",
-                "mixamorig_LeftHandMiddle1", "mixamorig_RightHandMiddle1",
+        let allJointStrings: [String] =
+            controllableJoints.map { $0.rawValue } + [
+                Joint.leftToeBase.rawValue, Joint.rightToeBase.rawValue,
+                Joint.leftHandMiddle1.rawValue, Joint.rightHandMiddle1.rawValue,
             ]
 
         var foundJoints = 0
         var missingJoints: [String] = []
 
-        for jointName in allJoints {
+        for jointName in allJointStrings {
             if let node = characterNode.childNode(withName: jointName, recursively: true) {
                 cachedBoneNodes[jointName] = node
                 foundJoints += 1
@@ -182,12 +194,12 @@ class CheerCOMSceneManager {
         }
 
         if !missingJoints.isEmpty {
-            print("⚠️ Missing expected joints:")
+            print("Missing expected joints:")
             for missing in missingJoints {
-                print("   ❌ \(missing)")
+                print("   \(missing)")
             }
         }
-        print("✅ Found \(foundJoints)/\(allJoints.count) expected joints")
+        print("Found \(foundJoints)/\(allJointStrings.count) expected joints")
 
         // Cache all nodes for COM calculation
         characterNode.enumerateChildNodes { [weak self] (node, _) in
@@ -202,7 +214,7 @@ class CheerCOMSceneManager {
             }
         }
 
-        print("✅ Cached \(cachedBoneNodes.count) total bone nodes")
+        print("Cached \(cachedBoneNodes.count) total bone nodes")
     }
 
     func findBone(named name: String) -> SCNNode? {
@@ -218,6 +230,10 @@ class CheerCOMSceneManager {
         return nil
     }
 
+    func findBone(_ joint: Joint) -> SCNNode? {
+        return findBone(named: joint.rawValue)
+    }
+
     func frameCharacter() {
         guard let cameraNode = sceneView.pointOfView else { return }
 
@@ -228,6 +244,6 @@ class CheerCOMSceneManager {
         cameraNode.position = SCNVector3(
             center.x, center.y, center.z + Float(characterHeight) * 1.5)
         cameraNode.look(at: center)
-        print("✅ Character automatically framed.")
+        print("Character automatically framed.")
     }
 }

@@ -1,6 +1,7 @@
 import SceneKit
 import Foundation
 import QuartzCore
+import ModelRigKit
 
 class CoMValidationHarness {
 
@@ -123,16 +124,18 @@ class CoMValidationHarness {
         log("Run Date: \(dateFormatter.string(from: Date()))")
         log("--- System Info ---")
         log("Total Body Mass (Configured): \(calculator.bodyMass) kg")
-        log("Number of Segments Defined: \(calculator.segments.count)")
+
+        let segments = SegmentData.standard
+        log("Number of Segments Defined: \(segments.count)")
 
         // 1. Verify Mass Ratios & Total Mass
-        let totalMassRatio = calculator.segments.reduce(0.0) { $0 + $1.mass }
+        let totalMassRatio = segments.reduce(0.0) { $0 + $1.massRatio }
         log("Total Mass Ratio Sum: \(String(format: "%.4f", totalMassRatio))")
 
         if abs(totalMassRatio - 1.0) > 0.001 {
-             log("⚠️ CRITICAL: Mass ratios do not sum to 1.0! (Diff: \(String(format: "%.4f", totalMassRatio - 1.0)))")
+             log("CRITICAL: Mass ratios do not sum to 1.0! (Diff: \(String(format: "%.4f", totalMassRatio - 1.0)))")
         } else {
-             log("✅ Mass ratios sum to approx 1.0")
+             log("Mass ratios sum to approx 1.0")
         }
 
         // Verify Total Mass Calculation
@@ -140,9 +143,9 @@ class CoMValidationHarness {
         log("Calculated Total Mass: \(String(format: "%.3f", calculatedTotalMass)) kg (Expected: \(String(format: "%.3f", calculator.bodyMass)) kg)")
 
         if abs(calculatedTotalMass - calculator.bodyMass) > 0.01 {
-            log("⚠️ CRITICAL: Calculated total mass does not match body mass!")
+            log("CRITICAL: Calculated total mass does not match body mass!")
         } else {
-            log("✅ Calculated mass matches body mass.")
+            log("Calculated mass matches body mass.")
         }
 
         // 2. Verify Segment Binding
@@ -151,44 +154,43 @@ class CoMValidationHarness {
         log("Number of Segments Bound: \(boundCount)")
 
         log("\nSegment Mapping Verification:")
-        for segment in calculator.segments {
-            let proxName = segment.prox
-            let distName = segment.dist
-            log(" - \(segment.name): \(proxName) -> \(distName)")
+        for segment in segments {
+            log(" - \(segment.name): \(segment.proximalJoint.rawValue) -> \(segment.distalJoint.rawValue)")
         }
         log("")
 
-        if boundCount < calculator.segments.count {
-            log("⚠️ CRITICAL: Only \(boundCount)/\(calculator.segments.count) segments are bound! Some segments are missing from the calculation.")
+        if boundCount < segments.count {
+            log("CRITICAL: Only \(boundCount)/\(segments.count) segments are bound! Some segments are missing from the calculation.")
             // Identify missing segments
             let boundNames = Set(result.segmentCOMs.map { $0.name })
-            for segment in calculator.segments {
+            for segment in segments {
                 if !boundNames.contains(segment.name) {
-                    log("   ❌ Missing: \(segment.name) (Joints: \(segment.prox) -> \(segment.dist))")
+                    log("   Missing: \(segment.name) (Joints: \(segment.proximalJoint.rawValue) -> \(segment.distalJoint.rawValue))")
                 }
             }
         } else {
-            log("✅ All segments successfully bound to joints.")
+            log("All segments successfully bound to joints.")
         }
 
         // 3. Verify BOS Nodes (Visualizations)
-        let bosJoints = ["mixamorig_LeftFoot", "mixamorig_RightFoot", "mixamorig_LeftToeBase", "mixamorig_RightToeBase"]
+        let bosJoints: [Joint] = [.leftFoot, .rightFoot, .leftToeBase, .rightToeBase]
         var missingBOS = false
         for joint in bosJoints {
-            if sceneManager.findBone(named: joint) == nil {
-                log("⚠️ WARNING: BOS Joint missing: \(joint)")
+            if sceneManager.findBone(joint) == nil {
+                log("WARNING: BOS Joint missing: \(joint.rawValue)")
                 missingBOS = true
             }
         }
         if !missingBOS {
-             log("✅ All BOS joints found.")
+             log("All BOS joints found.")
         }
 
         // 4. Log Joint Limits configuration
         log("\n--- Joint Limits Enforced ---")
-        log("Configured Joints: \(JointLimits.limits.keys.count)")
-        for (joint, _) in JointLimits.limits {
-            log(" - \(joint)")
+        let constrainedJoints = JointLimits.constrainedJoints
+        log("Configured Joints: \(constrainedJoints.count)")
+        for joint in constrainedJoints {
+            log(" - \(joint.rawValue)")
         }
 
         log("-------------------\n")
@@ -222,7 +224,7 @@ class CoMValidationHarness {
         log("- **Calculated CoM**: `\(formatVector(com))`")
 
         // Get Hips Position for reference
-        let hipsPos = sceneManager.findBone(named: "mixamorig_Hips")?.worldPosition
+        let hipsPos = sceneManager.findBone(.hips)?.worldPosition
 
         // Verify Criteria
         let (passed, message) = verifyPoseCriteria(poseType, com: com, hipsPos: hipsPos)
@@ -347,9 +349,9 @@ class CoMValidationHarness {
         SCNTransaction.begin()
         SCNTransaction.animationDuration = duration
 
-        for (jointName, angles) in poseDef.jointAngles {
-            if let bone = sceneManager.findBone(named: jointName) {
-                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
+        for (joint, angles) in poseDef.jointAngles {
+            if let bone = sceneManager.findBone(joint) {
+                bone.eulerAngles = JointLimits.clampAngles(for: joint, angles: angles)
             }
         }
 

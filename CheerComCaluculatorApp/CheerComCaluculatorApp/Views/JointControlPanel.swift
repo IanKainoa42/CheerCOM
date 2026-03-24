@@ -1,4 +1,5 @@
 import UIKit
+import ModelRigKit
 
 protocol JointControlPanelDelegate: AnyObject {
     func didTapJointSelection(sourceView: UIView)

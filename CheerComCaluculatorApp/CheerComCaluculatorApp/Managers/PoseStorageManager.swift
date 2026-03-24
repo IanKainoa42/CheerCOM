@@ -1,18 +1,6 @@
 import Foundation
 import SceneKit
-
-struct SavedPose: Codable {
-    let id: UUID
-    let name: String
-    let jointAngles: [String: [Float]] // [x, y, z] in radians
-    let timestamp: Date
-
-    // Helper to convert to SceneKit vector
-    func getVector(for joint: String) -> SCNVector3? {
-        guard let angles = jointAngles[joint], angles.count == 3 else { return nil }
-        return SCNVector3(angles[0], angles[1], angles[2])
-    }
-}
+import ModelRigKit
 
 class PoseStorageManager {
     static let shared = PoseStorageManager()
@@ -27,9 +15,6 @@ class PoseStorageManager {
         // Convert SCNVector3 to [Float]
         var codableAngles: [String: [Float]] = [:]
         for (joint, angle) in jointPositions {
-            // Only save non-zero angles to save space, or save all?
-            // Saving all is safer to ensure complete state restoration.
-            // However, we should only save controllable joints.
             codableAngles[joint] = [angle.x, angle.y, angle.z]
         }
 
@@ -53,7 +38,7 @@ class PoseStorageManager {
             let poses = try JSONDecoder().decode([SavedPose].self, from: data)
             return poses.sorted(by: { $0.timestamp > $1.timestamp }) // Newest first
         } catch {
-            print("❌ Failed to load poses: \(error)")
+            print("Failed to load poses: \(error)")
             return []
         }
     }
@@ -68,9 +53,9 @@ class PoseStorageManager {
         do {
             let data = try JSONEncoder().encode(poses)
             UserDefaults.standard.set(data, forKey: userDefaultsKey)
-            print("✅ Saved \(poses.count) poses to storage")
+            print("Saved \(poses.count) poses to storage")
         } catch {
-            print("❌ Failed to save poses: \(error)")
+            print("Failed to save poses: \(error)")
         }
     }
 
@@ -83,7 +68,7 @@ class PoseStorageManager {
             let data = try encoder.encode(poses)
             return String(data: data, encoding: .utf8)
         } catch {
-            print("❌ Failed to export poses: \(error)")
+            print("Failed to export poses: \(error)")
             return nil
         }
     }
@@ -103,9 +88,9 @@ class PoseStorageManager {
                 }
             }
             persist(currentPoses)
-            print("✅ Imported \(importedPoses.count) poses from JSON")
+            print("Imported \(importedPoses.count) poses from JSON")
         } catch {
-            print("❌ Failed to import poses from JSON: \(error)")
+            print("Failed to import poses from JSON: \(error)")
         }
     }
 }
