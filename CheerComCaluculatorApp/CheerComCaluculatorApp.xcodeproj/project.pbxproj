@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1F5E35192F73420D00F7A05F /* ModelRigKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1F5E35182F73420D00F7A05F /* ModelRigKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		1FBC0D7D2EB958290003CE84 /* CheerComCaluculatorApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CheerComCaluculatorApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F5E35192F73420D00F7A05F /* ModelRigKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +83,7 @@
 			);
 			name = CheerComCaluculatorApp;
 			packageProductDependencies = (
+				1F5E35182F73420D00F7A05F /* ModelRigKit */,
 			);
 			productName = CheerComCaluculatorApp;
 			productReference = 1FBC0D7D2EB958290003CE84 /* CheerComCaluculatorApp.app */;
@@ -107,6 +113,9 @@
 			);
 			mainGroup = 1FBC0D742EB958290003CE84;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1F5E35172F73420D00F7A05F /* XCLocalSwiftPackageReference "../../ModelRigKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1FBC0D7E2EB958290003CE84 /* Products */;
 			projectDirPath = "";
@@ -345,6 +354,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		1F5E35172F73420D00F7A05F /* XCLocalSwiftPackageReference "../../ModelRigKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../ModelRigKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1F5E35182F73420D00F7A05F /* ModelRigKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ModelRigKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1FBC0D752EB958290003CE84 /* Project object */;
 }
