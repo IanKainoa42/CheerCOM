@@ -7,6 +7,10 @@ protocol JointControlPanelDelegate: AnyObject {
     func didChangeJointAngle(value: Float)
     func didIncrementAngle()
     func didDecrementAngle()
+    func didBeginIncrementingAngle()
+    func didEndIncrementingAngle()
+    func didBeginDecrementingAngle()
+    func didEndDecrementingAngle()
     func didResetSelectedJoint()
 
     func didTapPoseLibrary()
@@ -120,11 +124,15 @@ class JointControlPanel: UIView {
         let decrementButton = CheerButton(title: "-", style: .neutral, compact: true)
         decrementButton.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
         decrementButton.addTarget(self, action: #selector(decrementTapped), for: .touchUpInside)
+        decrementButton.addTarget(self, action: #selector(decrementTouchDown), for: .touchDown)
+        decrementButton.addTarget(self, action: #selector(decrementTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         decrementButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
 
         let incrementButton = CheerButton(title: "+", style: .neutral, compact: true)
         incrementButton.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
         incrementButton.addTarget(self, action: #selector(incrementTapped), for: .touchUpInside)
+        incrementButton.addTarget(self, action: #selector(incrementTouchDown), for: .touchDown)
+        incrementButton.addTarget(self, action: #selector(incrementTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         incrementButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
 
         jointAngleSlider = UISlider()
@@ -205,6 +213,11 @@ class JointControlPanel: UIView {
 
     @objc private func decrementTapped() { delegate?.didDecrementAngle() }
     @objc private func incrementTapped() { delegate?.didIncrementAngle() }
+
+    @objc private func decrementTouchDown() { delegate?.didBeginDecrementingAngle() }
+    @objc private func decrementTouchUp() { delegate?.didEndDecrementingAngle() }
+    @objc private func incrementTouchDown() { delegate?.didBeginIncrementingAngle() }
+    @objc private func incrementTouchUp() { delegate?.didEndIncrementingAngle() }
 
     @objc private func poseLibraryTapped() { delegate?.didTapPoseLibrary() }
     @objc private func resetPoseTapped() { delegate?.didTapResetPose() }
