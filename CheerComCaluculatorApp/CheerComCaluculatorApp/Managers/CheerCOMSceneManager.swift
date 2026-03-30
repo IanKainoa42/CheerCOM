@@ -120,23 +120,15 @@ class CheerCOMSceneManager {
         }
 
         // CRITICAL FIX: Remove all animations from the source scene root
-        modelScene.rootNode.removeAllAnimations()
-        modelScene.rootNode.removeAllActions()
+        stripAnimations(from: modelScene.rootNode)
 
         characterNode = SCNNode()
         for child in modelScene.rootNode.childNodes {
             characterNode.addChildNode(child)
         }
 
-        // Remove animations from the container node itself
-        characterNode.removeAllAnimations()
-        characterNode.removeAllActions()
-
-        // Remove from all descendants
-        characterNode.enumerateChildNodes { (node, _) in
-            node.removeAllAnimations()
-            node.removeAllActions()
-        }
+        // Remove animations from the character hierarchy
+        stripAnimations(from: characterNode)
         print("Removed all animations from character model and source scene")
 
         scene.rootNode.addChildNode(characterNode)
@@ -144,6 +136,29 @@ class CheerCOMSceneManager {
 
         applyBodyPartColors()
         cacheBoneNodes()
+    }
+
+    /// Recursively removes animations, actions, constraints, and physics bodies from a node and its hierarchy.
+    private func stripAnimations(from node: SCNNode) {
+        node.removeAllAnimations()
+        node.removeAllActions()
+        node.constraints = nil
+        node.physicsBody = nil
+
+        if let geometry = node.geometry {
+            geometry.removeAllAnimations()
+            for material in geometry.materials {
+                material.removeAllAnimations()
+            }
+        }
+
+        if let morpher = node.morpher {
+            morpher.removeAllAnimations()
+        }
+
+        for child in node.childNodes {
+            stripAnimations(from: child)
+        }
     }
 
     func applyBodyPartColors() {
