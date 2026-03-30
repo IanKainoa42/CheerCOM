@@ -175,11 +175,18 @@ class CheerCOMSceneManager {
 
     func cacheBoneNodes() {
         // Cache all the joints we'll be accessing frequently
-        let allJointStrings: [String] =
-            controllableJoints.map { $0.rawValue } + [
-                Joint.leftToeBase.rawValue, Joint.rightToeBase.rawValue,
-                Joint.leftHandMiddle1.rawValue, Joint.rightHandMiddle1.rawValue,
-            ]
+        // Performance Fix: Avoid multiple array allocations from map + concat
+        let manualJoints = [
+            Joint.leftToeBase.rawValue, Joint.rightToeBase.rawValue,
+            Joint.leftHandMiddle1.rawValue, Joint.rightHandMiddle1.rawValue,
+        ]
+        var allJointStrings: [String] = []
+        allJointStrings.reserveCapacity(controllableJoints.count + manualJoints.count)
+
+        for joint in controllableJoints {
+            allJointStrings.append(joint.rawValue)
+        }
+        allJointStrings.append(contentsOf: manualJoints)
 
         var foundJoints = 0
         var missingJoints: [String] = []
