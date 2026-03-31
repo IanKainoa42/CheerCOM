@@ -531,6 +531,7 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func selectJoint(named name: String) {
+        stopContinuousRotation()
         clearSelectedJointHighlight()
         selectedJoint = nil
 
@@ -556,6 +557,7 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func didSelectAxis(_ axis: JointAxis) {
+        stopContinuousRotation()
         jointControlMode = axis
         print("🔄 Switched to \(axis.rawValue)-axis control")
         if let joint = selectedJoint {
@@ -572,6 +574,37 @@ extension SceneViewController: JointControlPanelDelegate {
 
     func didDecrementAngle() {
         didRotateJoint(direction: .negative)
+    }
+
+    func didBeginIncrementingAngle() {
+        startContinuousRotation(direction: .positive)
+    }
+
+    func didEndIncrementingAngle() {
+        stopContinuousRotation()
+    }
+
+    func didBeginDecrementingAngle() {
+        startContinuousRotation(direction: .negative)
+    }
+
+    func didEndDecrementingAngle() {
+        stopContinuousRotation()
+    }
+
+    private func startContinuousRotation(direction: RotationDirection) {
+        currentRotationDirection = direction
+        continuousRotationTimer?.invalidate()
+        continuousRotationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            guard let self = self, let direction = self.currentRotationDirection else { return }
+            self.didRotateJoint(direction: direction)
+        }
+    }
+
+    private func stopContinuousRotation() {
+        continuousRotationTimer?.invalidate()
+        continuousRotationTimer = nil
+        currentRotationDirection = nil
     }
 
     func didRotateJoint(direction: RotationDirection) {
@@ -606,6 +639,7 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func didResetSelectedJoint() {
+        stopContinuousRotation()
         guard let joint = selectedJoint else { return }
 
         SCNTransaction.begin()
