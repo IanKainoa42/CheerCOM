@@ -1,7 +1,7 @@
 import SceneKit
 import Foundation
 import QuartzCore
-import ModelRigKit
+
 
 class CoMValidationHarness {
 
