@@ -62,3 +62,5 @@ func testOptimizedPerformance() {
 
 ## Conclusion
 This optimization removes O(N) allocations and lookups from the hot path, replacing them with O(1) direct accesses. This is strictly better for both CPU and Memory usage.
+
+**Status Update:** This optimization has been successfully implemented. The unoptimized dictionary-based `calculateBodyCOM(jointPositions:)` method has been removed, and `SceneViewController` now correctly binds `cachedBoneNodes` to directly compute CoM without intermediate translations.
