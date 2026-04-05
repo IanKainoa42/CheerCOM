@@ -149,44 +149,6 @@ class COMCalculator {
         let totalCOM = totalMass > 0 ? (totalWeighted * Float(1.0 / totalMass)) : SCNVector3Zero
         return CalculationResult(totalCOM: totalCOM, segmentCOMs: segmentResults)
     }
-
-    // Legacy method - kept for compatibility but should be avoided in loops
-    func calculateBodyCOM(jointPositions: [String: SCNVector3]) -> SCNVector3 {
-        var totalWeighted = SCNVector3Zero
-        var totalMass: Double = 0
-        var segmentResults: [SegmentResult] = []
-
-        for segment in segments {
-            guard let proxPos = jointPositions[segment.prox] else {
-                print("⚠️ Missing proximal joint: \(segment.prox)")
-                continue
-            }
-
-            var distPos = jointPositions[segment.dist]
-            if distPos == nil {
-                distPos = proxPos // Fallback
-            }
-
-            // COM = proximal + (distal - proximal) * %
-            let segCOM = proxPos + ((distPos! - proxPos) * Float(segment.com))
-            let segMass = bodyMass * segment.mass
-
-            totalWeighted = totalWeighted + (segCOM * Float(segMass))
-            totalMass += segMass
-
-            segmentResults.append(SegmentResult(name: segment.name, position: segCOM, mass: segMass))
-        }
-
-        let totalCOM: SCNVector3
-        if totalMass > 0 {
-            totalCOM = totalWeighted * Float(1.0 / totalMass)
-        } else {
-            print("⚠️ Warning: Total mass is zero, returning origin")
-            totalCOM = SCNVector3Zero
-        }
-
-        return totalCOM
-    }
 }
 
 // MARK: - SCNVector3 Extensions
