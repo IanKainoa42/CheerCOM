@@ -92,12 +92,6 @@ class SceneViewController: UIViewController {
         calculator = COMCalculator(bodyMass: 52.2)
         // Bind calculator to scene nodes for optimized access
         calculator.bind(jointNodes: sceneManager.cachedBoneNodes)
-<<<<<<< Updated upstream
-
-        // 3. Setup UI
-        setupUI()
-=======
->>>>>>> Stashed changes
 
         // 4. Frame Character
         sceneManager.frameCharacter()
