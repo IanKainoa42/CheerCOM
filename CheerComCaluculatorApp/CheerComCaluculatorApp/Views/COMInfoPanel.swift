@@ -9,21 +9,21 @@ final class COMInfoPanel: CheerGlassPanel {
         init(title: String) {
             super.init(frame: .zero)
             translatesAutoresizingMaskIntoConstraints = false
-            backgroundColor = UIColor.white.withAlphaComponent(0.06)
+            backgroundColor = CheerPalette.storm
             layer.cornerCurve = .continuous
-            layer.cornerRadius = 18
+            layer.cornerRadius = 12
             layer.borderWidth = 1
-            layer.borderColor = UIColor.white.withAlphaComponent(0.08).cgColor
+            layer.borderColor = CheerPalette.panelBorder.cgColor
 
             axisLabel.translatesAutoresizingMaskIntoConstraints = false
             axisLabel.text = title
             axisLabel.textColor = CheerPalette.textSecondary
-            axisLabel.font = cheerRoundedFont(.caption1, weight: .semibold)
+            axisLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
 
             valueLabel.translatesAutoresizingMaskIntoConstraints = false
             valueLabel.text = "0.00 cm"
             valueLabel.textColor = CheerPalette.textPrimary
-            valueLabel.font = cheerMonospacedFont(size: 17, weight: .bold)
+            valueLabel.font = cheerMonospacedFont(size: 16, weight: .bold)
 
             addSubview(axisLabel)
             addSubview(valueLabel)
@@ -52,12 +52,13 @@ final class COMInfoPanel: CheerGlassPanel {
     }
 
     private let titleLabel = UILabel()
+    private let eyebrowLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let statusBadge = PaddingLabel()
     private let coordinatesStack = UIStackView()
-    private let xTile = MetricTile(title: "X AXIS")
-    private let yTile = MetricTile(title: "Y AXIS")
-    private let zTile = MetricTile(title: "Z AXIS")
+    private let xTile = MetricTile(title: "X")
+    private let yTile = MetricTile(title: "Y")
+    private let zTile = MetricTile(title: "Z")
     private let marginValueLabel = UILabel()
     private let marginCaptionLabel = UILabel()
     private let stabilityLabel = UILabel()
@@ -72,28 +73,36 @@ final class COMInfoPanel: CheerGlassPanel {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupUI() {
-        contentStack.spacing = 16
+    override var intrinsicContentSize: CGSize {
+        CGSize(width: UIView.noIntrinsicMetric, height: 214)
+    }
 
-        titleLabel.text = "Balance Overview"
+    private func setupUI() {
+        contentStack.spacing = 12
+
+        eyebrowLabel.text = "[POSE INSPECTOR]"
+        eyebrowLabel.textColor = CheerPalette.accentMint
+        eyebrowLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
+
+        titleLabel.text = "LIVE TELEMETRY"
         titleLabel.textColor = CheerPalette.textPrimary
         titleLabel.font = cheerRoundedFont(.title3, weight: .bold)
 
-        subtitleLabel.text = "Live center-of-mass tracking"
+        subtitleLabel.text = "Rig: mixamorig_v1 // Stability: live"
         subtitleLabel.textColor = CheerPalette.textSecondary
-        subtitleLabel.font = cheerRoundedFont(.subheadline, weight: .regular)
+        subtitleLabel.font = cheerMonospacedFont(size: 10, weight: .regular)
 
-        let titleStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        let titleStack = UIStackView(arrangedSubviews: [eyebrowLabel, titleLabel, subtitleLabel])
         titleStack.axis = .vertical
-        titleStack.spacing = 2
+        titleStack.spacing = 4
 
-        statusBadge.text = "Live"
+        statusBadge.text = "ACTIVE"
         statusBadge.textColor = CheerPalette.midnight
-        statusBadge.font = cheerRoundedFont(.caption1, weight: .bold)
+        statusBadge.font = cheerMonospacedFont(size: 10, weight: .bold)
         statusBadge.backgroundColor = CheerPalette.accentMint
 
-        let headerRow = UIStackView(arrangedSubviews: [titleStack, statusBadge])
-        headerRow.alignment = .center
+        let headerRow = UIStackView(arrangedSubviews: [titleStack, UIView(), statusBadge])
+        headerRow.alignment = .top
         headerRow.spacing = 12
         contentStack.addArrangedSubview(headerRow)
 
@@ -107,10 +116,10 @@ final class COMInfoPanel: CheerGlassPanel {
 
         let summaryCard = UIView()
         summaryCard.translatesAutoresizingMaskIntoConstraints = false
-        summaryCard.backgroundColor = UIColor.white.withAlphaComponent(0.06)
+        summaryCard.backgroundColor = CheerPalette.storm
         summaryCard.layer.cornerCurve = .continuous
-        summaryCard.layer.cornerRadius = 20
-        summaryCard.layer.borderColor = UIColor.white.withAlphaComponent(0.08).cgColor
+        summaryCard.layer.cornerRadius = 12
+        summaryCard.layer.borderColor = CheerPalette.panelBorder.cgColor
         summaryCard.layer.borderWidth = 1
 
         let summaryStack = UIStackView()
@@ -118,9 +127,9 @@ final class COMInfoPanel: CheerGlassPanel {
         summaryStack.axis = .vertical
         summaryStack.spacing = 4
 
-        marginCaptionLabel.text = "Support Margin"
+        marginCaptionLabel.text = "SUPPORT MARGIN"
         marginCaptionLabel.textColor = CheerPalette.textSecondary
-        marginCaptionLabel.font = cheerRoundedFont(.caption1, weight: .semibold)
+        marginCaptionLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
 
         marginValueLabel.text = "0.0 cm"
         marginValueLabel.textColor = CheerPalette.textPrimary
@@ -132,7 +141,7 @@ final class COMInfoPanel: CheerGlassPanel {
 
         feedbackLabel.text = "Adjust position to begin."
         feedbackLabel.textColor = CheerPalette.textSecondary
-        feedbackLabel.font = cheerRoundedFont(.subheadline, weight: .medium)
+        feedbackLabel.font = cheerMonospacedFont(size: 10, weight: .medium)
         feedbackLabel.numberOfLines = 2
 
         summaryStack.addArrangedSubview(marginCaptionLabel)
@@ -162,14 +171,14 @@ final class COMInfoPanel: CheerGlassPanel {
         marginValueLabel.text = String(format: "%.1f cm", margin)
 
         if isStable {
-            statusBadge.text = "Stable"
+            statusBadge.text = "STABLE"
             statusBadge.backgroundColor = CheerPalette.accentMint
             stabilityLabel.text = margin < 10 ? "Stable, but close" : "Stable posture"
             stabilityLabel.textColor = CheerPalette.accentMint
             feedbackLabel.text = margin < 10 ? "Keep micro-adjusting to stay centered." : "Balance window looks healthy."
             feedbackLabel.textColor = CheerPalette.textPrimary
         } else {
-            statusBadge.text = "Unstable"
+            statusBadge.text = "UNSTABLE"
             statusBadge.backgroundColor = CheerPalette.accentRose
             statusBadge.textColor = CheerPalette.textPrimary
             stabilityLabel.text = "Weight shift needed"

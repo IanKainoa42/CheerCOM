@@ -18,7 +18,7 @@ class TransformControlPanel: CheerGlassPanel {
     private let stepMultipliers: [Float] = [0.5, 1.0, 2.0, 5.0]
 
     init(width: CGFloat) {
-        super.init(padding: .init(top: 18, leading: 18, bottom: 18, trailing: 18))
+        super.init(padding: .init(top: 14, leading: 14, bottom: 14, trailing: 14))
         setupUI()
     }
 
@@ -27,21 +27,26 @@ class TransformControlPanel: CheerGlassPanel {
     }
 
     private func setupUI() {
-        contentStack.spacing = 14
+        contentStack.spacing = 12
+
+        let eyebrowLabel = UILabel()
+        eyebrowLabel.text = "POSE CONTROL"
+        eyebrowLabel.textColor = CheerPalette.accentMint
+        eyebrowLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
 
         let titleLabel = UILabel()
-        titleLabel.text = "Transform"
+        titleLabel.text = "TRANSFORM MATRIX"
         titleLabel.textColor = CheerPalette.textPrimary
         titleLabel.font = cheerRoundedFont(.headline, weight: .bold)
 
         modeSummaryLabel = UILabel()
-        modeSummaryLabel.text = "Position • 5.0"
+        modeSummaryLabel.text = "POSITION // STEP 5.0"
         modeSummaryLabel.textColor = CheerPalette.textSecondary
-        modeSummaryLabel.font = cheerRoundedFont(.subheadline, weight: .semibold)
+        modeSummaryLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
 
-        let titleStack = UIStackView(arrangedSubviews: [titleLabel, modeSummaryLabel])
+        let titleStack = UIStackView(arrangedSubviews: [eyebrowLabel, titleLabel, modeSummaryLabel])
         titleStack.axis = .vertical
-        titleStack.spacing = 2
+        titleStack.spacing = 4
         contentStack.addArrangedSubview(titleStack)
 
         modeSegmentedControl = makeCheerSegmentedControl(items: ["Move", "Rotate", "Scale"])
@@ -56,9 +61,11 @@ class TransformControlPanel: CheerGlassPanel {
         centerBadge.text = "Step 5.0"
         centerBadge.textAlignment = .center
         centerBadge.textColor = CheerPalette.textPrimary
-        centerBadge.font = cheerMonospacedFont(size: 13, weight: .bold)
-        centerBadge.backgroundColor = UIColor.white.withAlphaComponent(0.08)
-        centerBadge.layer.cornerRadius = 16
+        centerBadge.font = cheerMonospacedFont(size: 12, weight: .bold)
+        centerBadge.backgroundColor = CheerPalette.storm
+        centerBadge.layer.cornerRadius = 10
+        centerBadge.layer.borderWidth = 1
+        centerBadge.layer.borderColor = CheerPalette.panelBorder.cgColor
         centerBadge.layer.masksToBounds = true
 
         let upButton = directionButton(title: "↑", action: #selector(upTapped))
@@ -76,9 +83,9 @@ class TransformControlPanel: CheerGlassPanel {
         contentStack.addArrangedSubview(dPadStack)
 
         let stepLabel = UILabel()
-        stepLabel.text = "Step Multiplier"
+        stepLabel.text = "STEP MULTIPLIER"
         stepLabel.textColor = CheerPalette.textSecondary
-        stepLabel.font = cheerRoundedFont(.subheadline, weight: .semibold)
+        stepLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
         contentStack.addArrangedSubview(stepLabel)
 
         stepSegmentedControl = makeCheerSegmentedControl(items: ["0.5x", "1x", "2x", "5x"])
@@ -95,13 +102,13 @@ class TransformControlPanel: CheerGlassPanel {
         switch mode {
         case .position:
             modeSegmentedControl.selectedSegmentIndex = 0
-            modeSummaryLabel.text = "Position • \(formattedStep(step))"
+            modeSummaryLabel.text = "POSITION // STEP \(formattedStep(step))"
         case .rotation:
             modeSegmentedControl.selectedSegmentIndex = 1
-            modeSummaryLabel.text = "Rotation • \(formattedStep(step))"
+            modeSummaryLabel.text = "ROTATION // STEP \(formattedStep(step))"
         case .scale:
             modeSegmentedControl.selectedSegmentIndex = 2
-            modeSummaryLabel.text = "Scale • \(formattedStep(step))"
+            modeSummaryLabel.text = "SCALE // STEP \(formattedStep(step))"
         }
         centerBadge.text = "Step \(formattedStep(step))"
     }
@@ -150,7 +157,6 @@ class TransformControlPanel: CheerGlassPanel {
 
     private func directionButton(title: String, action: Selector) -> UIButton {
         let button = CheerButton(title: title, style: .neutral)
-        button.titleLabel?.font = cheerRoundedFont(.title2, weight: .bold)
         button.addTarget(self, action: action, for: .touchUpInside)
         button.heightAnchor.constraint(equalToConstant: 50).isActive = true
         return button

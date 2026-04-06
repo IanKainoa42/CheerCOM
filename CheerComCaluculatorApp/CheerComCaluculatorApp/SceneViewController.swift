@@ -1,7 +1,6 @@
 import SceneKit
 import UIKit
 
-
 class SceneViewController: UIViewController {
 
     // Managers
@@ -19,12 +18,26 @@ class SceneViewController: UIViewController {
     private var chromeScrollView: UIScrollView!
     private var chromeContentView: UIView!
     private var chromeStackView: UIStackView!
+    private var toolRailView: CheerGlassPanel!
+    private var toolRailStackView: UIStackView!
+    private var mainRegionStackView: UIStackView!
+    private var mainActionsPanel: CheerGlassPanel!
+    private var mainActionsTopRow: UIStackView!
+    private var mainActionsBottomRow: UIStackView!
+    private var inspectorStackView: UIStackView!
     private var topCardsStackView: UIStackView!
     private var headerPanel: CheerGlassPanel!
     private var headerRowStack: UIStackView!
     private var diagnosticsButton: CheerButton!
     private var bodyPresetSelector: UISegmentedControl!
     private var controlsToggleButton: CheerButton!
+    private var sceneCard: CheerGlassPanel!
+    private var sceneViewportContainer: UIView!
+    private var sceneViewportHeightConstraint: NSLayoutConstraint!
+    private var toolRailWidthConstraint: NSLayoutConstraint!
+    private var toolRailHeightConstraint: NSLayoutConstraint!
+    private var inspectorWidthConstraint: NSLayoutConstraint!
+    private var jointPanelHeightConstraint: NSLayoutConstraint!
     private var poseLibraryHeightConstraint: NSLayoutConstraint!
     private var poseLibraryVisible = false
     private var chromeVisible = true
@@ -62,9 +75,10 @@ class SceneViewController: UIViewController {
         print("🚀 SceneViewController loaded")
 
         setupBackdrop()
+        setupUI()
 
         // 1. Setup Managers
-        sceneManager = CheerCOMSceneManager(view: view)
+        sceneManager = CheerCOMSceneManager(view: sceneViewportContainer)
         sceneManager.loadCharacter()
 
         cameraManager = CameraManager(scene: sceneManager.scene)
@@ -78,9 +92,12 @@ class SceneViewController: UIViewController {
         calculator = COMCalculator(bodyMass: 52.2)
         // Bind calculator to scene nodes for optimized access
         calculator.bind(jointNodes: sceneManager.cachedBoneNodes)
+<<<<<<< Updated upstream
 
         // 3. Setup UI
         setupUI()
+=======
+>>>>>>> Stashed changes
 
         // 4. Frame Character
         sceneManager.frameCharacter()
@@ -146,29 +163,45 @@ class SceneViewController: UIViewController {
         chromeStackView = UIStackView()
         chromeStackView.translatesAutoresizingMaskIntoConstraints = false
         chromeStackView.axis = .vertical
-        chromeStackView.spacing = 14
+        chromeStackView.spacing = 16
+        chromeStackView.alignment = .fill
         chromeContentView.addSubview(chromeStackView)
 
-        headerPanel = makeHeaderPanel()
-        chromeStackView.addArrangedSubview(headerPanel)
+        toolRailView = makeToolRail()
+        chromeStackView.addArrangedSubview(toolRailView)
 
-        topCardsStackView = UIStackView()
-        topCardsStackView.axis = .vertical
-        topCardsStackView.spacing = 14
-        topCardsStackView.alignment = .fill
-        chromeStackView.addArrangedSubview(topCardsStackView)
+        mainRegionStackView = UIStackView()
+        mainRegionStackView.translatesAutoresizingMaskIntoConstraints = false
+        mainRegionStackView.axis = .vertical
+        mainRegionStackView.spacing = 12
+        chromeStackView.addArrangedSubview(mainRegionStackView)
+
+        inspectorStackView = UIStackView()
+        inspectorStackView.translatesAutoresizingMaskIntoConstraints = false
+        inspectorStackView.axis = .vertical
+        inspectorStackView.spacing = 10
+        chromeStackView.addArrangedSubview(inspectorStackView)
+
+        headerPanel = makeHeaderPanel()
+        mainRegionStackView.addArrangedSubview(headerPanel)
+
+        mainActionsPanel = makeMainActionsPanel()
+        mainRegionStackView.addArrangedSubview(mainActionsPanel)
+
+        sceneCard = makeSceneCard()
+        mainRegionStackView.addArrangedSubview(sceneCard)
 
         comInfoPanel = COMInfoPanel()
-        topCardsStackView.addArrangedSubview(comInfoPanel)
+        inspectorStackView.addArrangedSubview(comInfoPanel)
 
         transformControlPanel = TransformControlPanel(width: view.bounds.width)
         transformControlPanel.delegate = self
         transformControlPanel.updateStepMultiplierSelection(transformStepMultiplier)
-        topCardsStackView.addArrangedSubview(transformControlPanel)
+        inspectorStackView.addArrangedSubview(transformControlPanel)
 
         jointControlPanel = JointControlPanel(width: view.bounds.width)
         jointControlPanel.delegate = self
-        view.addSubview(jointControlPanel)
+        inspectorStackView.addArrangedSubview(jointControlPanel)
 
         poseLibraryPanel = PoseLibraryPanel(width: view.bounds.width)
         poseLibraryPanel.delegate = self
@@ -177,43 +210,42 @@ class SceneViewController: UIViewController {
         poseLibraryPanel.isUserInteractionEnabled = false
         view.addSubview(poseLibraryPanel)
 
+        jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 244)
+        jointPanelHeightConstraint.isActive = true
         poseLibraryHeightConstraint = poseLibraryPanel.heightAnchor.constraint(equalToConstant: 360)
 
-        controlsToggleButton = CheerButton(title: "Focus", style: .neutral, compact: true)
-        controlsToggleButton.addTarget(self, action: #selector(didTapToggleChromeVisibility), for: .touchUpInside)
-        controlsToggleButton.accessibilityHint = "Hide or show the interface controls."
-        view.addSubview(controlsToggleButton)
+        toolRailWidthConstraint = toolRailView.widthAnchor.constraint(equalToConstant: 64)
+        toolRailHeightConstraint = toolRailView.heightAnchor.constraint(equalToConstant: 56)
+        inspectorWidthConstraint = inspectorStackView.widthAnchor.constraint(equalToConstant: 280)
 
         NSLayoutConstraint.activate([
             chromeScrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
             chromeScrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
             chromeScrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            chromeScrollView.bottomAnchor.constraint(equalTo: jointControlPanel.topAnchor, constant: -16),
+            chromeScrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
 
             chromeContentView.topAnchor.constraint(equalTo: chromeScrollView.contentLayoutGuide.topAnchor),
             chromeContentView.leadingAnchor.constraint(equalTo: chromeScrollView.contentLayoutGuide.leadingAnchor),
             chromeContentView.trailingAnchor.constraint(equalTo: chromeScrollView.contentLayoutGuide.trailingAnchor),
             chromeContentView.bottomAnchor.constraint(equalTo: chromeScrollView.contentLayoutGuide.bottomAnchor),
             chromeContentView.widthAnchor.constraint(equalTo: chromeScrollView.frameLayoutGuide.widthAnchor),
+            chromeContentView.heightAnchor.constraint(greaterThanOrEqualTo: chromeScrollView.frameLayoutGuide.heightAnchor),
 
             chromeStackView.topAnchor.constraint(equalTo: chromeContentView.topAnchor),
             chromeStackView.leadingAnchor.constraint(equalTo: chromeContentView.leadingAnchor),
             chromeStackView.trailingAnchor.constraint(equalTo: chromeContentView.trailingAnchor),
             chromeStackView.bottomAnchor.constraint(equalTo: chromeContentView.bottomAnchor),
 
-            jointControlPanel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
-            jointControlPanel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            jointControlPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-
-            poseLibraryPanel.leadingAnchor.constraint(equalTo: jointControlPanel.leadingAnchor),
-            poseLibraryPanel.trailingAnchor.constraint(equalTo: jointControlPanel.trailingAnchor),
-            poseLibraryPanel.bottomAnchor.constraint(equalTo: jointControlPanel.topAnchor, constant: -12),
-            poseLibraryHeightConstraint,
-
-            controlsToggleButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            controlsToggleButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            poseLibraryPanel.leadingAnchor.constraint(equalTo: inspectorStackView.leadingAnchor),
+            poseLibraryPanel.trailingAnchor.constraint(equalTo: inspectorStackView.trailingAnchor),
+            poseLibraryPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            poseLibraryHeightConstraint
         ])
 
+        toolRailWidthConstraint.isActive = false
+        toolRailHeightConstraint.isActive = true
+        inspectorWidthConstraint.isActive = false
+        updateAdaptiveLayout()
         updateControlsToggleButton()
         setTransformMode(currentTransformMode)
     }
@@ -222,43 +254,47 @@ class SceneViewController: UIViewController {
         let panel = CheerGlassPanel(padding: .init(top: 16, leading: 18, bottom: 16, trailing: 18))
 
         let eyebrowLabel = PaddingLabel()
-        eyebrowLabel.text = "CHEERCOM STUDIO"
-        eyebrowLabel.textColor = CheerPalette.midnight
-        eyebrowLabel.font = cheerRoundedFont(.caption1, weight: .bold)
-        eyebrowLabel.backgroundColor = CheerPalette.accentAmber
+        eyebrowLabel.text = "// CHEERCOM / LIVE CENTER OF MASS"
+        eyebrowLabel.textColor = CheerPalette.accentMint
+        eyebrowLabel.font = cheerMonospacedFont(size: 11, weight: .bold)
+        eyebrowLabel.backgroundColor = .clear
+        eyebrowLabel.contentInsets = .zero
 
         let titleLabel = UILabel()
-        titleLabel.text = "Refine posture, balance, and saved routines."
+        titleLabel.text = "POSE STABILITY COMMAND"
         titleLabel.textColor = CheerPalette.textPrimary
-        titleLabel.font = cheerRoundedFont(.title3, weight: .bold)
+        titleLabel.font = cheerRoundedFont(.largeTitle, weight: .bold)
         titleLabel.numberOfLines = 0
 
         let subtitleLabel = UILabel()
-        subtitleLabel.text = "Tune joints, transform the model, and keep diagnostics one tap away on every device."
+        subtitleLabel.text = "Manipulate limb angles on the rig and monitor the center of mass relative to the base of support in real time."
         subtitleLabel.textColor = CheerPalette.textSecondary
-        subtitleLabel.font = cheerRoundedFont(.subheadline, weight: .regular)
+        subtitleLabel.font = cheerMonospacedFont(size: 12, weight: .regular)
         subtitleLabel.numberOfLines = 0
 
         let textStack = UIStackView(arrangedSubviews: [eyebrowLabel, titleLabel, subtitleLabel])
         textStack.axis = .vertical
-        textStack.spacing = 4
+        textStack.spacing = 8
         textStack.alignment = .leading
 
-        diagnosticsButton = CheerButton(title: "Diagnostics", symbol: "stethoscope", style: .neutral)
-        diagnosticsButton.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
+        let liveBadge = PaddingLabel()
+        liveBadge.text = "LIVE"
+        liveBadge.textColor = CheerPalette.midnight
+        liveBadge.font = cheerMonospacedFont(size: 11, weight: .bold)
+        liveBadge.backgroundColor = CheerPalette.accentMint
 
-        headerRowStack = UIStackView(arrangedSubviews: [textStack, diagnosticsButton])
+        headerRowStack = UIStackView(arrangedSubviews: [textStack, UIView(), liveBadge])
         headerRowStack.axis = .horizontal
         headerRowStack.spacing = 12
-        headerRowStack.alignment = .center
+        headerRowStack.alignment = .top
         headerRowStack.distribution = .fill
 
         panel.contentStack.addArrangedSubview(headerRowStack)
 
         let presetLabel = UILabel()
-        presetLabel.text = "Body Preset"
+        presetLabel.text = "BODY PRESET"
         presetLabel.textColor = CheerPalette.textSecondary
-        presetLabel.font = cheerRoundedFont(.subheadline, weight: .semibold)
+        presetLabel.font = cheerMonospacedFont(size: 11, weight: .bold)
 
         bodyPresetSelector = makeCheerSegmentedControl(items: ["Neutral", "Athletic F", "Athletic M"])
         bodyPresetSelector.selectedSegmentIndex = 0
@@ -272,16 +308,163 @@ class SceneViewController: UIViewController {
         return panel
     }
 
+    private func makeToolRail() -> CheerGlassPanel {
+        let panel = CheerGlassPanel(padding: .init(top: 10, leading: 10, bottom: 10, trailing: 10))
+
+        toolRailStackView = UIStackView()
+        toolRailStackView.axis = .vertical
+        toolRailStackView.spacing = 10
+        toolRailStackView.alignment = .center
+        toolRailStackView.distribution = .fill
+
+        let logoLabel = UILabel()
+        logoLabel.text = "CC"
+        logoLabel.textAlignment = .center
+        logoLabel.textColor = CheerPalette.accentMint
+        logoLabel.font = cheerMonospacedFont(size: 15, weight: .bold)
+
+        let diagnosticsRailButton = makeRailButton(symbol: "waveform.path.ecg", accessibilityLabel: "Run diagnostics", action: #selector(didTapRunDiagnostics))
+        let libraryRailButton = makeRailButton(symbol: "square.grid.2x2", accessibilityLabel: "Open pose library", action: #selector(didTapQuickPoseLibrary))
+        let fitRailButton = makeRailButton(symbol: "viewfinder", accessibilityLabel: "Fit scene to view", action: #selector(didTapQuickFitView))
+        let visualsRailButton = makeRailButton(symbol: "sparkles", accessibilityLabel: "Toggle visualizations", action: #selector(didTapQuickVisuals))
+
+        toolRailStackView.addArrangedSubview(logoLabel)
+        toolRailStackView.addArrangedSubview(diagnosticsRailButton)
+        toolRailStackView.addArrangedSubview(libraryRailButton)
+        toolRailStackView.addArrangedSubview(fitRailButton)
+        toolRailStackView.addArrangedSubview(visualsRailButton)
+
+        panel.contentStack.addArrangedSubview(toolRailStackView)
+        return panel
+    }
+
+    private func makeMainActionsPanel() -> CheerGlassPanel {
+        let panel = CheerGlassPanel(padding: .init(top: 12, leading: 12, bottom: 12, trailing: 12))
+
+        diagnosticsButton = CheerButton(title: "Run Diagnostics", symbol: "play.fill", style: .accent, compact: true)
+        diagnosticsButton.addTarget(self, action: #selector(didTapRunDiagnostics), for: .touchUpInside)
+
+        let poseLibraryButton = CheerButton(title: "Pose Library", symbol: "square.grid.2x2", style: .secondary, compact: true)
+        poseLibraryButton.addTarget(self, action: #selector(didTapQuickPoseLibrary), for: .touchUpInside)
+
+        let fitViewButton = CheerButton(title: "Fit View", symbol: "viewfinder", style: .neutral, compact: true)
+        fitViewButton.addTarget(self, action: #selector(didTapQuickFitView), for: .touchUpInside)
+
+        let visualsButton = CheerButton(title: "Visuals", symbol: "sparkles", style: .positive, compact: true)
+        visualsButton.addTarget(self, action: #selector(didTapQuickVisuals), for: .touchUpInside)
+
+        mainActionsTopRow = UIStackView(arrangedSubviews: [diagnosticsButton, poseLibraryButton])
+        mainActionsTopRow.axis = .horizontal
+        mainActionsTopRow.spacing = 10
+        mainActionsTopRow.distribution = .fillEqually
+
+        mainActionsBottomRow = UIStackView(arrangedSubviews: [fitViewButton, visualsButton])
+        mainActionsBottomRow.axis = .horizontal
+        mainActionsBottomRow.spacing = 10
+        mainActionsBottomRow.distribution = .fillEqually
+
+        panel.contentStack.spacing = 10
+        panel.contentStack.addArrangedSubview(mainActionsTopRow)
+        panel.contentStack.addArrangedSubview(mainActionsBottomRow)
+        return panel
+    }
+
+    private func makeSceneCard() -> CheerGlassPanel {
+        let panel = CheerGlassPanel(padding: .init(top: 12, leading: 12, bottom: 12, trailing: 12))
+
+        let statusLabel = UILabel()
+        statusLabel.text = "[SCENE: LIVE_RIG]"
+        statusLabel.textColor = CheerPalette.textPrimary
+        statusLabel.font = cheerMonospacedFont(size: 11, weight: .bold)
+
+        let metaLabel = UILabel()
+        metaLabel.text = "COM TRACKING ACTIVE"
+        metaLabel.textColor = CheerPalette.textSecondary
+        metaLabel.font = cheerMonospacedFont(size: 11, weight: .medium)
+
+        controlsToggleButton = CheerButton(title: "Focus", symbol: "rectangle.compress.vertical", style: .neutral, compact: true)
+        controlsToggleButton.addTarget(self, action: #selector(didTapToggleChromeVisibility), for: .touchUpInside)
+        controlsToggleButton.accessibilityHint = "Hide or show the interface controls."
+
+        let statusRow = UIStackView(arrangedSubviews: [statusLabel, UIView(), metaLabel, controlsToggleButton])
+        statusRow.axis = .horizontal
+        statusRow.alignment = .center
+        statusRow.spacing = 10
+        panel.contentStack.addArrangedSubview(statusRow)
+
+        sceneViewportContainer = UIView()
+        sceneViewportContainer.translatesAutoresizingMaskIntoConstraints = false
+        sceneViewportContainer.backgroundColor = CheerPalette.nightfall
+        sceneViewportContainer.layer.cornerCurve = .continuous
+        sceneViewportContainer.layer.cornerRadius = 10
+        sceneViewportContainer.layer.borderWidth = 1
+        sceneViewportContainer.layer.borderColor = UIColor(hex: 0x1F1F1F).cgColor
+        panel.contentStack.addArrangedSubview(sceneViewportContainer)
+
+        sceneViewportHeightConstraint = sceneViewportContainer.heightAnchor.constraint(equalToConstant: 360)
+        sceneViewportHeightConstraint.isActive = true
+
+        let totalCOMLabel = makeLegendLabel("[GREEN] TOTAL_COM", color: CheerPalette.accentMint)
+        let bosLabel = makeLegendLabel("[ORANGE] BASE_OF_SUPPORT", color: CheerPalette.accentAmber)
+        let legendRow = UIStackView(arrangedSubviews: [totalCOMLabel, bosLabel, UIView()])
+        legendRow.axis = .horizontal
+        legendRow.spacing = 14
+        legendRow.alignment = .leading
+        panel.contentStack.addArrangedSubview(legendRow)
+
+        return panel
+    }
+
+    private func makeLegendLabel(_ text: String, color: UIColor) -> UILabel {
+        let label = UILabel()
+        label.text = text
+        label.textColor = color
+        label.font = cheerMonospacedFont(size: 10, weight: .bold)
+        return label
+    }
+
+    private func makeRailButton(symbol: String, accessibilityLabel: String, action: Selector) -> UIButton {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        var configuration = UIButton.Configuration.plain()
+        configuration.image = UIImage(systemName: symbol)
+        configuration.baseForegroundColor = CheerPalette.textSecondary
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
+        button.configuration = configuration
+        button.backgroundColor = CheerPalette.nightfall
+        button.layer.cornerCurve = .continuous
+        button.layer.cornerRadius = 10
+        button.layer.borderWidth = 1
+        button.layer.borderColor = CheerPalette.panelBorder.cgColor
+        button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        button.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        button.accessibilityLabel = accessibilityLabel
+        button.addTarget(self, action: action, for: .touchUpInside)
+        return button
+    }
+
     private func updateAdaptiveLayout() {
-        let useHorizontalCards = view.bounds.width >= 820 || view.bounds.width > view.bounds.height
-        topCardsStackView.axis = useHorizontalCards ? .horizontal : .vertical
-        topCardsStackView.distribution = useHorizontalCards ? .fillEqually : .fill
+        let regularShell = view.bounds.width >= 860
+        chromeStackView.axis = regularShell ? .horizontal : .vertical
+        chromeStackView.spacing = regularShell ? 16 : 12
 
-        let compactHeader = view.bounds.width < 560
+        toolRailStackView.axis = regularShell ? .vertical : .horizontal
+        toolRailStackView.spacing = regularShell ? 10 : 8
+        toolRailStackView.alignment = .center
+
+        toolRailWidthConstraint.isActive = regularShell
+        toolRailHeightConstraint.isActive = !regularShell
+        inspectorWidthConstraint.isActive = regularShell
+
+        let compactHeader = view.bounds.width < 640
         headerRowStack.axis = compactHeader ? .vertical : .horizontal
-        headerRowStack.alignment = compactHeader ? .leading : .center
+        headerRowStack.alignment = compactHeader ? .leading : .top
 
-        poseLibraryHeightConstraint.constant = min(max(view.bounds.height * 0.44, 310), 480)
+        jointPanelHeightConstraint.constant = regularShell ? 236 : 252
+        poseLibraryHeightConstraint.constant = min(max(view.bounds.height * 0.48, 320), 540)
+        sceneViewportHeightConstraint.constant = regularShell
+            ? min(max(view.bounds.height * 0.56, 360), 700)
+            : min(max(view.bounds.width * 0.74, 260), 420)
     }
 
     @objc private func didChangeBodyPreset(_ sender: UISegmentedControl) {
@@ -298,6 +481,18 @@ class SceneViewController: UIViewController {
 
     @objc private func didTapToggleChromeVisibility() {
         setChromeVisible(!chromeVisible)
+    }
+
+    @objc private func didTapQuickPoseLibrary() {
+        didTapPoseLibrary()
+    }
+
+    @objc private func didTapQuickFitView() {
+        didTapFitView()
+    }
+
+    @objc private func didTapQuickVisuals() {
+        didTapToggleVisualizations()
     }
 
     private func setPoseLibraryVisible(_ isVisible: Bool, animated: Bool = true) {
@@ -332,14 +527,20 @@ class SceneViewController: UIViewController {
             setPoseLibraryVisible(false, animated: animated)
         }
 
-        chromeScrollView.isUserInteractionEnabled = isVisible
-        jointControlPanel.isUserInteractionEnabled = isVisible
+        toolRailView.isUserInteractionEnabled = isVisible
+        headerPanel.isUserInteractionEnabled = isVisible
+        mainActionsPanel.isUserInteractionEnabled = isVisible
+        inspectorStackView.isUserInteractionEnabled = isVisible
 
         let updates = {
-            self.chromeScrollView.alpha = isVisible ? 1 : 0
-            self.chromeScrollView.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: -28)
-            self.jointControlPanel.alpha = isVisible ? 1 : 0
-            self.jointControlPanel.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: 36)
+            self.toolRailView.alpha = isVisible ? 1 : 0
+            self.toolRailView.transform = isVisible ? .identity : CGAffineTransform(translationX: -20, y: 0)
+            self.headerPanel.alpha = isVisible ? 1 : 0
+            self.headerPanel.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: -18)
+            self.mainActionsPanel.alpha = isVisible ? 1 : 0
+            self.mainActionsPanel.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: -12)
+            self.inspectorStackView.alpha = isVisible ? 1 : 0
+            self.inspectorStackView.transform = isVisible ? .identity : CGAffineTransform(translationX: 22, y: 0)
             self.updateControlsToggleButton()
         }
 
@@ -384,14 +585,20 @@ class SceneViewController: UIViewController {
         // Disable interaction with other controls while running
         sceneManager.sceneView.isUserInteractionEnabled = false
         chromeScrollView.isUserInteractionEnabled = false
-        jointControlPanel.isUserInteractionEnabled = false
+        toolRailView.isUserInteractionEnabled = false
+        headerPanel.isUserInteractionEnabled = false
+        mainActionsPanel.isUserInteractionEnabled = false
+        inspectorStackView.isUserInteractionEnabled = false
         poseLibraryPanel.isUserInteractionEnabled = false
 
         // Handle close
         overlay.onClose = { [weak self] in
             self?.sceneManager.sceneView.isUserInteractionEnabled = true
-            self?.chromeScrollView.isUserInteractionEnabled = self?.chromeVisible ?? false
-            self?.jointControlPanel.isUserInteractionEnabled = self?.chromeVisible ?? false
+            self?.chromeScrollView.isUserInteractionEnabled = true
+            self?.toolRailView.isUserInteractionEnabled = self?.chromeVisible ?? false
+            self?.headerPanel.isUserInteractionEnabled = self?.chromeVisible ?? false
+            self?.mainActionsPanel.isUserInteractionEnabled = self?.chromeVisible ?? false
+            self?.inspectorStackView.isUserInteractionEnabled = self?.chromeVisible ?? false
             self?.poseLibraryPanel.isUserInteractionEnabled = (self?.poseLibraryVisible ?? false) && (self?.chromeVisible ?? false)
         }
 
@@ -511,10 +718,10 @@ extension SceneViewController: JointControlPanelDelegate {
             title: "Select Joint", message: "Choose a joint to control",
             preferredStyle: .actionSheet)
 
-        for joint in sceneManager.controllableJoints {
-            let displayName = formatJointName(joint.rawValue)
+        for jointName in sceneManager.controllableJoints {
+            let displayName = formatJointName(jointName)
             let action = UIAlertAction(title: displayName, style: .default) { [weak self] _ in
-                self?.selectJoint(named: joint.rawValue)
+                self?.selectJoint(named: jointName)
             }
             alert.addAction(action)
         }
@@ -531,7 +738,6 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func selectJoint(named name: String) {
-        stopContinuousRotation()
         clearSelectedJointHighlight()
         selectedJoint = nil
 
@@ -557,7 +763,6 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func didSelectAxis(_ axis: JointAxis) {
-        stopContinuousRotation()
         jointControlMode = axis
         print("🔄 Switched to \(axis.rawValue)-axis control")
         if let joint = selectedJoint {
@@ -574,37 +779,6 @@ extension SceneViewController: JointControlPanelDelegate {
 
     func didDecrementAngle() {
         didRotateJoint(direction: .negative)
-    }
-
-    func didBeginIncrementingAngle() {
-        startContinuousRotation(direction: .positive)
-    }
-
-    func didEndIncrementingAngle() {
-        stopContinuousRotation()
-    }
-
-    func didBeginDecrementingAngle() {
-        startContinuousRotation(direction: .negative)
-    }
-
-    func didEndDecrementingAngle() {
-        stopContinuousRotation()
-    }
-
-    private func startContinuousRotation(direction: RotationDirection) {
-        currentRotationDirection = direction
-        continuousRotationTimer?.invalidate()
-        continuousRotationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
-            guard let self = self, let direction = self.currentRotationDirection else { return }
-            self.didRotateJoint(direction: direction)
-        }
-    }
-
-    private func stopContinuousRotation() {
-        continuousRotationTimer?.invalidate()
-        continuousRotationTimer = nil
-        currentRotationDirection = nil
     }
 
     func didRotateJoint(direction: RotationDirection) {
@@ -625,8 +799,8 @@ extension SceneViewController: JointControlPanelDelegate {
         case .z: newAngles.z += delta
         }
 
-        if let jointName = joint.name, let jointEnum = Joint(rawValue: jointName) {
-            joint.eulerAngles = JointLimits.clampAngles(for: jointEnum, angles: newAngles)
+        if let jointName = joint.name {
+            joint.eulerAngles = JointLimits.clampAngles(for: jointName, angles: newAngles)
         } else {
             joint.eulerAngles = newAngles
         }
@@ -639,7 +813,6 @@ extension SceneViewController: JointControlPanelDelegate {
     }
 
     func didResetSelectedJoint() {
-        stopContinuousRotation()
         guard let joint = selectedJoint else { return }
 
         SCNTransaction.begin()
@@ -667,8 +840,8 @@ extension SceneViewController: JointControlPanelDelegate {
         case .z: newAngles.z = angle
         }
 
-        if let jointName = joint.name, let jointEnum = Joint(rawValue: jointName) {
-            joint.eulerAngles = JointLimits.clampAngles(for: jointEnum, angles: newAngles)
+        if let jointName = joint.name {
+            joint.eulerAngles = JointLimits.clampAngles(for: jointName, angles: newAngles)
         } else {
             joint.eulerAngles = newAngles
         }
@@ -694,9 +867,9 @@ extension SceneViewController: JointControlPanelDelegate {
         SCNTransaction.animationDuration = 0.3
 
         // Apply T-Pose joint angles
-        for (joint, angles) in tPoseDefinition.jointAngles {
-            if let bone = sceneManager.findBone(joint) {
-                bone.eulerAngles = JointLimits.clampAngles(for: joint, angles: angles)
+        for (jointName, angles) in tPoseDefinition.jointAngles {
+            if let bone = sceneManager.findBone(named: jointName) {
+                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
             }
         }
 
@@ -864,9 +1037,9 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         var jointPositions: [String: SCNVector3] = [:]
 
         // Iterate through all controllable joints and capture their Euler angles
-        for joint in sceneManager.controllableJoints {
-            if let node = sceneManager.cachedBoneNodes[joint.rawValue] {
-                jointPositions[joint.rawValue] = node.eulerAngles
+        for jointName in sceneManager.controllableJoints {
+            if let joint = sceneManager.cachedBoneNodes[jointName] {
+                jointPositions[jointName] = joint.eulerAngles
             }
         }
 
@@ -924,29 +1097,29 @@ extension SceneViewController: PoseLibraryPanelDelegate {
     }
 
     private func applySavedPose(_ pose: SavedPose) {
-        var jointAngles: [Joint: SCNVector3] = [:]
+        var jointAngles: [String: SCNVector3] = [:]
         for (name, _) in pose.jointAngles {
-            if let joint = Joint(rawValue: name), let vector = pose.getVector(for: joint) {
-                jointAngles[joint] = vector
+            if let vector = pose.getVector(for: name) {
+                jointAngles[name] = vector
             }
         }
         applyJointAngles(jointAngles, name: pose.name)
     }
 
-    private func applyJointAngles(_ jointAngles: [Joint: SCNVector3], name: String) {
+    private func applyJointAngles(_ jointAngles: [String: SCNVector3], name: String) {
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.3
 
         // Apply joint angles
-        for (joint, angles) in jointAngles {
-            if let bone = sceneManager.findBone(joint) {
-                bone.eulerAngles = JointLimits.clampAngles(for: joint, angles: angles)
+        for (jointName, angles) in jointAngles {
+            if let bone = sceneManager.findBone(named: jointName) {
+                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
             }
         }
 
         SCNTransaction.completionBlock = { [weak self] in
             self?.scheduleUpdateCOM()
-            print("Applied \(name)")
+            print("✅ Applied \(name)")
         }
         SCNTransaction.commit()
     }

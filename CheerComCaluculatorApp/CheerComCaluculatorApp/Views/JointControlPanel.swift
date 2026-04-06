@@ -24,7 +24,7 @@ class JointControlPanel: UIView {
 
     weak var delegate: JointControlPanelDelegate?
 
-    private let panel = CheerGlassPanel()
+    private let panel = CheerGlassPanel(padding: .init(top: 14, leading: 14, bottom: 14, trailing: 14))
     private let contentContainer = UIView()
     private let sectionLabel = UILabel()
     private var jointSelectionButton: CheerButton!
@@ -65,7 +65,7 @@ class JointControlPanel: UIView {
         let rootStack = UIStackView()
         rootStack.translatesAutoresizingMaskIntoConstraints = false
         rootStack.axis = .vertical
-        rootStack.spacing = 12
+        rootStack.spacing = 10
         contentContainer.addSubview(rootStack)
 
         NSLayoutConstraint.activate([
@@ -75,10 +75,17 @@ class JointControlPanel: UIView {
             rootStack.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor)
         ])
 
-        sectionLabel.text = "Joint Controls"
-        sectionLabel.textColor = CheerPalette.textPrimary
-        sectionLabel.font = cheerRoundedFont(.headline, weight: .bold)
+        sectionLabel.text = "JOINT OVERRIDES"
+        sectionLabel.textColor = CheerPalette.accentMint
+        sectionLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
         rootStack.addArrangedSubview(sectionLabel)
+
+        let hintLabel = UILabel()
+        hintLabel.text = "Select a joint, choose an axis, then adjust the live angle."
+        hintLabel.textColor = CheerPalette.textSecondary
+        hintLabel.font = cheerMonospacedFont(size: 10, weight: .regular)
+        hintLabel.numberOfLines = 2
+        rootStack.addArrangedSubview(hintLabel)
 
         jointSelectionButton = CheerButton(title: "Choose Joint", symbol: "slider.horizontal.3", style: .accent)
         jointSelectionButton.addTarget(self, action: #selector(jointSelectionTapped), for: .touchUpInside)
@@ -104,16 +111,18 @@ class JointControlPanel: UIView {
         sliderHeader.spacing = 8
 
         let sliderTitle = UILabel()
-        sliderTitle.text = "Joint Angle"
+        sliderTitle.text = "ACTIVE AXIS"
         sliderTitle.textColor = CheerPalette.textSecondary
-        sliderTitle.font = cheerRoundedFont(.subheadline, weight: .semibold)
+        sliderTitle.font = cheerMonospacedFont(size: 10, weight: .bold)
 
         jointAngleLabel = PaddingLabel()
         jointAngleLabel.text = "0.0°"
         jointAngleLabel.textColor = CheerPalette.textPrimary
-        jointAngleLabel.font = cheerMonospacedFont(size: 14, weight: .bold)
-        jointAngleLabel.backgroundColor = UIColor.white.withAlphaComponent(0.08)
-        jointAngleLabel.layer.cornerRadius = 14
+        jointAngleLabel.font = cheerMonospacedFont(size: 12, weight: .bold)
+        jointAngleLabel.backgroundColor = CheerPalette.storm
+        jointAngleLabel.layer.cornerRadius = 10
+        jointAngleLabel.layer.borderWidth = 1
+        jointAngleLabel.layer.borderColor = CheerPalette.panelBorder.cgColor
         jointAngleLabel.layer.masksToBounds = true
 
         sliderHeader.addArrangedSubview(sliderTitle)
@@ -169,7 +178,7 @@ class JointControlPanel: UIView {
 
         let footerStack = UIStackView(arrangedSubviews: [firstActionRow, secondActionRow])
         footerStack.axis = .vertical
-        footerStack.spacing = 10
+        footerStack.spacing = 8
         rootStack.addArrangedSubview(footerStack)
     }
 
