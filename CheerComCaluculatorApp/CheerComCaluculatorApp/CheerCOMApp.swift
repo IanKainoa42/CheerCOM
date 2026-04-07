@@ -38,9 +38,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(windowScene: windowScene)
         print("✅ Window created")
         
-        let viewController = SceneViewController()
-        print("✅ SceneViewController created")
-        
+        let viewController = ModeContainerViewController()
+        print("✅ ModeContainerViewController created")
+
         window?.rootViewController = viewController
         print("✅ Root view controller set")
         
