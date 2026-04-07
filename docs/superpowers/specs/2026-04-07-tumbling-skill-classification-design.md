@@ -34,11 +34,14 @@ A **two-layer classifier** with a **synthetic-first training strategy**:
 
 Training data is generated primarily by **authoring skill animations in CheerCOM on iPad**, exported as keypoint sequences from ~96 virtual camera angles per animation, then procedurally varied and noise-augmented in Python to simulate real YOLO output. A small real-data fine-tune on the existing Tumble set closes the sim-to-real gap.
 
+**Core principle — vocabulary is user-defined, not hardcoded.** Atoms, bodylines, and per-atom tags (e.g. "entry skill", "back-facing", "airborne") are authored in CheerCOM and propagate through the pipeline as data. Adding a new atom is a CheerCOM authoring action, not a Swift enum change or a Python config edit. The spec's illustrative vocabulary is a starting point, not a fixed contract. The user's CheerCOM library is canon.
+
 **What's new:**
 - `CheerCOM.SkillAnimator` — iPad mode for authoring tumbling animations on a rigged 3D skeleton
-- `training_pipeline/` — Python pipeline for ingest, augmentation, training, and Core ML export
+- `CheerCOM.VocabularyManifest` — user-editable source of truth for atoms, bodylines, and tags
+- `training_pipeline/` — Python pipeline for ingest, augmentation, training, and Core ML export (reads vocab from manifest, dynamically sizes model heads)
 - `FlightFilter.SkillClassificationService` — Core ML wrapper that runs the TCN on FlightFilter pose output
-- `FlightFilter.CompositionStateMachine` — Swift rules engine for atom → pass composition
+- `FlightFilter.CompositionStateMachine` — Swift rules engine for atom → pass composition (reads atom tags from the compiled model's metadata, not hardcoded)
 
 **What's recycled:**
 - CheerCOM's existing rigged character, joint controls, pose library, CoM validation, SceneKit scene
@@ -50,14 +53,14 @@ Training data is generated primarily by **authoring skill animations in CheerCOM
 **What's archived:**
 - Existing `CheerSkillClassifier.mlmodel` (kept as baseline reference only)
 - Competition tag corpus (`rage_tags`, `Ferocity`, `Blackout`, `Wrath`, `Frenzy`, `Navy`, `SSX`) — distribution mismatch with inference-time footage
-- The flat 32-class vocabulary (replaced by 12 atoms + composition rules)
+- The flat 32-class fixed vocabulary (replaced by a user-editable manifest-driven vocabulary + composition rules)
 
 ## Scope
 
 ### In scope for v1
 
 - Single-person tumbling classification only.
-- 12 tumbling atoms + 1 background class (13 total TCN outputs).
+- Tumbling atom vocabulary + 1 background class (size determined by `vocabulary_manifest.json`; seed manifest suggests ~12 atoms, but this is user-editable and not part of the contract).
 - Composition rules covering the standard cheer tumbling pass vocabulary (running/standing, multi-skill connections, doubles/triples of repeated atoms).
 - CheerCOM gets a new Skill Animator mode for authoring animations; Pose Mode is unchanged.
 - Python training pipeline with synthetic + fine-tune stages.
@@ -115,7 +118,8 @@ CheerCOM/
 │       └── Models/
 │           ├── SkillAnimation.swift             (NEW)
 │           ├── SkillKeyframe.swift              (NEW)
-│           └── BodylineLabel.swift              (NEW)
+│           ├── VocabularyManifest.swift         (NEW)
+│           └── BodylineLabel.swift              (NEW — dynamic struct, not enum)
 ├── training_pipeline/                   # NEW — Python
 │   ├── ingest_cheercom_exports.py
 │   ├── kinematic_features.py
@@ -145,25 +149,88 @@ FlightFilter consumes the compiled model by copying `CoreMLModels/CheerSkillTCN_
 
 ## Atom vocabulary and composition rules
 
-### Atoms (13 classes including background)
+### Vocabulary is data, not code
 
-| # | Atom | Description | Typical duration (30 fps) |
-|---|---|---|---|
-| 0 | `background` | Walking, standing, stepping, between-skill recovery | variable |
-| 1 | `cartwheel` | Two-handed sideways rotation, feet separated, no flip | 18–30 frames |
-| 2 | `round_off` | Cartwheel variant with both-feet snap-down rotation to face back | 15–25 frames |
-| 3 | `back_handspring` | Back-facing hand-support rotation | 15–25 frames |
-| 4 | `back_tuck` | Airborne back rotation, tucked body | 15–25 frames |
-| 5 | `back_layout` | Airborne back rotation, straight body | 18–30 frames |
-| 6 | `back_full` | Back layout + 360° twist | 20–35 frames |
-| 7 | `back_double_full` | Back layout + 720° twist | 25–45 frames |
-| 8 | `front_handspring` | Front-facing hand-support rotation | 15–25 frames |
-| 9 | `front_tuck` | Airborne forward rotation, tucked body | 15–25 frames |
-| 10 | `aerial` | No-hands cartwheel | 15–25 frames |
-| 11 | `back_walkover` | Slow back-facing hand-support rotation, no airborne phase | 25–45 frames |
-| 12 | `front_walkover` | Slow front-facing hand-support rotation, no airborne phase | 25–45 frames |
+Atoms and bodylines are defined in **`CheerCOM/training_data/raw/vocabulary_manifest.json`**. That file is the single source of truth. Nothing downstream hardcodes the atom or bodyline list:
 
-**Design note on layout/full/double full:** these three atoms share the same body shape and differ only by twist count. They are kept as separate atoms for label simplicity. The model learns twist count from the `shoulder_hip_twist_deg` derived feature and from hip-shoulder relative angular velocity over the airborne phase.
+- **CheerCOM Skill Animator** reads the manifest to populate the skill picker, the bodyline tag dropdown, and the atom filter in the animation library.
+- **`training_pipeline/build_dataset.py`** reads the manifest at dataset build time and dynamically sizes the TCN output heads (`num_atoms + 1` for atom head including background; `num_bodylines` for bodyline head).
+- **The exported Core ML model** embeds the vocabulary as metadata (`CheerSkillTCN_v1.mlmodel.modelDescription.metadata`) — atom class names, bodyline class names, and per-atom tags.
+- **FlightFilter's `SkillClassificationService`** reads class names and tags from the Core ML metadata at load time. No Swift enum needs to be touched when the vocabulary grows.
+- **`CompositionStateMachine`** references atoms by string ID and reads per-atom tags from the loaded model. Rules like "R2 running pass" operate on the `entry` tag, not on a hardcoded set of atom names.
+
+Adding a new skill is a data operation: author in CheerCOM → manifest updates → retrain → new Core ML model ships with the new class and its tags. No code changes in any of the three apps.
+
+### The manifest schema
+
+```json
+{
+  "schema_version": 1,
+  "atoms": [
+    {
+      "id": "back_handspring",
+      "display_name": "Back Handspring",
+      "category": "tumbling",
+      "tags": ["hand_support", "back_facing", "airborne_brief"],
+      "created_at": "2026-04-07T21:03:47Z"
+    },
+    {
+      "id": "round_off",
+      "display_name": "Round Off",
+      "category": "tumbling",
+      "tags": ["entry", "hand_support", "running"],
+      "created_at": "2026-04-07T21:05:12Z"
+    }
+  ],
+  "bodylines": [
+    {
+      "id": "tuck_peak",
+      "display_name": "Tuck Peak",
+      "created_at": "2026-04-07T21:06:00Z"
+    },
+    {
+      "id": "layout_peak",
+      "display_name": "Layout Peak",
+      "created_at": "2026-04-07T21:06:15Z"
+    }
+  ]
+}
+```
+
+Atom `tags` are a loose, extensible set. V1 recognizes these tag values for composition rules:
+
+| Tag | Meaning to the composition state machine |
+|---|---|
+| `entry` | This atom is an entry skill → a pass starting with this atom is a "running" pass |
+| `airborne` | Fully airborne skill (no ground contact during the skill) |
+| `hand_support` | Skill uses hands on the ground (BHS, round-off, cartwheel, walkovers, etc.) |
+| `back_facing` | Rotation is in the backward direction |
+| `front_facing` | Rotation is in the forward direction |
+| `twisting` | Skill includes longitudinal rotation (full, double full, arabian, whip) |
+
+Adding a new tag is as simple as adding it in CheerCOM; composition rules that don't know the tag ignore it. Future composition rules can read new tags as they become useful.
+
+### Starter vocabulary (illustrative only — replace with whatever CheerCOM actually contains)
+
+The actual vocabulary used by v1 is whatever you author in CheerCOM. The list below is a *suggestion* of atoms to seed the manifest with before the first training run. Replace, rename, or extend freely — this table is not part of the contract.
+
+| Atom id (suggestion) | Suggested tags |
+|---|---|
+| `background` | (implicit — always present, no tags) |
+| `cartwheel` | `entry`, `hand_support` |
+| `round_off` | `entry`, `hand_support`, `running` |
+| `back_handspring` | `hand_support`, `back_facing` |
+| `back_tuck` | `airborne`, `back_facing` |
+| `back_layout` | `airborne`, `back_facing` |
+| `back_full` | `airborne`, `back_facing`, `twisting` |
+| `back_double_full` | `airborne`, `back_facing`, `twisting` |
+| `front_handspring` | `entry`, `hand_support`, `front_facing` |
+| `front_tuck` | `airborne`, `front_facing` |
+| `aerial` | `airborne`, `front_facing` |
+| `back_walkover` | `entry`, `hand_support`, `back_facing` |
+| `front_walkover` | `entry`, `hand_support`, `front_facing` |
+
+**Design note on layout/full/double full (if you choose to keep them as separate atoms):** they share the same body shape and differ only by twist count. The model learns twist count from the `shoulder_hip_twist_deg` derived feature and from hip-shoulder relative angular velocity over the airborne phase. You could alternatively collapse them to a single `back_layout` atom and derive "full/double full" from twist count as a separate output — a preference decision made during CheerCOM authoring.
 
 ### Composition rules (Swift state machine)
 
@@ -171,7 +238,7 @@ Input: a list of `AtomSegment` tuples `(atom, start_frame, end_frame, confidence
 
 **R1 — Pass boundaries.** Two consecutive atoms belong to the same pass if the gap between them is less than `MAX_SKILL_GAP_FRAMES` (default 30 frames = 1s at 30fps). Otherwise a new pass starts.
 
-**R2 — Running vs standing.** A pass is "running" if its first atom is in `{round_off, cartwheel, front_handspring, front_walkover, back_walkover}`. Otherwise "standing". These are the entry skills that imply forward momentum.
+**R2 — Running vs standing.** A pass is "running" if its first atom has the `entry` tag in the vocabulary manifest. Otherwise "standing". The state machine queries the loaded model's embedded metadata for tag membership — it does not hold a hardcoded entry-skill list.
 
 **R3 — Skill repetition collapse.** Two or more consecutive identical atoms collapse to a count multiplier.
 - `[BHS, BHS]` → "double back handspring"
@@ -205,36 +272,59 @@ Thresholds live in a `CompositionConfig` struct so they can be tuned without cod
 
 ### Output types
 
+Atoms and bodylines are **dynamic string-identified values**, not enums. This lets vocabulary grow in CheerCOM without Swift code changes.
+
 ```swift
-struct ClassifiedPass {
-    let startFrame: Int
-    let endFrame: Int
-    let atoms: [AtomSegment]
-    let label: String                   // "round-off back handspring layout"
-    let isRunning: Bool
-    let totalTwistDegrees: Double       // summed from derived feature
-    let peakInversionFrame: Int?
+struct Atom: Hashable, Codable {
+    let id: String                      // "back_handspring", "round_off", ...
+    let displayName: String             // "Back Handspring"
+    let category: String                // "tumbling", "stunts", ...
+    let tags: Set<String>               // ["entry", "hand_support", "back_facing"]
+
+    func hasTag(_ tag: String) -> Bool { tags.contains(tag) }
+}
+
+struct Bodyline: Hashable, Codable {
+    let id: String                      // "tuck_peak", "layout_peak", ...
+    let displayName: String
 }
 
 struct AtomSegment {
-    let atom: Atom                      // .backHandspring, .backLayout, ...
+    let atom: Atom
     let startFrame: Int
     let endFrame: Int
     let confidence: Double
     let bodylineAtPeak: Bodyline?
 }
 
-enum Atom: String, Codable {
-    case background, cartwheel, roundOff, backHandspring, backTuck,
-         backLayout, backFull, backDoubleFull, frontHandspring,
-         frontTuck, aerial, backWalkover, frontWalkover
+struct ClassifiedPass {
+    let startFrame: Int
+    let endFrame: Int
+    let atoms: [AtomSegment]
+    let label: String                   // "round-off back handspring layout"
+    let isRunning: Bool
+    let totalTwistDegrees: Double
+    let peakInversionFrame: Int?
 }
+```
 
-enum Bodyline: String, Codable {
-    case standing, lunge, standReady, arch, handsPlantInverted,
-         invertedStraight, invertedTucked, invertedPiked,
-         landingSquat, cartwheelInverted, twistInProgress,
-         layoutPeak, tuckPeak, pikePeak
+**Vocabulary provider:** a shared `VocabularyRegistry` loads atoms and bodylines from the Core ML model's embedded metadata at `SkillClassificationService` init time. All code that needs to resolve an atom ID or a bodyline ID goes through the registry. The registry is the only place where the vocabulary lives at runtime.
+
+```swift
+final class VocabularyRegistry {
+    let atoms: [String: Atom]           // keyed by id
+    let bodylines: [String: Bodyline]
+
+    init(from model: MLModel) throws {
+        let metadata = model.modelDescription.metadata
+        self.atoms = try Self.parseAtoms(from: metadata)
+        self.bodylines = try Self.parseBodylines(from: metadata)
+    }
+
+    func atom(id: String) -> Atom? { atoms[id] }
+    func atomsWithTag(_ tag: String) -> [Atom] {
+        atoms.values.filter { $0.hasTag(tag) }
+    }
 }
 ```
 
@@ -299,11 +389,31 @@ File naming: `<skill>_<version>_az<NNN>_el<NN>_<timestamp>.json`, e.g. `back_han
 
 **Sampling bias (applied at training-time data loader, not export):** side-ish angles (azimuth 90° ± 30°) get 2× weight. Near-front/near-back angles (azimuth near 0° or 180°) get 0.5× weight. All 96 files are still exported.
 
-### Pose Library extension
+### Pose Library extension + bodyline vocabulary
 
-Each saved pose gains an optional `bodyline: BodylineLabel?` field. When the user saves a new pose in Pose Mode, they tag it with one of the 14 bodyline labels (or none). When a pose is used as a keyframe, the animation's per-frame bodyline label is derived by holding the nearest-keyframe bodyline.
+Each saved pose gains an optional `bodyline: String?` field referencing a bodyline ID from the current vocabulary manifest. When the user saves a new pose in Pose Mode, they either pick an existing bodyline from a dropdown or **create a new one inline** with a name — the new bodyline is immediately added to `vocabulary_manifest.json` and becomes available everywhere.
 
-Bodyline vocabulary (v1): `standing, lunge, stand_ready, arch, hands_plant_inverted, inverted_straight, inverted_tucked, inverted_piked, landing_squat, cartwheel_inverted, twist_in_progress, layout_peak, tuck_peak, pike_peak`.
+Creating a new bodyline is a one-tap flow:
+1. User taps "Tag bodyline" on a saved pose
+2. Dropdown shows current bodylines + "➕ New bodyline..."
+3. User picks new, types a name ("arabesque_peak"), taps Save
+4. Manifest updates, pose is tagged, dropdown now contains the new bodyline for future poses
+
+The same flow applies when authoring a new skill animation: if the user wants to create a new atom (e.g., "punch_front"), they tap "New skill..." in Skill Animator's skill picker, enter a display name and category, optionally pick tags from a checkbox list, and the atom is added to the manifest.
+
+### Vocabulary Management panel
+
+A simple settings-style panel accessed from either Pose Mode or Skill Animator mode. Lists all atoms and bodylines from the current manifest with their metadata. Actions:
+
+- **Rename** an atom or bodyline (updates manifest + all existing animations that reference the old ID)
+- **Delete** an atom or bodyline (warns if animations reference it; offers to re-tag or delete those animations)
+- **Edit tags** on an atom (checkboxes for `entry`, `airborne`, `hand_support`, `back_facing`, `front_facing`, `twisting`, plus a free-text field for custom tags)
+- **Add new atom** directly (outside of the Skill Animator flow)
+- **Add new bodyline** directly (outside of the Pose Mode flow)
+- **Export manifest** to JSON for backup or sharing
+- **Import manifest** from JSON (merge or replace)
+
+The panel is the escape hatch for bulk vocabulary edits. Most day-to-day additions happen inline during authoring.
 
 ### Storage format in CheerCOM
 
@@ -481,7 +591,7 @@ Background frames prevent false-positive skill firing. Sources:
 1. Author 5–10 CheerCOM background animations: `walking_across_mat`, `standing_waiting`, `stretching`, `arms_overhead_stretch`, `lunge_walk`.
 2. Mine real FlightFilter tumbling recordings for frames between passes (`background_mining.py`).
 
-Target training distribution: **60% background / 40% skill** (roughly balanced across the 12 skill atoms).
+Target training distribution: **60% background / 40% skill** (with the 40% roughly balanced across whatever skill atoms the current manifest contains).
 
 ### Stage 4 — Real Tumble set fine-tune
 
@@ -533,14 +643,16 @@ Shared backbone:    [batch, 128, T]
 
 Atom head:
   Conv1D(1×1, 128 → 64) + ReLU
-  Conv1D(1×1, 64 → 13)
-  → [batch, 13, T]   atom logits
+  Conv1D(1×1, 64 → N_atoms + 1)       # +1 for background
+  → [batch, N_atoms + 1, T]   atom logits
 
 Bodyline head:
   Conv1D(1×1, 128 → 64) + ReLU
-  Conv1D(1×1, 64 → 14)
-  → [batch, 14, T]   bodyline logits
+  Conv1D(1×1, 64 → N_bodylines)
+  → [batch, N_bodylines, T]   bodyline logits
 ```
+
+**Dynamic head sizing:** `N_atoms` and `N_bodylines` are read from `vocabulary_manifest.json` at `build_dataset.py` invocation time and baked into the model. Each trained model is **versioned together with the vocabulary manifest that produced it** (manifest hash stored in model metadata). If vocabulary changes, the next training run produces a new model with matched vocabulary. Mismatched manifest/model pairs are rejected at FlightFilter load time with a clear error.
 
 **Receptive field:** kernel 3, dilations {1, 2, 4, 8, 16}, 2 convs/block:
 `RF = 1 + 2 × (3-1) × (1+2+4+8+16) = 125 frames ≈ 4.16 seconds at 30 fps`.
@@ -557,7 +669,7 @@ atom_loss:     Focal Loss (γ=2.0) + class-balanced weighting by inverse-sqrt fr
 bodyline_loss: Cross-entropy, masked where bodyline label is null
 ```
 
-Class weights normalized so skill atoms receive ~4× the gradient signal of background.
+Class weights normalized so skill atoms receive ~4× the gradient signal of background. Weights are computed dynamically from the manifest's atom count, not hardcoded.
 
 ### Training stages
 
@@ -689,7 +801,7 @@ final class SkillClassificationService {
         // Run Core ML
         let output = try await model.prediction(pose_features: tensor)
         let atomLogits = output.atom_logits           // [1, 13, T]
-        let bodylineLogits = output.bodyline_logits   // [1, 14, T]
+        let bodylineLogits = output.bodyline_logits   // [1, N_bodylines, T]
 
         // Per-frame softmax → atom probabilities
         let atomProbs = softmax(atomLogits, axis: 1)
@@ -776,11 +888,12 @@ func extractSegments(
 
 ### `CompositionStateMachine` (new)
 
-A pure Swift rules engine. No ML, no state beyond what's passed in. Implements R1–R7 from the Composition Rules section above.
+A pure Swift rules engine. No ML, no hardcoded vocabulary. Reads atom tags from a `VocabularyRegistry` (loaded from Core ML model metadata at init). Implements R1–R7 from the Composition Rules section above.
 
 ```swift
 struct CompositionStateMachine {
     let config: CompositionConfig
+    let vocabulary: VocabularyRegistry
 
     func compose(segments: [AtomSegment]) -> [ClassifiedPass] {
         // R5, R6: pre-filter (done in extractSegments, but defensive here)
@@ -796,16 +909,15 @@ struct CompositionStateMachine {
     }
 
     private func composePass(_ segments: [AtomSegment]) -> ClassifiedPass {
-        // R2: running if first atom is an entry skill
-        let entrySkills: Set<Atom> = [.roundOff, .cartwheel,
-                                       .frontHandspring, .frontWalkover, .backWalkover]
-        let isRunning = entrySkills.contains(segments.first!.atom)
+        // R2: running if first atom carries the `entry` tag in the manifest
+        let firstAtom = segments.first!.atom
+        let isRunning = firstAtom.hasTag("entry")
 
-        // R3: collapse repetitions into count tags for labeling
-        let runs = runLengthEncode(segments.map { $0.atom })
+        // R3: collapse repetitions by atom id
+        let runs = runLengthEncode(segments.map { $0.atom.id })
 
-        // R4: build label string
-        let label = buildLabel(runs: runs, isRunning: isRunning)
+        // R4: build label string from display names
+        let label = buildLabel(runs: runs, isRunning: isRunning, vocabulary: vocabulary)
 
         // Summary derived values
         let totalTwist = sumTwistDegrees(segments)
@@ -934,7 +1046,10 @@ Already listed under TCN training section. Summary:
 2. **Authored animations are not physically plausible enough** (e.g., CoM trajectory wrong during airborne phase → model learns impossible motion). Mitigation: CheerCOM's existing CoM validation harness runs on each authored animation during preview; warning shown if CoM trajectory during inverted phases is implausible.
 3. **Core ML variable-length input failures** on older iOS versions or specific tensor shapes. Mitigation: test export on device early (during TCN development, not at the end).
 4. **SceneKit 3D → 2D projection doesn't match YOLO's coordinate conventions** (Y-axis direction, origin placement). Mitigation: build a Swift test that projects a known pose through both paths and compares.
-5. **Authoring burden exceeds patience.** If 60 animations feels like too much, the model is still trainable on fewer but accuracy drops. Mitigation: prioritize the 6 most common tumbling atoms first (BHS, round-off, tuck, layout, full, front handspring), ship a reduced v1, expand later.
+5. **Authoring burden exceeds patience.** If 60 animations feels like too much, the model is still trainable on fewer but accuracy drops. Mitigation: prioritize the most common tumbling atoms first and ship a reduced v1, expanding later. Because vocabulary is data-driven, "shipping v1 with fewer atoms" is zero code effort — just train on whatever the manifest currently contains.
+6. **Vocabulary drift between manifest and deployed model.** If the manifest is edited after training but before the new model ships, runtime inference references IDs the deployed model doesn't produce. Mitigation: every trained Core ML model embeds the hash of the manifest that produced it; `SkillClassificationService` rejects model/manifest pairs with mismatched hashes and falls back to the previous model version.
+7. **Atom rename or delete breaks historical animations.** If the user renames `back_handspring` → `bhs`, any exported JSON files referencing the old ID become orphaned. Mitigation: CheerCOM's Vocabulary Management panel performs rename operations as a migration (updates manifest + rewrites all JSON files in `training_data/raw/` that reference the old ID). Delete operations warn and offer to re-tag orphaned animations before removing the atom.
+8. **Tag taxonomy bloat.** If the user creates many ad-hoc tags, composition rules become unpredictable. Mitigation: CheerCOM UI surfaces the core v1 tag vocabulary as checkboxes and treats custom tags as a power-user free-text field. Custom tags are ignored by composition rules that don't know them.
 
 ### Open questions
 
@@ -1000,6 +1115,9 @@ Currently v1 is post-processing. A future iteration could run the TCN on sliding
 - `Models/SkillAnimation.swift`
 - `Models/SkillKeyframe.swift`
 - `Models/BodylineLabel.swift`
+- `Models/VocabularyManifest.swift`
+- `Managers/VocabularyManager.swift` — load/save manifest, add/rename/delete atoms and bodylines, propagate changes to existing animations
+- `Views/VocabularyManagementView.swift` — UI panel listing atoms and bodylines with add/rename/delete/edit-tags actions
 
 ### Modified Swift files (CheerCOM)
 
@@ -1018,10 +1136,11 @@ Currently v1 is post-processing. A future iteration could run the TCN on sliding
 - `Services/SkillClassificationService.swift`
 - `Services/TCNFeatureBuilder.swift`
 - `Services/CompositionStateMachine.swift`
+- `Services/VocabularyRegistry.swift` — loads atoms, bodylines, tags from Core ML model metadata
 - `Models/AtomSegment.swift`
 - `Models/ClassifiedPass.swift`
-- `Models/Atom.swift`
-- `Models/Bodyline.swift`
+- `Models/Atom.swift` — dynamic struct, not an enum
+- `Models/Bodyline.swift` — dynamic struct, not an enum
 
 ### Modified Swift files (FlightFilter)
 
