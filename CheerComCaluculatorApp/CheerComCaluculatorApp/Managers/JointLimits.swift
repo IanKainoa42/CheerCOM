@@ -1,5 +1,6 @@
 import Foundation
 import SceneKit
+import ModelRigKit
 
 struct JointLimit {
     let minAngle: SCNVector3

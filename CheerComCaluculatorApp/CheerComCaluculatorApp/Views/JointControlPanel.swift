@@ -1,16 +1,17 @@
 import UIKit
+import SceneKit
+import ModelRigKit
 
 
 protocol JointControlPanelDelegate: AnyObject {
     func didTapJointSelection(sourceView: UIView)
-    func didSelectAxis(_ axis: JointAxis)
-    func didChangeJointAngle(value: Float)
-    func didIncrementAngle()
-    func didDecrementAngle()
-    func didBeginIncrementingAngle()
-    func didEndIncrementingAngle()
-    func didBeginDecrementingAngle()
-    func didEndDecrementingAngle()
+    func didChangeJointAngle(axis: JointAxis, value: Float)
+    func didIncrementAngle(axis: JointAxis)
+    func didDecrementAngle(axis: JointAxis)
+    func didBeginIncrementingAngle(axis: JointAxis)
+    func didEndIncrementingAngle(axis: JointAxis)
+    func didBeginDecrementingAngle(axis: JointAxis)
+    func didEndDecrementingAngle(axis: JointAxis)
     func didResetSelectedJoint()
 
     func didTapPoseLibrary()
@@ -18,6 +19,60 @@ protocol JointControlPanelDelegate: AnyObject {
 
     func didTapFitView()
     func didTapToggleVisualizations()
+}
+
+class AxisControlBox: UIStackView {
+    let jointAxis: JointAxis
+    let slider = UISlider()
+    let angleLabel = PaddingLabel()
+    let decrementBtn = CheerButton(title: "-", style: .neutral, compact: true)
+    let incrementBtn = CheerButton(title: "+", style: .neutral, compact: true)
+
+    init(axis: JointAxis) {
+        self.jointAxis = axis
+        super.init(frame: .zero)
+        self.axis = .horizontal
+        spacing = 8
+        alignment = .center
+
+        let axisTitle = UILabel()
+        axisTitle.text = self.jointAxis.rawValue.uppercased()
+        axisTitle.textColor = CheerPalette.textSecondary
+        axisTitle.font = cheerMonospacedFont(size: 10, weight: .bold)
+        axisTitle.widthAnchor.constraint(equalToConstant: 45).isActive = true
+
+        angleLabel.text = "0.0°"
+        angleLabel.textColor = CheerPalette.textPrimary
+        angleLabel.font = cheerMonospacedFont(size: 11, weight: .bold)
+        angleLabel.backgroundColor = CheerPalette.storm
+        angleLabel.layer.cornerRadius = 8
+        angleLabel.layer.borderWidth = 1
+        angleLabel.layer.borderColor = CheerPalette.panelBorder.cgColor
+        angleLabel.layer.masksToBounds = true
+        angleLabel.textAlignment = .center
+        angleLabel.widthAnchor.constraint(equalToConstant: 50).isActive = true
+
+        decrementBtn.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
+        decrementBtn.widthAnchor.constraint(equalToConstant: 36).isActive = true
+
+        incrementBtn.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
+        incrementBtn.widthAnchor.constraint(equalToConstant: 36).isActive = true
+
+        slider.minimumValue = -180
+        slider.maximumValue = 180
+        slider.value = 0
+        slider.tintColor = CheerPalette.accentBlue
+        slider.minimumTrackTintColor = CheerPalette.accentBlue
+        slider.maximumTrackTintColor = UIColor.white.withAlphaComponent(0.12)
+
+        addArrangedSubview(axisTitle)
+        addArrangedSubview(decrementBtn)
+        addArrangedSubview(slider)
+        addArrangedSubview(incrementBtn)
+        addArrangedSubview(angleLabel)
+    }
+
+    required init(coder: NSCoder) { fatalError() }
 }
 
 class JointControlPanel: UIView {
@@ -28,9 +83,10 @@ class JointControlPanel: UIView {
     private let contentContainer = UIView()
     private let sectionLabel = UILabel()
     private var jointSelectionButton: CheerButton!
-    private var axisSegmentedControl: UISegmentedControl!
-    private var jointAngleSlider: UISlider!
-    private var jointAngleLabel: PaddingLabel!
+    
+    private let xAxisRow = AxisControlBox(axis: .x)
+    private let yAxisRow = AxisControlBox(axis: .y)
+    private let zAxisRow = AxisControlBox(axis: .z)
 
     init(width: CGFloat) {
         super.init(frame: .zero)
@@ -80,13 +136,6 @@ class JointControlPanel: UIView {
         sectionLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
         rootStack.addArrangedSubview(sectionLabel)
 
-        let hintLabel = UILabel()
-        hintLabel.text = "Select a joint, choose an axis, then adjust the live angle."
-        hintLabel.textColor = CheerPalette.textSecondary
-        hintLabel.font = cheerMonospacedFont(size: 10, weight: .regular)
-        hintLabel.numberOfLines = 2
-        rootStack.addArrangedSubview(hintLabel)
-
         jointSelectionButton = CheerButton(title: "Choose Joint", symbol: "slider.horizontal.3", style: .accent)
         jointSelectionButton.addTarget(self, action: #selector(jointSelectionTapped), for: .touchUpInside)
 
@@ -101,64 +150,14 @@ class JointControlPanel: UIView {
         resetJointButton.setContentHuggingPriority(.required, for: .horizontal)
         rootStack.addArrangedSubview(headerRow)
 
-        axisSegmentedControl = makeCheerSegmentedControl(items: ["X Axis", "Y Axis", "Z Axis"])
-        axisSegmentedControl.addTarget(self, action: #selector(axisChanged), for: .valueChanged)
-        rootStack.addArrangedSubview(axisSegmentedControl)
-
-        let sliderHeader = UIStackView()
-        sliderHeader.axis = .horizontal
-        sliderHeader.alignment = .center
-        sliderHeader.spacing = 8
-
-        let sliderTitle = UILabel()
-        sliderTitle.text = "ACTIVE AXIS"
-        sliderTitle.textColor = CheerPalette.textSecondary
-        sliderTitle.font = cheerMonospacedFont(size: 10, weight: .bold)
-
-        jointAngleLabel = PaddingLabel()
-        jointAngleLabel.text = "0.0°"
-        jointAngleLabel.textColor = CheerPalette.textPrimary
-        jointAngleLabel.font = cheerMonospacedFont(size: 12, weight: .bold)
-        jointAngleLabel.backgroundColor = CheerPalette.storm
-        jointAngleLabel.layer.cornerRadius = 10
-        jointAngleLabel.layer.borderWidth = 1
-        jointAngleLabel.layer.borderColor = CheerPalette.panelBorder.cgColor
-        jointAngleLabel.layer.masksToBounds = true
-
-        sliderHeader.addArrangedSubview(sliderTitle)
-        sliderHeader.addArrangedSubview(UIView())
-        sliderHeader.addArrangedSubview(jointAngleLabel)
-        rootStack.addArrangedSubview(sliderHeader)
-
-        let decrementButton = CheerButton(title: "-", style: .neutral, compact: true)
-        decrementButton.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
-        decrementButton.addTarget(self, action: #selector(decrementTapped), for: .touchUpInside)
-        decrementButton.addTarget(self, action: #selector(decrementTouchDown), for: .touchDown)
-        decrementButton.addTarget(self, action: #selector(decrementTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
-        decrementButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
-
-        let incrementButton = CheerButton(title: "+", style: .neutral, compact: true)
-        incrementButton.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
-        incrementButton.addTarget(self, action: #selector(incrementTapped), for: .touchUpInside)
-        incrementButton.addTarget(self, action: #selector(incrementTouchDown), for: .touchDown)
-        incrementButton.addTarget(self, action: #selector(incrementTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
-        incrementButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
-
-        jointAngleSlider = UISlider()
-        jointAngleSlider.translatesAutoresizingMaskIntoConstraints = false
-        jointAngleSlider.minimumValue = -180
-        jointAngleSlider.maximumValue = 180
-        jointAngleSlider.value = 0
-        jointAngleSlider.tintColor = CheerPalette.accentBlue
-        jointAngleSlider.minimumTrackTintColor = CheerPalette.accentBlue
-        jointAngleSlider.maximumTrackTintColor = UIColor.white.withAlphaComponent(0.12)
-        jointAngleSlider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
-
-        let sliderRow = UIStackView(arrangedSubviews: [decrementButton, jointAngleSlider, incrementButton])
-        sliderRow.axis = .horizontal
-        sliderRow.spacing = 10
-        sliderRow.alignment = .center
-        rootStack.addArrangedSubview(sliderRow)
+        let slidersContainer = UIStackView(arrangedSubviews: [xAxisRow, yAxisRow, zAxisRow])
+        slidersContainer.axis = .vertical
+        slidersContainer.spacing = 8
+        rootStack.addArrangedSubview(slidersContainer)
+        
+        setupAxisRow(xAxisRow)
+        setupAxisRow(yAxisRow)
+        setupAxisRow(zAxisRow)
 
         let firstActionRow = UIStackView(arrangedSubviews: [
             makeActionButton(title: "Library", symbol: "square.grid.2x2", style: .accent, action: #selector(poseLibraryTapped)),
@@ -182,51 +181,65 @@ class JointControlPanel: UIView {
         rootStack.addArrangedSubview(footerStack)
     }
 
+    private func setupAxisRow(_ row: AxisControlBox) {
+        row.slider.addTarget(self, action: #selector(sliderChanged(_:)), for: .valueChanged)
+        
+        row.decrementBtn.addTarget(self, action: #selector(decrementTapped(_:)), for: .touchUpInside)
+        row.decrementBtn.addTarget(self, action: #selector(decrementTouchDown(_:)), for: .touchDown)
+        row.decrementBtn.addTarget(self, action: #selector(decrementTouchUp(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        
+        row.incrementBtn.addTarget(self, action: #selector(incrementTapped(_:)), for: .touchUpInside)
+        row.incrementBtn.addTarget(self, action: #selector(incrementTouchDown(_:)), for: .touchDown)
+        row.incrementBtn.addTarget(self, action: #selector(incrementTouchUp(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+    }
+
     // MARK: - Public Methods
 
-    func updateJointSelection(name: String, angle: Float) {
+    func updateJointSelection(name: String, angles: SCNVector3) {
         jointSelectionButton.setTitle(name, for: .normal)
-        updateAngleDisplay(angle: angle)
+        updateAngleDisplays(angles: angles)
     }
 
-    func updateAngleDisplay(angle: Float) {
-        jointAngleSlider.value = angle
-        jointAngleLabel.text = String(format: "%.1f°", angle)
-    }
-
-    func updateSelectedAxis(_ axis: JointAxis) {
-        switch axis {
-        case .x: axisSegmentedControl.selectedSegmentIndex = 0
-        case .y: axisSegmentedControl.selectedSegmentIndex = 1
-        case .z: axisSegmentedControl.selectedSegmentIndex = 2
-        }
+    func updateAngleDisplays(angles: SCNVector3) {
+        let x = angles.x * 180 / .pi
+        let y = angles.y * 180 / .pi
+        let z = angles.z * 180 / .pi
+        
+        xAxisRow.slider.value = x
+        xAxisRow.angleLabel.text = String(format: "%.0f°", x)
+        
+        yAxisRow.slider.value = y
+        yAxisRow.angleLabel.text = String(format: "%.0f°", y)
+        
+        zAxisRow.slider.value = z
+        zAxisRow.angleLabel.text = String(format: "%.0f°", z)
     }
 
     // MARK: - Actions
 
-    @objc private func jointSelectionTapped() {
-        delegate?.didTapJointSelection(sourceView: jointSelectionButton)
+    private func axisFor(view: UIView) -> JointAxis? {
+        if let row = view.superview as? AxisControlBox { return row.jointAxis }
+        return nil
     }
+
+    @objc private func jointSelectionTapped() { delegate?.didTapJointSelection(sourceView: jointSelectionButton) }
     @objc private func resetJointTapped() { delegate?.didResetSelectedJoint() }
 
-    @objc private func axisChanged() {
-        let index = axisSegmentedControl.selectedSegmentIndex
-        let axis: JointAxis = (index == 0) ? .x : (index == 1) ? .y : .z
-        delegate?.didSelectAxis(axis)
+    @objc private func sliderChanged(_ sender: UISlider) {
+        guard let axis = axisFor(view: sender) else { return }
+        delegate?.didChangeJointAngle(axis: axis, value: sender.value)
+        if let row = sender.superview as? AxisControlBox {
+            row.angleLabel.text = String(format: "%.0f°", sender.value)
+        }
     }
 
-    @objc private func sliderChanged() {
-        delegate?.didChangeJointAngle(value: jointAngleSlider.value)
-        jointAngleLabel.text = String(format: "%.1f°", jointAngleSlider.value)
-    }
+    @objc private func decrementTapped(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didDecrementAngle(axis: ax) } }
+    @objc private func incrementTapped(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didIncrementAngle(axis: ax) } }
 
-    @objc private func decrementTapped() { delegate?.didDecrementAngle() }
-    @objc private func incrementTapped() { delegate?.didIncrementAngle() }
-
-    @objc private func decrementTouchDown() { delegate?.didBeginDecrementingAngle() }
-    @objc private func decrementTouchUp() { delegate?.didEndDecrementingAngle() }
-    @objc private func incrementTouchDown() { delegate?.didBeginIncrementingAngle() }
-    @objc private func incrementTouchUp() { delegate?.didEndIncrementingAngle() }
+    @objc private func decrementTouchDown(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didBeginDecrementingAngle(axis: ax) } }
+    @objc private func decrementTouchUp(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didEndDecrementingAngle(axis: ax) } }
+    @objc private func incrementTouchDown(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didBeginIncrementingAngle(axis: ax) } }
+    @objc private func incrementTouchUp(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didEndIncrementingAngle(axis: ax) } }
 
     @objc private func poseLibraryTapped() { delegate?.didTapPoseLibrary() }
     @objc private func resetPoseTapped() { delegate?.didTapResetPose() }

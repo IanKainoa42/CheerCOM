@@ -40,6 +40,7 @@ enum PoseType {
     case pike
     case layout
     case sideLean
+    case lunge
 
     // Arms Only Poses
     case armsHighV
@@ -65,7 +66,7 @@ enum PoseType {
     var category: PoseCategory {
         switch self {
         case .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque, .bridge,
-            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean:
+            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lunge:
             return .fullBody
         case .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow, .armsDaggers,
             .armsBrokenT, .armsHalfHighVHalfT:
@@ -95,6 +96,7 @@ enum PoseType {
         case .pike: return "Pike"
         case .layout: return "Layout"
         case .sideLean: return "Side Lean"
+        case .lunge: return "Lunge"
 
         // Arms Only
         case .armsHighV: return "High V Arms"
@@ -138,6 +140,7 @@ enum PoseType {
         case .pike: return "📐"
         case .layout: return "🧍"
         case .sideLean: return "📐"
+        case .lunge: return "🤺"
 
         // Arms
         case .armsHighV: return "🙌"

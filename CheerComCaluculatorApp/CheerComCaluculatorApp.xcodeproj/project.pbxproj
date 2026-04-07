@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		DAA64597DD5342AA8FAC39AC /* ModelRigKit in Frameworks */ = {isa = PBXBuildFile; productRef = EBF8C26992C0386483DFF52C /* ModelRigKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		1FBC0D7D2EB958290003CE84 /* CheerComCaluculatorApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CheerComCaluculatorApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DAA64597DD5342AA8FAC39AC /* ModelRigKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +83,7 @@
 			);
 			name = CheerComCaluculatorApp;
 			packageProductDependencies = (
+				EBF8C26992C0386483DFF52C /* ModelRigKit */,
 			);
 			productName = CheerComCaluculatorApp;
 			productReference = 1FBC0D7D2EB958290003CE84 /* CheerComCaluculatorApp.app */;
@@ -107,6 +113,9 @@
 			);
 			mainGroup = 1FBC0D742EB958290003CE84;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				28BF5614A092E089BA49FA44 /* XCLocalSwiftPackageReference "ModelRigKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1FBC0D7E2EB958290003CE84 /* Products */;
 			projectDirPath = "";
@@ -345,6 +354,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		28BF5614A092E089BA49FA44 /* XCLocalSwiftPackageReference "ModelRigKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../ModelRigKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		EBF8C26992C0386483DFF52C /* ModelRigKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 28BF5614A092E089BA49FA44 /* XCLocalSwiftPackageReference "ModelRigKit" */;
+			productName = ModelRigKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1FBC0D752EB958290003CE84 /* Project object */;
 }

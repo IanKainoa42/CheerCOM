@@ -1,5 +1,6 @@
 import SceneKit
 import UIKit
+import ModelRigKit
 
 class SceneViewController: UIViewController {
 
@@ -468,7 +469,9 @@ class SceneViewController: UIViewController {
         case 2: preset = .athleticMale
         default: preset = .averageNeutral
         }
-        calculator.setPreset(preset)
+        // Local COMCalculator does not yet support body presets.
+        // TODO: Unify with ModelRigKit.COMCalculator which has setPreset.
+        _ = preset
         scheduleUpdateCOM()
         print("👤 Body preset changed to: \(preset)")
     }
@@ -712,7 +715,8 @@ extension SceneViewController: JointControlPanelDelegate {
             title: "Select Joint", message: "Choose a joint to control",
             preferredStyle: .actionSheet)
 
-        for jointName in sceneManager.controllableJoints {
+        for joint in sceneManager.controllableJoints {
+            let jointName = joint.rawValue
             let displayName = formatJointName(jointName)
             let action = UIAlertAction(title: displayName, style: .default) { [weak self] _ in
                 self?.selectJoint(named: jointName)
@@ -742,9 +746,7 @@ extension SceneViewController: JointControlPanelDelegate {
             let displayName = formatJointName(name)
 
             // Update UI
-            let currentAngle = getAngleForCurrentAxis(joint: joint)
-            jointControlPanel.updateJointSelection(name: displayName, angle: currentAngle)
-            jointControlPanel.updateSelectedAxis(jointControlMode)
+            jointControlPanel.updateJointSelection(name: displayName, angles: joint.eulerAngles)
 
             print("✅ Selected joint: \(displayName)")
             print(
@@ -756,26 +758,20 @@ extension SceneViewController: JointControlPanelDelegate {
         }
     }
 
-    func didSelectAxis(_ axis: JointAxis) {
-        jointControlMode = axis
-        print("🔄 Switched to \(axis.rawValue)-axis control")
-        if let joint = selectedJoint {
-            let angle = getAngleForCurrentAxis(joint: joint)
-            jointControlPanel.updateAngleDisplay(angle: angle)
-            jointControlPanel.updateSelectedAxis(axis)
-            print("   Current \(axis.rawValue) angle: \(angle)°")
-        }
+    func didIncrementAngle(axis: JointAxis) {
+        didRotateJoint(axis: axis, direction: .positive)
     }
 
-    func didIncrementAngle() {
-        didRotateJoint(direction: .positive)
+    func didDecrementAngle(axis: JointAxis) {
+        didRotateJoint(axis: axis, direction: .negative)
     }
 
-    func didDecrementAngle() {
-        didRotateJoint(direction: .negative)
-    }
+    func didBeginIncrementingAngle(axis: JointAxis) {}
+    func didEndIncrementingAngle(axis: JointAxis) {}
+    func didBeginDecrementingAngle(axis: JointAxis) {}
+    func didEndDecrementingAngle(axis: JointAxis) {}
 
-    func didRotateJoint(direction: RotationDirection) {
+    func didRotateJoint(axis: JointAxis, direction: RotationDirection) {
         guard let joint = selectedJoint else {
             print("⚠️ No joint selected for rotation")
             return
@@ -784,10 +780,8 @@ extension SceneViewController: JointControlPanelDelegate {
         let rotationAmount: Float = 1.0 * .pi / 180  // 1 degree fine tuning
         let delta = (direction == .positive) ? rotationAmount : -rotationAmount
 
-        let oldAngle = getAngleForCurrentAxis(joint: joint)
-
         var newAngles = joint.eulerAngles
-        switch jointControlMode {
+        switch axis {
         case .x: newAngles.x += delta
         case .y: newAngles.y += delta
         case .z: newAngles.z += delta
@@ -799,10 +793,12 @@ extension SceneViewController: JointControlPanelDelegate {
             joint.eulerAngles = newAngles
         }
 
-        let newAngle = getAngleForCurrentAxis(joint: joint)
-        print("🎮 Rotated joint on \(jointControlMode.rawValue)-axis: \(oldAngle)° → \(newAngle)°")
+        let x = joint.eulerAngles.x * 180 / .pi
+        let y = joint.eulerAngles.y * 180 / .pi
+        let z = joint.eulerAngles.z * 180 / .pi
+        print("🎮 Rotated joint on \(axis.rawValue)-axis. New angles: (x: \(x)°, y: \(y)°, z: \(z)°)")
 
-        jointControlPanel.updateAngleDisplay(angle: newAngle)
+        jointControlPanel.updateAngleDisplays(angles: joint.eulerAngles)
         scheduleUpdateCOM()
     }
 
@@ -817,10 +813,10 @@ extension SceneViewController: JointControlPanelDelegate {
         }
         SCNTransaction.commit()
 
-        jointControlPanel.updateAngleDisplay(angle: 0)
+        jointControlPanel.updateAngleDisplays(angles: joint.eulerAngles)
     }
 
-    func didChangeJointAngle(value: Float) {
+    func didChangeJointAngle(axis: JointAxis, value: Float) {
         guard let joint = selectedJoint else {
             print("⚠️ No joint selected for angle change")
             return
@@ -828,7 +824,7 @@ extension SceneViewController: JointControlPanelDelegate {
         let angle = value * .pi / 180
 
         var newAngles = joint.eulerAngles
-        switch jointControlMode {
+        switch axis {
         case .x: newAngles.x = angle
         case .y: newAngles.y = angle
         case .z: newAngles.z = angle
@@ -840,7 +836,7 @@ extension SceneViewController: JointControlPanelDelegate {
             joint.eulerAngles = newAngles
         }
 
-        print("🎚️ Set \(jointControlMode.rawValue)-axis angle to \(value)°")
+        print("🎚️ Set \(axis.rawValue)-axis angle to \(value)°")
 
         scheduleUpdateCOM()
     }
@@ -1031,9 +1027,10 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         var jointPositions: [String: SCNVector3] = [:]
 
         // Iterate through all controllable joints and capture their Euler angles
-        for jointName in sceneManager.controllableJoints {
-            if let joint = sceneManager.cachedBoneNodes[jointName] {
-                jointPositions[jointName] = joint.eulerAngles
+        for joint in sceneManager.controllableJoints {
+            let jointName = joint.rawValue
+            if let boneNode = sceneManager.cachedBoneNodes[jointName] {
+                jointPositions[jointName] = boneNode.eulerAngles
             }
         }
 
@@ -1092,10 +1089,14 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 
     private func applySavedPose(_ pose: SavedPose) {
         var jointAngles: [String: SCNVector3] = [:]
-        for (name, _) in pose.jointAngles {
-            if let vector = pose.getVector(for: name) {
-                jointAngles[name] = vector
-            }
+        for (name, components) in pose.jointAngles where components.count == 3 {
+            #if os(macOS)
+            jointAngles[name] = SCNVector3(
+                CGFloat(components[0]), CGFloat(components[1]), CGFloat(components[2])
+            )
+            #else
+            jointAngles[name] = SCNVector3(components[0], components[1], components[2])
+            #endif
         }
         applyJointAngles(jointAngles, name: pose.name)
     }

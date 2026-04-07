@@ -1,4 +1,5 @@
 import SwiftUI
+import ModelRigKit
 
 struct CheerDashboardSwiftUIView: View {
     enum BodyPreset: String, CaseIterable, Identifiable {

@@ -1,6 +1,7 @@
 import SceneKit
 import Foundation
 import QuartzCore
+import ModelRigKit
 
 
 class CoMValidationHarness {
@@ -350,7 +351,7 @@ class CoMValidationHarness {
         SCNTransaction.animationDuration = duration
 
         for (joint, angles) in poseDef.jointAngles {
-            if let bone = sceneManager.findBone(joint) {
+            if let bone = sceneManager.findBone(named: joint) {
                 bone.eulerAngles = JointLimits.clampAngles(for: joint, angles: angles)
             }
         }

@@ -1,5 +1,6 @@
 import Foundation
 import SceneKit
+import ModelRigKit
 
 
 class PoseStorageManager {
