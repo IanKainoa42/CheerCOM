@@ -7,8 +7,55 @@ class PoseStorageManager {
     static let shared = PoseStorageManager()
 
     private let userDefaultsKey = "saved_poses"
+    private let bodylineTagsKey = "saved_pose_bodylines"
 
     private init() {}
+
+    // MARK: - Bodyline Tagging (sidecar)
+
+    /// Loads the pose-id → bodyline-id map from sidecar storage.
+    private func loadBodylineTags() -> [String: String] {
+        guard let data = UserDefaults.standard.data(forKey: bodylineTagsKey),
+              let map = try? JSONDecoder().decode([String: String].self, from: data) else {
+            return [:]
+        }
+        return map
+    }
+
+    /// Persists the pose-id → bodyline-id map.
+    private func persistBodylineTags(_ map: [String: String]) {
+        guard let data = try? JSONEncoder().encode(map) else { return }
+        UserDefaults.standard.set(data, forKey: bodylineTagsKey)
+    }
+
+    /// Tags a pose with a bodyline id. Nil id removes any existing tag.
+    public func setBodyline(poseId: UUID, bodylineId: String?) {
+        var map = loadBodylineTags()
+        if let bodylineId = bodylineId {
+            map[poseId.uuidString] = bodylineId
+        } else {
+            map.removeValue(forKey: poseId.uuidString)
+        }
+        persistBodylineTags(map)
+    }
+
+    public func bodyline(for poseId: UUID) -> String? {
+        return loadBodylineTags()[poseId.uuidString]
+    }
+
+    /// Returns all saved poses paired with their bodyline tags.
+    public func loadPosesWithBodylines() -> [BodylineTaggedPose] {
+        let poses = loadPoses()
+        let tags = loadBodylineTags()
+        return poses.map { pose in
+            BodylineTaggedPose(pose: pose, bodylineId: tags[pose.id.uuidString])
+        }
+    }
+
+    /// Test-only: clear all bodyline tags.
+    public func _resetBodylineTagsForTesting() {
+        UserDefaults.standard.removeObject(forKey: bodylineTagsKey)
+    }
 
     func savePose(name: String, jointPositions: [String: SCNVector3]) {
         var poses = loadPoses()
