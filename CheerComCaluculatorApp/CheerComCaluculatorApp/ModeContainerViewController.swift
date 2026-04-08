@@ -20,7 +20,9 @@ final class ModeContainerViewController: UIViewController {
 
         setupChildren()
         setupModeSelector()
-        switchTo(.pose)
+        let initialMode: Mode = ProcessInfo.processInfo.arguments.contains("--skill-animator") ? .skillAnimator : .pose
+        modeSelector.selectedSegmentIndex = initialMode.rawValue
+        switchTo(initialMode)
     }
 
     private func setupChildren() {

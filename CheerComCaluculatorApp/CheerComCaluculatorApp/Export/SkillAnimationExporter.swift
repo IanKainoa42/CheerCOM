@@ -8,6 +8,7 @@ public final class SkillAnimationExporter {
 
     public enum ExportError: Error {
         case missingPose(id: UUID)
+        case missingKeyframePose(frameIndex: Int)
         case noKeyframes
     }
 
@@ -46,8 +47,16 @@ public final class SkillAnimationExporter {
         guard !animation.keyframes.isEmpty else { throw ExportError.noKeyframes }
 
         let resolved: [KeyframeInterpolator.ResolvedKeyframe] = try animation.sortedKeyframes.map { kf in
-            guard let angles = poseResolver(kf.poseId) else {
-                throw ExportError.missingPose(id: kf.poseId)
+            let angles: [String: SCNVector3]
+            if let inlineAngles = kf.inlineJointAngles {
+                angles = vectorAngles(from: inlineAngles)
+            } else if let poseId = kf.poseId {
+                guard let resolvedAngles = poseResolver(poseId) else {
+                    throw ExportError.missingPose(id: poseId)
+                }
+                angles = resolvedAngles
+            } else {
+                throw ExportError.missingKeyframePose(frameIndex: kf.frameIndex)
             }
             return KeyframeInterpolator.ResolvedKeyframe(
                 frameIndex: kf.frameIndex,
@@ -240,12 +249,27 @@ public final class SkillAnimationExporter {
         guard !keyframes.isEmpty else { return result }
 
         let pairs: [(Int, String?)] = keyframes.map { kf in
-            (kf.frameIndex, kf.bodylineId ?? bodylineForPoseId(kf.poseId))
+            let bodylineId = kf.bodylineId ?? kf.poseId.flatMap(bodylineForPoseId)
+            return (kf.frameIndex, bodylineId)
         }
 
         for frame in 0..<numFrames {
             let nearest = pairs.min { abs($0.0 - frame) < abs($1.0 - frame) }
-            result[frame] = nearest?.1 ?? nil
+            result[frame] = nearest?.1
+        }
+        return result
+    }
+
+    private func vectorAngles(from inlineJointAngles: [String: [Float]]) -> [String: SCNVector3] {
+        var result: [String: SCNVector3] = [:]
+        for (boneName, components) in inlineJointAngles where components.count == 3 {
+            #if os(macOS)
+            result[boneName] = SCNVector3(
+                CGFloat(components[0]), CGFloat(components[1]), CGFloat(components[2])
+            )
+            #else
+            result[boneName] = SCNVector3(components[0], components[1], components[2])
+            #endif
         }
         return result
     }
