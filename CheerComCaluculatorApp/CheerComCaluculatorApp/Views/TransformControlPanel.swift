@@ -3,6 +3,8 @@ import UIKit
 protocol TransformControlPanelDelegate: AnyObject {
     func didChangeTransformMode(_ mode: TransformMode)
     func didTapTransform(direction: TransformDirection)
+    func didBeginContinuousTransform(direction: TransformDirection)
+    func didEndContinuousTransform()
     func didTapResetTransform()
     func didChangeTransformStepMultiplier(_ multiplier: Float)
 }
@@ -16,6 +18,9 @@ class TransformControlPanel: CheerGlassPanel {
     private var modeSegmentedControl: UISegmentedControl!
     private var centerBadge: PaddingLabel!
     private let stepMultipliers: [Float] = [0.5, 1.0, 2.0, 5.0]
+    private var pressedDirection: TransformDirection?
+    private var holdStartWorkItem: DispatchWorkItem?
+    private var isContinuousTransformActive = false
 
     init(width: CGFloat) {
         super.init(padding: .init(top: 14, leading: 14, bottom: 14, trailing: 14))
@@ -68,10 +73,10 @@ class TransformControlPanel: CheerGlassPanel {
         centerBadge.layer.borderColor = CheerPalette.panelBorder.cgColor
         centerBadge.layer.masksToBounds = true
 
-        let upButton = directionButton(title: "↑", action: #selector(upTapped))
-        let leftButton = directionButton(title: "←", action: #selector(leftTapped))
-        let rightButton = directionButton(title: "→", action: #selector(rightTapped))
-        let downButton = directionButton(title: "↓", action: #selector(downTapped))
+        let upButton = directionButton(title: "↑", direction: .up)
+        let leftButton = directionButton(title: "←", direction: .left)
+        let rightButton = directionButton(title: "→", direction: .right)
+        let downButton = directionButton(title: "↓", direction: .down)
 
         let topRow = dPadRow(left: UIView(), center: upButton, right: UIView())
         let middleRow = dPadRow(left: leftButton, center: centerBadge, right: rightButton)
@@ -133,11 +138,6 @@ class TransformControlPanel: CheerGlassPanel {
     @objc private func rotationModeTapped() { delegate?.didChangeTransformMode(.rotation) }
     @objc private func scaleModeTapped() { delegate?.didChangeTransformMode(.scale) }
 
-    @objc private func upTapped() { delegate?.didTapTransform(direction: .up) }
-    @objc private func downTapped() { delegate?.didTapTransform(direction: .down) }
-    @objc private func leftTapped() { delegate?.didTapTransform(direction: .left) }
-    @objc private func rightTapped() { delegate?.didTapTransform(direction: .right) }
-
     @objc private func resetTapped() { delegate?.didTapResetTransform() }
     @objc private func stepSizeChanged() {
         let multiplier = stepMultipliers[stepSegmentedControl.selectedSegmentIndex]
@@ -155,11 +155,58 @@ class TransformControlPanel: CheerGlassPanel {
         return row
     }
 
-    private func directionButton(title: String, action: Selector) -> UIButton {
+    private func directionButton(title: String, direction: TransformDirection) -> UIButton {
         let button = CheerButton(title: title, style: .neutral)
-        button.addTarget(self, action: action, for: .touchUpInside)
+        button.accessibilityIdentifier = direction.rawValue
+        button.addTarget(self, action: #selector(directionPressed(_:)), for: .touchDown)
+        button.addTarget(self, action: #selector(directionReleasedInside(_:)), for: .touchUpInside)
+        button.addTarget(self, action: #selector(directionReleasedOutside(_:)), for: [.touchUpOutside, .touchCancel])
         button.heightAnchor.constraint(equalToConstant: 50).isActive = true
         return button
+    }
+
+    private func direction(for button: UIButton) -> TransformDirection? {
+        guard let rawValue = button.accessibilityIdentifier else { return nil }
+        return TransformDirection(rawValue: rawValue)
+    }
+
+    @objc private func directionPressed(_ sender: UIButton) {
+        guard let direction = direction(for: sender) else { return }
+        pressedDirection = direction
+        isContinuousTransformActive = false
+
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self, self.pressedDirection == direction else { return }
+            self.isContinuousTransformActive = true
+            self.delegate?.didBeginContinuousTransform(direction: direction)
+        }
+        holdStartWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
+    }
+
+    @objc private func directionReleasedInside(_ sender: UIButton) {
+        guard let direction = direction(for: sender) else { return }
+        finishDirectionInteraction(direction: direction, treatAsTap: !isContinuousTransformActive)
+    }
+
+    @objc private func directionReleasedOutside(_ sender: UIButton) {
+        guard let direction = direction(for: sender) else { return }
+        finishDirectionInteraction(direction: direction, treatAsTap: false)
+    }
+
+    private func finishDirectionInteraction(direction: TransformDirection, treatAsTap: Bool) {
+        holdStartWorkItem?.cancel()
+        holdStartWorkItem = nil
+
+        let wasContinuous = isContinuousTransformActive && pressedDirection == direction
+        pressedDirection = nil
+        isContinuousTransformActive = false
+
+        if wasContinuous {
+            delegate?.didEndContinuousTransform()
+        } else if treatAsTap {
+            delegate?.didTapTransform(direction: direction)
+        }
     }
 
     private func formattedStep(_ step: Float) -> String {

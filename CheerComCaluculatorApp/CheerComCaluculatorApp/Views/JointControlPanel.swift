@@ -13,6 +13,8 @@ protocol JointControlPanelDelegate: AnyObject {
     func didBeginDecrementingAngle(axis: JointAxis)
     func didEndDecrementingAngle(axis: JointAxis)
     func didResetSelectedJoint()
+    func didTapJointPresets(sourceView: UIView)
+    func didTapSaveJointPreset()
 
     func didTapPoseLibrary()
     func didTapResetPose()
@@ -170,6 +172,15 @@ class JointControlPanel: UIView {
         setupAxisRow(yAxisRow)
         setupAxisRow(zAxisRow)
 
+        let presetRow = UIStackView(arrangedSubviews: [
+            makeActionButton(title: "Joint Presets", symbol: "slider.horizontal.3", style: .secondary, action: #selector(jointPresetsTapped)),
+            makeActionButton(title: "Save Joint", symbol: "bookmark.fill", style: .accent, action: #selector(saveJointPresetTapped))
+        ])
+        presetRow.axis = .horizontal
+        presetRow.spacing = 10
+        presetRow.distribution = .fillEqually
+        rootStack.addArrangedSubview(presetRow)
+
         let firstActionRow = UIStackView(arrangedSubviews: [
             makeActionButton(title: "Library", symbol: "square.grid.2x2", style: .accent, action: #selector(poseLibraryTapped)),
             makeActionButton(title: "Reset Pose", symbol: "arrow.counterclockwise.circle", style: .danger, action: #selector(resetPoseTapped))
@@ -254,6 +265,8 @@ class JointControlPanel: UIView {
     @objc private func incrementTouchDown(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didBeginIncrementingAngle(axis: ax) } }
     @objc private func incrementTouchUp(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didEndIncrementingAngle(axis: ax) } }
 
+    @objc private func jointPresetsTapped(_ sender: UIButton) { delegate?.didTapJointPresets(sourceView: sender) }
+    @objc private func saveJointPresetTapped() { delegate?.didTapSaveJointPreset() }
     @objc private func poseLibraryTapped() { delegate?.didTapPoseLibrary() }
     @objc private func resetPoseTapped() { delegate?.didTapResetPose() }
     @objc private func fitViewTapped() { delegate?.didTapFitView() }

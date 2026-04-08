@@ -1,6 +1,6 @@
 import Foundation
 
-enum JointAxis: String {
+enum JointAxis: String, CaseIterable, Codable {
     case x = "X-Axis"
     case y = "Y-Axis"
     case z = "Z-Axis"
@@ -169,10 +169,15 @@ enum RotationDirection {
     case negative
 }
 
-enum TransformMode {
-    case position, rotation, scale
+enum TransformMode: String, CaseIterable, Codable {
+    case position
+    case rotation
+    case scale
 }
 
-enum TransformDirection {
-    case up, down, left, right
+enum TransformDirection: String, Codable {
+    case up
+    case down
+    case left
+    case right
 }

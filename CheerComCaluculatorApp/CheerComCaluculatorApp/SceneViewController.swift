@@ -69,6 +69,7 @@ class SceneViewController: UIViewController {
     // Continuous control support
     private var continuousRotationTimer: Timer?
     private var currentRotationDirection: RotationDirection?
+    private var continuousTransformTimer: Timer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -206,7 +207,7 @@ class SceneViewController: UIViewController {
         poseLibraryPanel.isUserInteractionEnabled = false
         view.addSubview(poseLibraryPanel)
 
-        jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 336)
+        jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 392)
         jointPanelHeightConstraint.isActive = true
         poseLibraryHeightConstraint = poseLibraryPanel.heightAnchor.constraint(equalToConstant: 360)
 
@@ -456,7 +457,7 @@ class SceneViewController: UIViewController {
         headerRowStack.axis = compactHeader ? .vertical : .horizontal
         headerRowStack.alignment = compactHeader ? .leading : .top
 
-        jointPanelHeightConstraint.constant = regularShell ? 330 : 348
+        jointPanelHeightConstraint.constant = regularShell ? 392 : 408
         poseLibraryHeightConstraint.constant = min(max(view.bounds.height * 0.48, 320), 540)
         sceneViewportHeightConstraint.constant = regularShell
             ? min(max(view.bounds.height * 0.56, 360), 700)
@@ -712,28 +713,24 @@ class SceneViewController: UIViewController {
 // MARK: - JointControlPanelDelegate
 extension SceneViewController: JointControlPanelDelegate {
     func didTapJointSelection(sourceView: UIView) {
-        let alert = UIAlertController(
-            title: "Select Joint", message: "Choose a joint to control",
-            preferredStyle: .actionSheet)
-
-        for joint in sceneManager.controllableJoints {
-            let jointName = joint.rawValue
-            let displayName = formatJointName(jointName)
-            let action = UIAlertAction(title: displayName, style: .default) { [weak self] _ in
-                self?.selectJoint(named: jointName)
-            }
-            alert.addAction(action)
+        let picker = JointPickerViewController()
+        picker.joints = sceneManager.controllableJoints
+        picker.selectedJointName = selectedJoint?.name
+        picker.onSelectJoint = { [weak self] jointName in
+            self?.selectJoint(named: jointName)
         }
 
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        alert.addAction(cancelAction)
-
-        if let popover = alert.popoverPresentationController {
+        let navigationController = UINavigationController(rootViewController: picker)
+        if let sheet = navigationController.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        if let popover = navigationController.popoverPresentationController {
             popover.sourceView = sourceView
             popover.sourceRect = sourceView.bounds
         }
 
-        present(alert, animated: true)
+        present(navigationController, animated: true)
     }
 
     func selectJoint(named name: String) {
@@ -771,6 +768,25 @@ extension SceneViewController: JointControlPanelDelegate {
     func didEndIncrementingAngle(axis: JointAxis) {}
     func didBeginDecrementingAngle(axis: JointAxis) {}
     func didEndDecrementingAngle(axis: JointAxis) {}
+    func didTapJointPresets(sourceView: UIView) {
+        let alert = UIAlertController(
+            title: "Joint Presets",
+            message: "Joint presets are available in the animator workspace.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
+    func didTapSaveJointPreset() {
+        let alert = UIAlertController(
+            title: "Joint Presets",
+            message: "Save joint presets in the animator workspace.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
 
     func didRotateJoint(axis: JointAxis, direction: RotationDirection) {
         guard let joint = selectedJoint else {
@@ -1125,6 +1141,19 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 extension SceneViewController: TransformControlPanelDelegate {
     func didChangeTransformMode(_ mode: TransformMode) {
         setTransformMode(mode)
+    }
+
+    func didBeginContinuousTransform(direction: TransformDirection) {
+        continuousTransformTimer?.invalidate()
+        continuousTransformTimer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { [weak self] _ in
+            self?.didTapTransform(direction: direction)
+        }
+        didTapTransform(direction: direction)
+    }
+
+    func didEndContinuousTransform() {
+        continuousTransformTimer?.invalidate()
+        continuousTransformTimer = nil
     }
 
     func setTransformMode(_ mode: TransformMode) {
