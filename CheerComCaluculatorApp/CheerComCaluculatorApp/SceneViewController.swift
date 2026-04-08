@@ -177,14 +177,15 @@ class SceneViewController: UIViewController {
         inspectorStackView.spacing = 10
         chromeStackView.addArrangedSubview(inspectorStackView)
 
-        headerPanel = makeHeaderPanel()
-        mainRegionStackView.addArrangedSubview(headerPanel)
+        sceneCard = makeSceneCard()
+        mainRegionStackView.addArrangedSubview(sceneCard)
 
         mainActionsPanel = makeMainActionsPanel()
         mainRegionStackView.addArrangedSubview(mainActionsPanel)
 
-        sceneCard = makeSceneCard()
-        mainRegionStackView.addArrangedSubview(sceneCard)
+        headerPanel = makeHeaderPanel()
+        headerPanel.isHidden = true
+        mainRegionStackView.addArrangedSubview(headerPanel)
 
         comInfoPanel = COMInfoPanel()
         inspectorStackView.addArrangedSubview(comInfoPanel)
@@ -249,20 +250,20 @@ class SceneViewController: UIViewController {
         let panel = CheerGlassPanel(padding: .init(top: 16, leading: 18, bottom: 16, trailing: 18))
 
         let eyebrowLabel = PaddingLabel()
-        eyebrowLabel.text = "// CHEERCOM / LIVE CENTER OF MASS"
+        eyebrowLabel.text = "// CHEERCOM / POSE CONTROLS"
         eyebrowLabel.textColor = CheerPalette.accentMint
         eyebrowLabel.font = cheerMonospacedFont(size: 11, weight: .bold)
         eyebrowLabel.backgroundColor = .clear
         eyebrowLabel.contentInsets = .zero
 
         let titleLabel = UILabel()
-        titleLabel.text = "POSE STABILITY COMMAND"
+        titleLabel.text = "POSE CONTROLS"
         titleLabel.textColor = CheerPalette.textPrimary
         titleLabel.font = cheerRoundedFont(.largeTitle, weight: .bold)
         titleLabel.numberOfLines = 0
 
         let subtitleLabel = UILabel()
-        subtitleLabel.text = "Manipulate limb angles on the rig and monitor the center of mass relative to the base of support in real time."
+        subtitleLabel.text = "Adjust joints, apply saved poses, and check center of mass only when you need it."
         subtitleLabel.textColor = CheerPalette.textSecondary
         subtitleLabel.font = cheerMonospacedFont(size: 12, weight: .regular)
         subtitleLabel.numberOfLines = 0
@@ -273,7 +274,7 @@ class SceneViewController: UIViewController {
         textStack.alignment = .leading
 
         let liveBadge = PaddingLabel()
-        liveBadge.text = "LIVE"
+        liveBadge.text = "COM"
         liveBadge.textColor = CheerPalette.midnight
         liveBadge.font = cheerMonospacedFont(size: 11, weight: .bold)
         liveBadge.backgroundColor = CheerPalette.accentMint
@@ -368,12 +369,12 @@ class SceneViewController: UIViewController {
         let panel = CheerGlassPanel(padding: .init(top: 12, leading: 12, bottom: 12, trailing: 12))
 
         let statusLabel = UILabel()
-        statusLabel.text = "[SCENE: LIVE_RIG]"
+        statusLabel.text = "MODEL"
         statusLabel.textColor = CheerPalette.textPrimary
         statusLabel.font = cheerMonospacedFont(size: 11, weight: .bold)
 
         let metaLabel = UILabel()
-        metaLabel.text = "COM TRACKING ACTIVE"
+        metaLabel.text = "Controls below"
         metaLabel.textColor = CheerPalette.textSecondary
         metaLabel.font = cheerMonospacedFont(size: 11, weight: .medium)
 
