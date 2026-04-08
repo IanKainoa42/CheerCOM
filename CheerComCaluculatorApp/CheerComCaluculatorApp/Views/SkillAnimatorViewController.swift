@@ -14,6 +14,7 @@ final class SkillAnimatorViewController: UIViewController {
     private var controlsScrollView: UIScrollView!
     private var controlsStackView: UIStackView!
     private var savedPoseStackView: UIStackView!
+    private var jointControlPanel: JointControlPanel!
     private var selectedKeyframeLabel: UILabel!
     private var selectedPoseLabel: UILabel!
 
@@ -34,6 +35,7 @@ final class SkillAnimatorViewController: UIViewController {
     private var keyframePoseIds: [Int: UUID] = [:]
     private var selectedKeyframeIndex = 0
     private var selectedAtomId = "back_handspring"
+    private var selectedJoint: SCNNode?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -83,7 +85,7 @@ final class SkillAnimatorViewController: UIViewController {
             timelineView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             timelineView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             timelineView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            timelineView.heightAnchor.constraint(equalToConstant: 120),
+            timelineView.heightAnchor.constraint(equalToConstant: 72),
 
             controlsScrollView.topAnchor.constraint(equalTo: controlsPanel.topAnchor, constant: 14),
             controlsScrollView.leadingAnchor.constraint(equalTo: controlsPanel.leadingAnchor, constant: 14),
@@ -111,7 +113,7 @@ final class SkillAnimatorViewController: UIViewController {
         compactLayoutConstraints = [
             viewportContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             viewportContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            viewportContainer.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.48),
+            viewportContainer.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.34),
 
             controlsPanel.topAnchor.constraint(equalTo: viewportContainer.bottomAnchor, constant: 12),
             controlsPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
@@ -151,7 +153,7 @@ final class SkillAnimatorViewController: UIViewController {
 
         vocabButton = UIButton(type: .system)
         vocabButton.translatesAutoresizingMaskIntoConstraints = false
-        vocabButton.setTitle("Vocabulary", for: .normal)
+        vocabButton.setTitle("Vocab", for: .normal)
         vocabButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
         vocabButton.addTarget(self, action: #selector(openVocabulary), for: .touchUpInside)
         view.addSubview(vocabButton)
@@ -172,6 +174,7 @@ final class SkillAnimatorViewController: UIViewController {
         NSLayoutConstraint.activate([
             skillPickerButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 16),
             skillPickerButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            skillPickerButton.trailingAnchor.constraint(lessThanOrEqualTo: vocabButton.leadingAnchor, constant: -8),
 
             cameraAngleLabel.centerYAnchor.constraint(equalTo: skillPickerButton.centerYAnchor),
             cameraAngleLabel.leadingAnchor.constraint(equalTo: skillPickerButton.trailingAnchor, constant: 24),
@@ -208,6 +211,11 @@ final class SkillAnimatorViewController: UIViewController {
         savedPoseStackView.axis = .vertical
         savedPoseStackView.spacing = 8
 
+        jointControlPanel = JointControlPanel(width: view.bounds.width)
+        jointControlPanel.delegate = self
+        jointControlPanel.heightAnchor.constraint(equalToConstant: 336).isActive = true
+
+        controlsStackView.addArrangedSubview(jointControlPanel)
         controlsStackView.addArrangedSubview(titleLabel)
         controlsStackView.addArrangedSubview(selectedKeyframeLabel)
         controlsStackView.addArrangedSubview(selectedPoseLabel)
@@ -217,6 +225,10 @@ final class SkillAnimatorViewController: UIViewController {
 
     private func updateAuthoringPanelLayout() {
         let shouldUseWideLayout = view.bounds.width >= 820
+        cameraAngleLabel?.isHidden = view.bounds.width < 520
+        skillPickerButton?.titleLabel?.font = UIFont.preferredFont(
+            forTextStyle: view.bounds.width < 520 ? .subheadline : .headline
+        )
         guard shouldUseWideLayout != usesWideLayout else { return }
 
         NSLayoutConstraint.deactivate(shouldUseWideLayout ? compactLayoutConstraints : wideLayoutConstraints)
@@ -441,6 +453,29 @@ final class SkillAnimatorViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
+
+    private func applyJointAngles(_ jointAngles: [String: SCNVector3], animated: Bool = true) {
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = animated ? 0.25 : 0.0
+        for (jointName, angles) in jointAngles {
+            if let bone = sceneManager.findBone(named: jointName) {
+                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
+            }
+        }
+        SCNTransaction.commit()
+    }
+
+    private func formatJointName(_ name: String) -> String {
+        let clean = name.replacingOccurrences(of: "mixamorig_", with: "")
+        var result = ""
+        for (index, char) in clean.enumerated() {
+            if index > 0 && char.isUppercase {
+                result += " "
+            }
+            result.append(char)
+        }
+        return result
+    }
 }
 
 // MARK: - SkillTimelineViewDelegate
@@ -466,5 +501,118 @@ extension SkillAnimatorViewController: SkillTimelineViewDelegate {
 
     func timelineView(_ view: SkillTimelineView, didScrubToFrame frame: Int) {
         view.currentFrame = frame
+    }
+}
+
+// MARK: - JointControlPanelDelegate
+
+extension SkillAnimatorViewController: JointControlPanelDelegate {
+    func didTapJointSelection(sourceView: UIView) {
+        let alert = UIAlertController(
+            title: "Select Joint",
+            message: "Choose a joint to adjust in the animator preview",
+            preferredStyle: .actionSheet
+        )
+
+        for joint in sceneManager.controllableJoints {
+            let jointName = joint.rawValue
+            alert.addAction(UIAlertAction(title: formatJointName(jointName), style: .default) { [weak self] _ in
+                self?.selectJoint(named: jointName)
+            })
+        }
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = sourceView
+            popover.sourceRect = sourceView.bounds
+        }
+        present(alert, animated: true)
+    }
+
+    private func selectJoint(named name: String) {
+        guard let joint = sceneManager.findBone(named: name) else {
+            print("Failed to find animator joint: \(name)")
+            return
+        }
+
+        selectedJoint = joint
+        jointControlPanel.updateJointSelection(name: formatJointName(name), angles: joint.eulerAngles)
+    }
+
+    func didChangeJointAngle(axis: JointAxis, value: Float) {
+        guard let joint = selectedJoint else { return }
+        let angle = value * .pi / 180
+
+        var newAngles = joint.eulerAngles
+        switch axis {
+        case .x: newAngles.x = angle
+        case .y: newAngles.y = angle
+        case .z: newAngles.z = angle
+        }
+
+        if let jointName = joint.name {
+            joint.eulerAngles = JointLimits.clampAngles(for: jointName, angles: newAngles)
+        } else {
+            joint.eulerAngles = newAngles
+        }
+        jointControlPanel.updateAngleDisplays(angles: joint.eulerAngles)
+    }
+
+    func didIncrementAngle(axis: JointAxis) {
+        rotateSelectedJoint(axis: axis, direction: .positive)
+    }
+
+    func didDecrementAngle(axis: JointAxis) {
+        rotateSelectedJoint(axis: axis, direction: .negative)
+    }
+
+    func didBeginIncrementingAngle(axis: JointAxis) {}
+    func didEndIncrementingAngle(axis: JointAxis) {}
+    func didBeginDecrementingAngle(axis: JointAxis) {}
+    func didEndDecrementingAngle(axis: JointAxis) {}
+
+    private func rotateSelectedJoint(axis: JointAxis, direction: RotationDirection) {
+        guard let joint = selectedJoint else { return }
+        let delta: Float = (direction == .positive ? 1 : -1) * .pi / 180
+
+        var newAngles = joint.eulerAngles
+        switch axis {
+        case .x: newAngles.x += delta
+        case .y: newAngles.y += delta
+        case .z: newAngles.z += delta
+        }
+
+        if let jointName = joint.name {
+            joint.eulerAngles = JointLimits.clampAngles(for: jointName, angles: newAngles)
+        } else {
+            joint.eulerAngles = newAngles
+        }
+        jointControlPanel.updateAngleDisplays(angles: joint.eulerAngles)
+    }
+
+    func didResetSelectedJoint() {
+        guard let joint = selectedJoint else { return }
+        joint.eulerAngles = SCNVector3Zero
+        jointControlPanel.updateAngleDisplays(angles: joint.eulerAngles)
+    }
+
+    func didTapPoseLibrary() {
+        refreshSavedPoses()
+    }
+
+    func didTapResetPose() {
+        let tPoseDefinition = PosePresets.shared.getPose(.tPose)
+        applyJointAngles(tPoseDefinition.jointAngles)
+        if let selectedJoint {
+            jointControlPanel.updateAngleDisplays(angles: selectedJoint.eulerAngles)
+        }
+    }
+
+    func didTapFitView() {
+        sceneManager.frameCharacter()
+    }
+
+    func didTapToggleVisualizations() {
+        sceneManager.sceneView.showsStatistics.toggle()
     }
 }

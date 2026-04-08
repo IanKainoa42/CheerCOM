@@ -115,7 +115,7 @@ class SceneViewController: UIViewController {
 
         if !didApplyInitialChromePreference {
             didApplyInitialChromePreference = true
-            setChromeVisible(!prefersFocusModeByDefault(), animated: false)
+            setChromeVisible(true, animated: false)
         }
     }
 
@@ -180,6 +180,15 @@ class SceneViewController: UIViewController {
         sceneCard = makeSceneCard()
         mainRegionStackView.addArrangedSubview(sceneCard)
 
+        jointControlPanel = JointControlPanel(width: view.bounds.width)
+        jointControlPanel.delegate = self
+        mainRegionStackView.addArrangedSubview(jointControlPanel)
+
+        transformControlPanel = TransformControlPanel(width: view.bounds.width)
+        transformControlPanel.delegate = self
+        transformControlPanel.updateStepMultiplierSelection(transformStepMultiplier)
+        mainRegionStackView.addArrangedSubview(transformControlPanel)
+
         mainActionsPanel = makeMainActionsPanel()
         mainRegionStackView.addArrangedSubview(mainActionsPanel)
 
@@ -190,15 +199,6 @@ class SceneViewController: UIViewController {
         comInfoPanel = COMInfoPanel()
         inspectorStackView.addArrangedSubview(comInfoPanel)
 
-        transformControlPanel = TransformControlPanel(width: view.bounds.width)
-        transformControlPanel.delegate = self
-        transformControlPanel.updateStepMultiplierSelection(transformStepMultiplier)
-        inspectorStackView.addArrangedSubview(transformControlPanel)
-
-        jointControlPanel = JointControlPanel(width: view.bounds.width)
-        jointControlPanel.delegate = self
-        inspectorStackView.addArrangedSubview(jointControlPanel)
-
         poseLibraryPanel = PoseLibraryPanel(width: view.bounds.width)
         poseLibraryPanel.delegate = self
         poseLibraryPanel.alpha = 0
@@ -206,7 +206,7 @@ class SceneViewController: UIViewController {
         poseLibraryPanel.isUserInteractionEnabled = false
         view.addSubview(poseLibraryPanel)
 
-        jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 244)
+        jointPanelHeightConstraint = jointControlPanel.heightAnchor.constraint(equalToConstant: 336)
         jointPanelHeightConstraint.isActive = true
         poseLibraryHeightConstraint = poseLibraryPanel.heightAnchor.constraint(equalToConstant: 360)
 
@@ -456,7 +456,7 @@ class SceneViewController: UIViewController {
         headerRowStack.axis = compactHeader ? .vertical : .horizontal
         headerRowStack.alignment = compactHeader ? .leading : .top
 
-        jointPanelHeightConstraint.constant = regularShell ? 236 : 252
+        jointPanelHeightConstraint.constant = regularShell ? 330 : 348
         poseLibraryHeightConstraint.constant = min(max(view.bounds.height * 0.48, 320), 540)
         sceneViewportHeightConstraint.constant = regularShell
             ? min(max(view.bounds.height * 0.56, 360), 700)

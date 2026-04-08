@@ -31,15 +31,14 @@ class AxisControlBox: UIStackView {
     init(axis: JointAxis) {
         self.jointAxis = axis
         super.init(frame: .zero)
-        self.axis = .horizontal
-        spacing = 8
-        alignment = .center
+        self.axis = .vertical
+        spacing = 6
+        alignment = .fill
 
         let axisTitle = UILabel()
-        axisTitle.text = self.jointAxis.rawValue.uppercased()
+        axisTitle.text = self.jointAxis.shortLabel
         axisTitle.textColor = CheerPalette.textSecondary
-        axisTitle.font = cheerMonospacedFont(size: 10, weight: .bold)
-        axisTitle.widthAnchor.constraint(equalToConstant: 45).isActive = true
+        axisTitle.font = cheerMonospacedFont(size: 14, weight: .bold)
 
         angleLabel.text = "0.0°"
         angleLabel.textColor = CheerPalette.textPrimary
@@ -53,10 +52,12 @@ class AxisControlBox: UIStackView {
         angleLabel.widthAnchor.constraint(equalToConstant: 50).isActive = true
 
         decrementBtn.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
-        decrementBtn.widthAnchor.constraint(equalToConstant: 36).isActive = true
+        decrementBtn.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        decrementBtn.heightAnchor.constraint(equalToConstant: 34).isActive = true
 
         incrementBtn.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
-        incrementBtn.widthAnchor.constraint(equalToConstant: 36).isActive = true
+        incrementBtn.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        incrementBtn.heightAnchor.constraint(equalToConstant: 34).isActive = true
 
         slider.minimumValue = -180
         slider.maximumValue = 180
@@ -64,12 +65,20 @@ class AxisControlBox: UIStackView {
         slider.tintColor = CheerPalette.accentBlue
         slider.minimumTrackTintColor = CheerPalette.accentBlue
         slider.maximumTrackTintColor = UIColor.white.withAlphaComponent(0.12)
+        slider.heightAnchor.constraint(equalToConstant: 36).isActive = true
 
-        addArrangedSubview(axisTitle)
-        addArrangedSubview(decrementBtn)
+        let buttonStack = UIStackView(arrangedSubviews: [decrementBtn, incrementBtn])
+        buttonStack.axis = .horizontal
+        buttonStack.spacing = 8
+        buttonStack.alignment = .center
+
+        let headerRow = UIStackView(arrangedSubviews: [axisTitle, UIView(), buttonStack, angleLabel])
+        headerRow.axis = .horizontal
+        headerRow.spacing = 8
+        headerRow.alignment = .center
+
+        addArrangedSubview(headerRow)
         addArrangedSubview(slider)
-        addArrangedSubview(incrementBtn)
-        addArrangedSubview(angleLabel)
     }
 
     required init(coder: NSCoder) { fatalError() }
@@ -111,8 +120,8 @@ class JointControlPanel: UIView {
         contentContainer.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             contentContainer.topAnchor.constraint(equalTo: panel.contentView.layoutMarginsGuide.topAnchor),
-            contentContainer.leadingAnchor.constraint(greaterThanOrEqualTo: panel.contentView.layoutMarginsGuide.leadingAnchor),
-            contentContainer.trailingAnchor.constraint(lessThanOrEqualTo: panel.contentView.layoutMarginsGuide.trailingAnchor),
+            contentContainer.leadingAnchor.constraint(equalTo: panel.contentView.layoutMarginsGuide.leadingAnchor),
+            contentContainer.trailingAnchor.constraint(equalTo: panel.contentView.layoutMarginsGuide.trailingAnchor),
             contentContainer.centerXAnchor.constraint(equalTo: panel.contentView.centerXAnchor),
             contentContainer.bottomAnchor.constraint(equalTo: panel.contentView.layoutMarginsGuide.bottomAnchor),
             contentContainer.widthAnchor.constraint(lessThanOrEqualToConstant: 1100)
@@ -136,10 +145,12 @@ class JointControlPanel: UIView {
         sectionLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
         rootStack.addArrangedSubview(sectionLabel)
 
-        jointSelectionButton = CheerButton(title: "Choose Joint", symbol: "slider.horizontal.3", style: .accent)
+        jointSelectionButton = CheerButton(title: "Select Joint", style: .accent)
+        jointSelectionButton.titleLabel?.adjustsFontSizeToFitWidth = true
+        jointSelectionButton.titleLabel?.minimumScaleFactor = 0.82
         jointSelectionButton.addTarget(self, action: #selector(jointSelectionTapped), for: .touchUpInside)
 
-        let resetJointButton = CheerButton(title: "Reset Joint", symbol: "arrow.counterclockwise", style: .secondary, compact: true)
+        let resetJointButton = CheerButton(title: "Reset", symbol: "arrow.counterclockwise", style: .secondary, compact: true)
         resetJointButton.addTarget(self, action: #selector(resetJointTapped), for: .touchUpInside)
 
         let headerRow = UIStackView(arrangedSubviews: [jointSelectionButton, resetJointButton])
@@ -218,7 +229,11 @@ class JointControlPanel: UIView {
     // MARK: - Actions
 
     private func axisFor(view: UIView) -> JointAxis? {
-        if let row = view.superview as? AxisControlBox { return row.jointAxis }
+        var current: UIView? = view
+        while let view = current {
+            if let row = view as? AxisControlBox { return row.jointAxis }
+            current = view.superview
+        }
         return nil
     }
 
@@ -228,9 +243,7 @@ class JointControlPanel: UIView {
     @objc private func sliderChanged(_ sender: UISlider) {
         guard let axis = axisFor(view: sender) else { return }
         delegate?.didChangeJointAngle(axis: axis, value: sender.value)
-        if let row = sender.superview as? AxisControlBox {
-            row.angleLabel.text = String(format: "%.0f°", sender.value)
-        }
+        updateAngleLabel(for: sender, value: sender.value)
     }
 
     @objc private func decrementTapped(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didDecrementAngle(axis: ax) } }
@@ -252,5 +265,26 @@ class JointControlPanel: UIView {
         let button = CheerButton(title: title, symbol: symbol, style: style, compact: true)
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
+    }
+
+    private func updateAngleLabel(for view: UIView, value: Float) {
+        var current: UIView? = view
+        while let view = current {
+            if let row = view as? AxisControlBox {
+                row.angleLabel.text = String(format: "%.0f°", value)
+                return
+            }
+            current = view.superview
+        }
+    }
+}
+
+private extension JointAxis {
+    var shortLabel: String {
+        switch self {
+        case .x: return "X"
+        case .y: return "Y"
+        case .z: return "Z"
+        }
     }
 }
