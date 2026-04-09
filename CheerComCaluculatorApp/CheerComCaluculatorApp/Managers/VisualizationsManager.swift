@@ -339,11 +339,11 @@ class VisualizationsManager {
             return nil
         }
 
-        let lf = CGPoint(x: CGFloat(leftFoot.worldPosition.x), y: CGFloat(leftFoot.worldPosition.z))
+        let lf = CGPoint(x: CGFloat(leftFoot.presentation.worldPosition.x), y: CGFloat(leftFoot.presentation.worldPosition.z))
         let rf = CGPoint(
-            x: CGFloat(rightFoot.worldPosition.x), y: CGFloat(rightFoot.worldPosition.z))
-        let lt = CGPoint(x: CGFloat(leftToe.worldPosition.x), y: CGFloat(leftToe.worldPosition.z))
-        let rt = CGPoint(x: CGFloat(rightToe.worldPosition.x), y: CGFloat(rightToe.worldPosition.z))
+            x: CGFloat(rightFoot.presentation.worldPosition.x), y: CGFloat(rightFoot.presentation.worldPosition.z))
+        let lt = CGPoint(x: CGFloat(leftToe.presentation.worldPosition.x), y: CGFloat(leftToe.presentation.worldPosition.z))
+        let rt = CGPoint(x: CGFloat(rightToe.presentation.worldPosition.x), y: CGFloat(rightToe.presentation.worldPosition.z))
 
         // Order points to form a convex hull (simplified for feet)
         // Assuming standard stance: LF -> RF -> RT -> LT
@@ -487,7 +487,7 @@ class VisualizationsManager {
             if sceneManager.feetAndToes.contains(node) { continue }
 
             let nodePos = CGPoint(
-                x: CGFloat(node.worldPosition.x), y: CGFloat(node.worldPosition.z))
+                x: CGFloat(node.presentation.worldPosition.x), y: CGFloat(node.presentation.worldPosition.z))
             let nodeVector = CGPoint(x: nodePos.x - center.x, y: nodePos.y - center.y)
 
             // Dot product to find alignment with instability
