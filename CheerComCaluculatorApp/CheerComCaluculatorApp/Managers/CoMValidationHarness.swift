@@ -18,7 +18,8 @@ class CoMValidationHarness {
         .layout,
         .sideLean,
         .bowAndArrow,
-        .lunge
+        .lunge,
+        .liberty
     ]
 
     private struct ValidationOutcome {
@@ -225,7 +226,7 @@ class CoMValidationHarness {
         log("- **Calculated CoM**: `\(formatVector(com))`")
 
         // Get Hips Position for reference
-        let hipsPos = sceneManager.findBone(.hips)?.worldPosition
+        let hipsPos = sceneManager.findBone(.hips)?.presentation.worldPosition
 
         // Verify Criteria
         let (passed, message) = verifyPoseCriteria(poseType, com: com, hipsPos: hipsPos)
@@ -338,6 +339,16 @@ class CoMValidationHarness {
                 return (true, "CoM lowered by \(String(format: "%.1f", drop)) units due to lunge stance (Expected > 5.0)")
             }
             return (false, "CoM did not lower significantly in lunge stance (Drop: \(String(format: "%.1f", drop)), Expected > 5.0)")
+
+        case .liberty:
+            // Liberty has one leg up (usually right leg) and arms up in high V.
+            // CoM should rise compared to T-Pose. It may also shift laterally depending on balance.
+            let rise = com.y - baseline.y
+            let xShift = abs(com.x - baseline.x)
+            if rise > 1.0 {
+                return (true, "CoM rose by \(String(format: "%.1f", rise)) units due to single leg stance and arms (Expected rise > 1.0). X-Shift: \(String(format: "%.1f", xShift))")
+            }
+            return (false, "CoM failed to rise significantly (Rise: \(String(format: "%.1f", rise)))")
 
         default:
             return (true, "No specific criteria")

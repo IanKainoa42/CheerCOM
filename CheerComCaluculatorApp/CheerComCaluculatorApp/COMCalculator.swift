@@ -127,8 +127,8 @@ class COMCalculator {
 
         for segment in boundSegments {
             // Direct property access is faster than dictionary lookup
-            let proxPos = segment.prox.worldPosition
-            let distPos = segment.dist.worldPosition
+            let proxPos = segment.prox.presentation.worldPosition
+            let distPos = segment.dist.presentation.worldPosition
 
             // COM = proximal + (distal - proximal) * %
             let segCOM = proxPos + ((distPos - proxPos) * Float(segment.comRatio))

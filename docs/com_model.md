@@ -72,6 +72,7 @@ To verify the CoM calculation in the app:
     *   **Side Lean**: Trunk lateral flexion. CoM should shift laterally (X-axis).
     *   **Bow and Arrow**: Asymmetric arm extension. CoM should shift laterally (X-axis) away from the baseline.
     *   **Lunge**: Asymmetric leg stance (one forward, one back). CoM should lower compared to T-Pose.
+    *   **Liberty**: One leg raised and arms up. CoM should rise compared to T-Pose and shift slightly laterally.
 
     These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, and asymmetry).
 4.  A detailed report is printed to the console and the on-screen overlay, verifying segment masses, individual segment COM points, and the final CoM.
@@ -88,6 +89,7 @@ For independent verification of the mathematical model (segment mass ratios, fal
     *   **Touchdown**: CoM rises significantly when arms are raised.
     *   **Squat**: CoM lowers significantly when hips are lowered.
     *   **Lunge**: CoM lowers significantly when stance is widened and hips are lowered.
+    *   **Liberty**: CoM rises when one leg is raised and arms are in high V.
 
 ## Visible CoM Marker
 Within the SceneKit view, a prominent bright green sphere (radius 10) dynamically tracks the total body Center of Mass. Auxiliary cyan spheres represent individual segment COMs, showing exactly where each segment's mass is centered.

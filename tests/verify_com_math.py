@@ -38,6 +38,11 @@ class SCNNode:
     def worldPosition(self, value):
         self.position = value
 
+    @property
+    def presentation(self):
+        # Mock presentation node returning self so we can call presentation.worldPosition
+        return self
+
 class COMCalculatorMock:
     def __init__(self, body_mass, preset="averageNeutral"):
         self.body_mass = body_mass
@@ -154,8 +159,8 @@ class COMCalculatorMock:
         segment_results = []
 
         for segment in self.bound_segments:
-            prox_pos = segment["prox"].worldPosition
-            dist_pos = segment["dist"].worldPosition
+            prox_pos = segment["prox"].presentation.worldPosition
+            dist_pos = segment["dist"].presentation.worldPosition
 
             # COM = proximal + (distal - proximal) * %
             seg_com = prox_pos + ((dist_pos - prox_pos) * segment["com_ratio"])
@@ -469,6 +474,44 @@ def test_lunge(calculator, t_pose_com):
         print("❌ FAIL: CoM did not lower significantly in lunge")
         return False
 
+def test_liberty(calculator, t_pose_com):
+    print("\nTest: Liberty Pose (Single Leg, Arms High V)")
+    nodes = create_t_pose_nodes()
+
+    # Raise arms to High V (same as High V test)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(-30, 150, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(-50, 170, 0)
+    # RightHandMiddle1 omitted to test fallback
+
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(30, 150, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(50, 170, 0)
+    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(60, 180, 0)
+
+    # Raise Right Leg (flex hip and knee)
+    # Right thigh: UpLeg -> Leg
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 90, 30) # Knee goes up and forward
+    # Right Shank: Leg -> Foot
+    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 50, 30) # Ankle below knee
+    # Right Foot: Foot -> ToeBase
+    nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 40, 30)
+
+    calculator.bind(nodes)
+    liberty_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Liberty CoM: {liberty_com}")
+
+    rise = liberty_com.y - t_pose_com.y
+    x_shift = abs(liberty_com.x - t_pose_com.x)
+    print(f"   Rise from T-Pose: {rise:.2f}")
+    print(f"   Lateral Shift (X): {x_shift:.2f}")
+
+    if rise > 1.0:
+        print("✅ PASS: CoM rose significantly in Liberty")
+        return True
+    else:
+        print("❌ FAIL: CoM did not rise significantly in Liberty")
+        return False
+
 class JointLimitsMock:
     limits = {
         "mixamorig_RightLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
@@ -645,6 +688,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_lunge(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_liberty(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():
