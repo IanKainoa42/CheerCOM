@@ -1095,6 +1095,38 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         present(alert, animated: true)
     }
 
+    func didTapExportPoses() {
+        guard let jsonString = PoseStorageManager.shared.exportPosesToJSON() else {
+            print("❌ Failed to export poses to JSON")
+            return
+        }
+
+        let alert = UIAlertController(title: "Export Poses", message: "Copy the JSON string below.", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.text = jsonString
+        }
+        alert.addAction(UIAlertAction(title: "Copy & Close", style: .default, handler: { _ in
+            UIPasteboard.general.string = jsonString
+        }))
+        alert.addAction(UIAlertAction(title: "Close", style: .cancel))
+        present(alert, animated: true)
+    }
+
+    func didTapImportPoses() {
+        let alert = UIAlertController(title: "Import Poses", message: "Paste the JSON string below to import poses.", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = "JSON String"
+        }
+        alert.addAction(UIAlertAction(title: "Import", style: .default, handler: { [weak self] _ in
+            if let text = alert.textFields?.first?.text, !text.isEmpty {
+                PoseStorageManager.shared.importPosesFromJSON(jsonString: text)
+                self?.poseLibraryPanel.refreshPoses()
+            }
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
+    }
+
     func didTapClosePoseLibrary() {
         setPoseLibraryVisible(false)
     }
