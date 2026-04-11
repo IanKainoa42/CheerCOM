@@ -293,7 +293,8 @@ class SceneViewController: UIViewController {
         presetLabel.textColor = CheerPalette.textSecondary
         presetLabel.font = cheerMonospacedFont(size: 11, weight: .bold)
 
-        bodyPresetSelector = makeCheerSegmentedControl(items: ["Neutral", "Athletic F", "Athletic M"])
+        let presetItems = BodyPreset.allCases.map { $0.rawValue }
+        bodyPresetSelector = makeCheerSegmentedControl(items: presetItems)
         bodyPresetSelector.selectedSegmentIndex = 0
         bodyPresetSelector.addTarget(self, action: #selector(didChangeBodyPreset(_:)), for: .valueChanged)
 
@@ -465,15 +466,8 @@ class SceneViewController: UIViewController {
     }
 
     @objc private func didChangeBodyPreset(_ sender: UISegmentedControl) {
-        let preset: BodyPreset
-        switch sender.selectedSegmentIndex {
-        case 1: preset = .athleticFemale
-        case 2: preset = .athleticMale
-        default: preset = .averageNeutral
-        }
-        // Local COMCalculator does not yet support body presets.
-        // TODO: Unify with ModelRigKit.COMCalculator which has setPreset.
-        _ = preset
+        let preset = BodyPreset.allCases[sender.selectedSegmentIndex]
+        calculator.setPreset(preset)
         scheduleUpdateCOM()
         print("👤 Body preset changed to: \(preset)")
     }
