@@ -2,14 +2,6 @@ import SwiftUI
 import ModelRigKit
 
 struct CheerDashboardSwiftUIView: View {
-    enum BodyPreset: String, CaseIterable, Identifiable {
-        case neutral = "Neutral"
-        case athleticF = "Athletic F"
-        case athleticM = "Athletic M"
-
-        var id: String { rawValue }
-    }
-
     enum Axis: String, CaseIterable, Identifiable {
         case x = "X Axis"
         case y = "Y Axis"
@@ -18,7 +10,7 @@ struct CheerDashboardSwiftUIView: View {
         var id: String { rawValue }
     }
 
-    @State private var selectedPreset: BodyPreset = .neutral
+    @State private var selectedPreset: BodyPreset = .averageNeutral
     @State private var selectedTransformMode: TransformMode = .position
     @State private var selectedAxis: Axis = .x
     @State private var jointAngle: Double = 0

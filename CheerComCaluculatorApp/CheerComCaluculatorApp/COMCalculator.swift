@@ -52,11 +52,13 @@ class COMCalculator {
         let name: String
         let prox: SCNNode
         let dist: SCNNode
-        let massRatio: Double
+        let baseMassRatio: Double
+        var currentMassRatio: Double
         let comRatio: Double
     }
 
     private var boundSegments: [BoundSegment] = []
+    private var currentPreset: BodyPreset = .averageNeutral
 
     init(bodyMass: Double) {
         self.bodyMass = bodyMass
@@ -92,13 +94,70 @@ class COMCalculator {
                 name: segment.name, // Use descriptive segment name
                 prox: proxNode,
                 dist: distNode!,
-                massRatio: segment.mass,
+                baseMassRatio: segment.mass,
+                currentMassRatio: segment.mass,
                 comRatio: segment.com
             ))
         }
 
+        applyPresetMultipliers()
+
         if missingCount == 0 {
             print("✅ COMCalculator bound to \(boundSegments.count) segments")
+        }
+    }
+
+    /// Sets the active body preset, which adjusts segment masses (anthropometric multipliers)
+    func setPreset(_ preset: BodyPreset) {
+        currentPreset = preset
+        applyPresetMultipliers()
+    }
+
+    private func applyPresetMultipliers() {
+        guard !boundSegments.isEmpty else { return }
+
+        let trunkMultiplier: Double
+        let upperMultiplier: Double
+        let lowerMultiplier: Double
+
+        switch currentPreset {
+        case .averageNeutral:
+            trunkMultiplier = 1.0
+            upperMultiplier = 1.0
+            lowerMultiplier = 1.0
+        case .athleticFemale:
+            trunkMultiplier = 0.95
+            upperMultiplier = 0.95
+            lowerMultiplier = 1.08
+        case .athleticMale:
+            trunkMultiplier = 1.05
+            upperMultiplier = 1.15
+            lowerMultiplier = 0.95
+        }
+
+        var totalMassRatio: Double = 0
+
+        for i in 0..<boundSegments.count {
+            let name = boundSegments[i].name
+            var multiplier = 1.0
+
+            if name.contains("Pelvis") || name.contains("Abdomen") || name.contains("Thorax") || name.contains("Head") {
+                multiplier = trunkMultiplier
+            } else if name.contains("Arm") || name.contains("Forearm") || name.contains("Hand") {
+                multiplier = upperMultiplier
+            } else if name.contains("Thigh") || name.contains("Shank") || name.contains("Foot") {
+                multiplier = lowerMultiplier
+            }
+
+            boundSegments[i].currentMassRatio = boundSegments[i].baseMassRatio * multiplier
+            totalMassRatio += boundSegments[i].currentMassRatio
+        }
+
+        // Normalize so they sum to exactly 1.0
+        if totalMassRatio > 0 {
+            for i in 0..<boundSegments.count {
+                boundSegments[i].currentMassRatio /= totalMassRatio
+            }
         }
     }
 
@@ -132,7 +191,7 @@ class COMCalculator {
 
             // COM = proximal + (distal - proximal) * %
             let segCOM = proxPos + ((distPos - proxPos) * Float(segment.comRatio))
-            let segMass = bodyMass * segment.massRatio
+            let segMass = bodyMass * segment.currentMassRatio
 
             totalWeighted = totalWeighted + (segCOM * Float(segMass))
             totalMass += segMass

@@ -1,5 +1,13 @@
 import Foundation
 
+enum BodyPreset: String, CaseIterable, Identifiable {
+    case averageNeutral = "Neutral"
+    case athleticFemale = "Athletic F"
+    case athleticMale = "Athletic M"
+
+    var id: String { rawValue }
+}
+
 enum JointAxis: String, CaseIterable, Codable {
     case x = "X-Axis"
     case y = "Y-Axis"
