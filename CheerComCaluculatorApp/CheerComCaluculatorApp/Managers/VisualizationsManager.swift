@@ -54,11 +54,13 @@ class VisualizationsManager {
     var gridNode: SCNNode!
     var axesNode: SCNNode!
     var segmentCOMNodes: SCNNode!
+    var skeletonNodes: SCNNode!
 
     // Caches to avoid accessing sceneKit's childNodes property, which reallocates an array every time
     private var cachedSegmentNodes: [SCNNode] = []
     private var cachedTrailNodes: [SCNNode] = []
     private var cachedBosNodes: [SCNNode] = []
+    private var cachedSkeletonBoneNodes: [SCNNode] = []
 
     var showAdvancedVisualizations = false {
         didSet {
@@ -68,6 +70,7 @@ class VisualizationsManager {
             gridNode.isHidden = !showAdvancedVisualizations
             axesNode.isHidden = !showAdvancedVisualizations
             segmentCOMNodes.isHidden = !showAdvancedVisualizations
+            skeletonNodes.isHidden = !showAdvancedVisualizations
 
             if showAdvancedVisualizations {
                 updateGravityLine()
@@ -96,6 +99,7 @@ class VisualizationsManager {
     private func setupVisuals(in scene: SCNScene) {
         setupCOMMarker(in: scene)
         setupSegmentMarkers(in: scene)
+        setupSkeletonVisualization(in: scene)
         setupCOMTrail(in: scene)
         setupVisualAids(in: scene)
         setupAxes(in: scene)
@@ -147,6 +151,11 @@ class VisualizationsManager {
     private func setupSegmentMarkers(in scene: SCNScene) {
         segmentCOMNodes = SCNNode()
         scene.rootNode.addChildNode(segmentCOMNodes)
+    }
+
+    private func setupSkeletonVisualization(in scene: SCNScene) {
+        skeletonNodes = SCNNode()
+        scene.rootNode.addChildNode(skeletonNodes)
     }
 
     private func setupCOMTrail(in scene: SCNScene) {
@@ -242,10 +251,7 @@ class VisualizationsManager {
     }
 
     private func updateSegmentVisuals(segmentResults: [SegmentResult]) {
-        // Clear existing nodes if count mismatch (simple approach) or update them
-        // For performance, we should reuse nodes.
-
-        // Ensure we have enough nodes
+        // Ensure we have enough nodes for segment COMs
         if cachedSegmentNodes.count < segmentResults.count {
             for _ in cachedSegmentNodes.count..<segmentResults.count {
                 let sphere = SCNSphere(radius: 3) // Smaller than main COM
@@ -257,13 +263,64 @@ class VisualizationsManager {
             }
         }
 
+        // Ensure we have enough nodes for skeleton lines
+        if cachedSkeletonBoneNodes.count < segmentResults.count {
+            for _ in cachedSkeletonBoneNodes.count..<segmentResults.count {
+                let cylinder = SCNCylinder(radius: 1.5, height: 1.0)
+                cylinder.firstMaterial?.diffuse.contents = UIColor.white.withAlphaComponent(0.6)
+                cylinder.firstMaterial?.lightingModel = .constant
+                let node = SCNNode(geometry: cylinder)
+                skeletonNodes.addChildNode(node)
+                cachedSkeletonBoneNodes.append(node)
+            }
+        }
+
         // Update positions
         for (index, result) in segmentResults.enumerated() {
             if index < cachedSegmentNodes.count {
-                // Use cached currentNodes to avoid repeated childNodes array creation
                 let node = cachedSegmentNodes[index]
                 node.position = result.position
-                node.isHidden = !showAdvancedVisualizations // Only show in advanced mode?
+                node.isHidden = !showAdvancedVisualizations
+            }
+
+            if index < cachedSkeletonBoneNodes.count {
+                let boneNode = cachedSkeletonBoneNodes[index]
+                let prox = result.proxPosition
+                let dist = result.distPosition
+
+                let vector = SCNVector3(dist.x - prox.x, dist.y - prox.y, dist.z - prox.z)
+                let height = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z)
+
+                if let cylinder = boneNode.geometry as? SCNCylinder {
+                    cylinder.height = CGFloat(height)
+                }
+
+                boneNode.position = SCNVector3((prox.x + dist.x) / 2, (prox.y + dist.y) / 2, (prox.z + dist.z) / 2)
+
+                // Align cylinder with vector
+                let yAxis = SCNVector3(0, 1, 0)
+                let length = Float(height)
+                if length > 0.001 {
+                    let normalizedVector = SCNVector3(vector.x / length, vector.y / length, vector.z / length)
+                    let cross = SCNVector3(
+                        yAxis.y * normalizedVector.z - yAxis.z * normalizedVector.y,
+                        yAxis.z * normalizedVector.x - yAxis.x * normalizedVector.z,
+                        yAxis.x * normalizedVector.y - yAxis.y * normalizedVector.x
+                    )
+                    let dot = yAxis.x * normalizedVector.x + yAxis.y * normalizedVector.y + yAxis.z * normalizedVector.z
+                    let angle = acos(max(-1, min(1, dot)))
+
+                    if angle > 0.001 {
+                        let crossLength = sqrt(cross.x * cross.x + cross.y * cross.y + cross.z * cross.z)
+                        if crossLength > 0.001 {
+                            boneNode.rotation = SCNVector4(cross.x / crossLength, cross.y / crossLength, cross.z / crossLength, angle)
+                        }
+                    } else {
+                        boneNode.rotation = SCNVector4(0, 1, 0, 0)
+                    }
+                }
+
+                boneNode.isHidden = !showAdvancedVisualizations
             }
         }
 
@@ -271,6 +328,12 @@ class VisualizationsManager {
         if cachedSegmentNodes.count > segmentResults.count {
             for index in segmentResults.count..<cachedSegmentNodes.count {
                 cachedSegmentNodes[index].isHidden = true
+            }
+        }
+
+        if cachedSkeletonBoneNodes.count > segmentResults.count {
+            for index in segmentResults.count..<cachedSkeletonBoneNodes.count {
+                cachedSkeletonBoneNodes[index].isHidden = true
             }
         }
     }

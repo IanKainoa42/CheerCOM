@@ -4,6 +4,8 @@ struct SegmentResult {
     let name: String
     let position: SCNVector3
     let mass: Double
+    let proxPosition: SCNVector3
+    let distPosition: SCNVector3
 }
 
 struct CalculationResult {
@@ -200,7 +202,9 @@ class COMCalculator {
                 segmentResults.append(SegmentResult(
                     name: segment.name,
                     position: segCOM,
-                    mass: segMass
+                    mass: segMass,
+                    proxPosition: proxPos,
+                    distPosition: distPos
                 ))
             }
         }

@@ -512,6 +512,41 @@ def test_liberty(calculator, t_pose_com):
         print("❌ FAIL: CoM did not rise significantly in Liberty")
         return False
 
+def test_prep_position(calculator, t_pose_com):
+    print("\nTest: Prep Position (Slight Squat, Hands at Chest)")
+    nodes = create_t_pose_nodes()
+
+    # Slight drop in hips and knees
+    nodes["mixamorig_Hips"].position = SCNVector3(0, 95, 0)
+    nodes["mixamorig_Spine"].position = SCNVector3(0, 100, 0)
+    nodes["mixamorig_RightUpLeg"].position = SCNVector3(10, 95, 0)
+    nodes["mixamorig_LeftUpLeg"].position = SCNVector3(-10, 95, 0)
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 48, 10)
+    nodes["mixamorig_LeftLeg"].position = SCNVector3(-10, 48, 10)
+
+    # Hands near chest (Y ~ 110-120)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(15, 120, 10)
+    nodes["mixamorig_RightHand"].position = SCNVector3(5, 120, 15)
+    # RightHandMiddle1 is missing by design for fallback testing
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-15, 120, 10)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-5, 120, 15)
+    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-5, 120, 20)
+
+    calculator.bind(nodes)
+    prep_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Prep Position CoM: {prep_com}")
+
+    drop = t_pose_com.y - prep_com.y
+    print(f"   Drop from T-Pose: {drop:.2f}")
+
+    if drop > 1.0 and drop < 10.0:
+        print("✅ PASS: CoM dropped slightly in Prep Position")
+        return True
+    else:
+        print("❌ FAIL: CoM drop not in expected range for Prep Position")
+        return False
+
 class JointLimitsMock:
     limits = {
         "mixamorig_RightLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
@@ -691,6 +726,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_liberty(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_prep_position(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():
