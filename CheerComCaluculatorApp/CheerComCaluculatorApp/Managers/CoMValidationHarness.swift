@@ -19,7 +19,8 @@ class CoMValidationHarness {
         .sideLean,
         .bowAndArrow,
         .lunge,
-        .liberty
+        .liberty,
+        .prepPosition
     ]
 
     private struct ValidationOutcome {
@@ -349,6 +350,15 @@ class CoMValidationHarness {
                 return (true, "CoM rose by \(String(format: "%.1f", rise)) units due to single leg stance and arms (Expected rise > 1.0). X-Shift: \(String(format: "%.1f", xShift))")
             }
             return (false, "CoM failed to rise significantly (Rise: \(String(format: "%.1f", rise)))")
+
+        case .prepPosition:
+            // Prep position: hands at chest/waist level, knees slightly bent
+            // CoM should drop slightly due to bent knees, but less than a full squat.
+            let drop = baseline.y - com.y
+            if drop > 1.0 && drop < 10.0 {
+                return (true, "CoM dropped slightly by \(String(format: "%.1f", drop)) units (Expected between 1.0 and 10.0)")
+            }
+            return (false, "CoM drop not in expected range for prep position (Drop: \(String(format: "%.1f", drop)))")
 
         default:
             return (true, "No specific criteria")
