@@ -188,4 +188,6 @@ enum TransformDirection: String, Codable {
     case down
     case left
     case right
+    case forward
+    case backward
 }
