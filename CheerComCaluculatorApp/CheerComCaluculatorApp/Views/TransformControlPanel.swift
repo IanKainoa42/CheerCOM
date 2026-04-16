@@ -77,10 +77,12 @@ class TransformControlPanel: CheerGlassPanel {
         let leftButton = directionButton(title: "←", direction: .left)
         let rightButton = directionButton(title: "→", direction: .right)
         let downButton = directionButton(title: "↓", direction: .down)
+        let forwardButton = directionButton(title: "↗", direction: .forward)
+        let backwardButton = directionButton(title: "↙", direction: .backward)
 
-        let topRow = dPadRow(left: UIView(), center: upButton, right: UIView())
+        let topRow = dPadRow(left: UIView(), center: upButton, right: forwardButton)
         let middleRow = dPadRow(left: leftButton, center: centerBadge, right: rightButton)
-        let bottomRow = dPadRow(left: UIView(), center: downButton, right: UIView())
+        let bottomRow = dPadRow(left: backwardButton, center: downButton, right: UIView())
 
         dPadStack.addArrangedSubview(topRow)
         dPadStack.addArrangedSubview(middleRow)

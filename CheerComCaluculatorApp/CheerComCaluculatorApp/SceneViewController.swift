@@ -1202,6 +1202,8 @@ extension SceneViewController: TransformControlPanelDelegate {
         case .down: transformDown()
         case .left: transformLeft()
         case .right: transformRight()
+        case .forward: transformForward()
+        case .backward: transformBackward()
         }
     }
 
@@ -1254,6 +1256,24 @@ extension SceneViewController: TransformControlPanelDelegate {
         switch currentTransformMode {
         case .position: sceneManager.characterNode.position.x += transformStep
         case .rotation: sceneManager.characterNode.eulerAngles.y -= transformStep * .pi / 180
+        case .scale: break
+        }
+        scheduleUpdateCOM()
+    }
+
+    func transformForward() {
+        switch currentTransformMode {
+        case .position: sceneManager.characterNode.position.z += transformStep
+        case .rotation: sceneManager.characterNode.eulerAngles.z += transformStep * .pi / 180
+        case .scale: break
+        }
+        scheduleUpdateCOM()
+    }
+
+    func transformBackward() {
+        switch currentTransformMode {
+        case .position: sceneManager.characterNode.position.z -= transformStep
+        case .rotation: sceneManager.characterNode.eulerAngles.z -= transformStep * .pi / 180
         case .scale: break
         }
         scheduleUpdateCOM()
