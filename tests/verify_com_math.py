@@ -57,8 +57,8 @@ class COMCalculatorMock:
             ("Abdomen Upper", "mixamorig_Spine1", "mixamorig_Spine2", 0.0855, 0.50),
             ("Thorax", "mixamorig_Spine2", "mixamorig_Neck", 0.180, 0.50),
 
-            # Head (Total 8.1%) - Modeled as Neck segment (approx)
-            ("Head", "mixamorig_Neck", "mixamorig_Head", 0.081, 0.50),
+            # Head (Total 8.1%)
+            ("Head", "mixamorig_Head", "mixamorig_HeadTop_End", 0.081, 0.50),
 
             # Upper Limbs (Total 10.0%)
             # RightArm = Humerus (Shoulder to Elbow)
@@ -188,6 +188,7 @@ def create_t_pose_nodes():
     nodes["mixamorig_Spine2"] = SCNNode("Spine2", SCNVector3(0, 130, 0))
     nodes["mixamorig_Neck"] = SCNNode("Neck", SCNVector3(0, 140, 0))
     nodes["mixamorig_Head"] = SCNNode("Head", SCNVector3(0, 150, 0))
+    nodes["mixamorig_HeadTop_End"] = SCNNode("HeadTop", SCNVector3(0, 160, 0))
 
     # Right Arm (X-axis lateral)
     nodes["mixamorig_RightArm"] = SCNNode("RArm", SCNVector3(20, 130, 0))

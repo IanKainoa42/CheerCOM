@@ -27,8 +27,8 @@ class COMCalculator {
         ("Abdomen Upper", "mixamorig_Spine1", "mixamorig_Spine2", 0.0855, 0.50),
         ("Thorax", "mixamorig_Spine2", "mixamorig_Neck", 0.180, 0.50),
 
-        // Head (Total 8.1%) - Modeled as Neck segment (approx)
-        ("Head", "mixamorig_Neck", "mixamorig_Head", 0.081, 0.50),
+        // Head (Total 8.1%)
+        ("Head", "mixamorig_Head", "mixamorig_HeadTop_End", 0.081, 0.50),
 
         // Upper Limbs (Total 10.0%)
         // RightArm = Humerus (Shoulder to Elbow)
