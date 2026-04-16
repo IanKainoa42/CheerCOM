@@ -36,8 +36,8 @@ The trunk is subdivided into 4 segments to better approximate spinal curvature:
 *Note: The Clavicle/Scapula mass is considered integrated into the Thorax segment.*
 
 ### Head & Neck (8.1%)
-5.  **Head** (8.1%): Neck → Head
-    *   *Assumption*: The CoM is located at 50% along the Neck bone. This is an approximation; realistically, the CoM is higher (inside the cranium), but this segment definition captures the general mass location relative to the spine.
+5.  **Head** (8.1%): Head → HeadTop_End
+    *   *Assumption*: The CoM is located at 50% along the line from the head base to the crown.
 
 ### Upper Limbs (10.0%)
 Left and Right sides are symmetric.
@@ -109,5 +109,4 @@ Realistic joint limits are enforced within the application to prevent impossible
 ## Known Limitations
 
 1.  **Clavicle Segment**: The shoulder girdle (clavicle) is not modeled as a separate moving segment. Its mass is effectively lumped into the Thorax.
-2.  **Head CoM**: The Head segment uses `Neck` → `Head` joints. This places the CoM lower than anatomical reality (mid-neck vs cranium).
-3.  **Rig Dependency**: The calculation relies on specific `mixamorig_` bone names. If a custom character uses different naming, the calculator must be updated.
+2.  **Rig Dependency**: The calculation relies on specific `mixamorig_` bone names. If a custom character uses different naming, the calculator must be updated.
