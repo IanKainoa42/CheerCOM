@@ -18,7 +18,7 @@ class CoMValidationHarness {
         .layout,
         .sideLean,
         .bowAndArrow,
-        .lunge,
+        .lungePose,
         .liberty,
         .prepPosition
     ]
@@ -333,7 +333,7 @@ class CoMValidationHarness {
             }
             return (false, "CoM did not shift laterally significantly for asymmetric arm pose (Diff: \(String(format: "%.1f", diff)), Expected > 1.0)")
 
-        case .lunge:
+        case .lungePose:
             // Lunge has one leg forward (-Z usually) and one back (+Z), hips lower
             let drop = baseline.y - com.y
             if drop > 5.0 {

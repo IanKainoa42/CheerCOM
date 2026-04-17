@@ -320,7 +320,7 @@ class PosePresets {
                 description: "Side lean with T-arms"
             )
 
-        case .lunge:
+        case .lungePose:
             return PoseDefinition(
                 name: "Lunge",
                 category: .fullBody,
@@ -600,7 +600,7 @@ class PosePresets {
         let allPoses: [PoseType] = [
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean,
+            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
