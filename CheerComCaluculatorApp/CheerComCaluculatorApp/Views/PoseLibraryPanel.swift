@@ -385,7 +385,7 @@ class PoseLibraryPanel: UIView {
     private func poseFromString(_ string: String) -> PoseType? {
         let allPoses: [PoseType] = [
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lunge,
+            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose,
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
             .legsStanding, .legsLibertyRight, .legsLibertyLeft, .legsScaleRight, .legsScaleLeft,

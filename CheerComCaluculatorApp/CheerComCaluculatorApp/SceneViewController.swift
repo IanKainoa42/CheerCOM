@@ -184,6 +184,7 @@ class SceneViewController: UIViewController {
         chromeContentView.addSubview(chromeStackView)
 
         toolRailView = makeToolRail()
+        toolRailView.isHidden = true
         chromeStackView.addArrangedSubview(toolRailView)
 
         mainRegionStackView = UIStackView()
@@ -196,7 +197,12 @@ class SceneViewController: UIViewController {
         inspectorStackView.translatesAutoresizingMaskIntoConstraints = false
         inspectorStackView.axis = .vertical
         inspectorStackView.spacing = 10
+        inspectorStackView.isHidden = true
         chromeStackView.addArrangedSubview(inspectorStackView)
+
+        transformControlPanel = TransformControlPanel(width: view.bounds.width)
+        transformControlPanel.delegate = self
+        transformControlPanel.updateStepMultiplierSelection(transformStepMultiplier)
 
         sceneCard = makeSceneCard()
         mainRegionStackView.addArrangedSubview(sceneCard)
@@ -205,12 +211,8 @@ class SceneViewController: UIViewController {
         jointControlPanel.delegate = self
         mainRegionStackView.addArrangedSubview(jointControlPanel)
 
-        transformControlPanel = TransformControlPanel(width: view.bounds.width)
-        transformControlPanel.delegate = self
-        transformControlPanel.updateStepMultiplierSelection(transformStepMultiplier)
-        mainRegionStackView.addArrangedSubview(transformControlPanel)
-
         mainActionsPanel = makeMainActionsPanel()
+        mainActionsPanel.isHidden = true
         mainRegionStackView.addArrangedSubview(mainActionsPanel)
 
         headerPanel = makeHeaderPanel()
@@ -218,6 +220,7 @@ class SceneViewController: UIViewController {
         mainRegionStackView.addArrangedSubview(headerPanel)
 
         comInfoPanel = COMInfoPanel()
+        comInfoPanel.isHidden = true
         inspectorStackView.addArrangedSubview(comInfoPanel)
 
         poseLibraryPanel = PoseLibraryPanel(width: view.bounds.width)
@@ -253,8 +256,8 @@ class SceneViewController: UIViewController {
             chromeStackView.trailingAnchor.constraint(equalTo: chromeContentView.trailingAnchor),
             chromeStackView.bottomAnchor.constraint(equalTo: chromeContentView.bottomAnchor),
 
-            poseLibraryPanel.leadingAnchor.constraint(equalTo: inspectorStackView.leadingAnchor),
-            poseLibraryPanel.trailingAnchor.constraint(equalTo: inspectorStackView.trailingAnchor),
+            poseLibraryPanel.leadingAnchor.constraint(equalTo: mainRegionStackView.leadingAnchor),
+            poseLibraryPanel.trailingAnchor.constraint(equalTo: mainRegionStackView.trailingAnchor),
             poseLibraryPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             poseLibraryHeightConstraint
         ])
@@ -396,7 +399,7 @@ class SceneViewController: UIViewController {
         statusLabel.font = cheerMonospacedFont(size: 11, weight: .bold)
 
         let metaLabel = UILabel()
-        metaLabel.text = "Controls below"
+        metaLabel.text = "Pose workspace"
         metaLabel.textColor = CheerPalette.textSecondary
         metaLabel.font = cheerMonospacedFont(size: 11, weight: .medium)
 
@@ -422,13 +425,7 @@ class SceneViewController: UIViewController {
         sceneViewportHeightConstraint = sceneViewportContainer.heightAnchor.constraint(equalToConstant: 360)
         sceneViewportHeightConstraint.isActive = true
 
-        let totalCOMLabel = makeLegendLabel("[GREEN] TOTAL_COM", color: CheerPalette.accentMint)
-        let bosLabel = makeLegendLabel("[ORANGE] BASE_OF_SUPPORT", color: CheerPalette.accentAmber)
-        let legendRow = UIStackView(arrangedSubviews: [totalCOMLabel, bosLabel, UIView()])
-        legendRow.axis = .horizontal
-        legendRow.spacing = 14
-        legendRow.alignment = .leading
-        panel.contentStack.addArrangedSubview(legendRow)
+        panel.contentStack.addArrangedSubview(transformControlPanel)
 
         return panel
     }
@@ -463,16 +460,16 @@ class SceneViewController: UIViewController {
 
     private func updateAdaptiveLayout() {
         let regularShell = view.bounds.width >= 860
-        chromeStackView.axis = regularShell ? .horizontal : .vertical
-        chromeStackView.spacing = regularShell ? 16 : 12
+        chromeStackView.axis = .vertical
+        chromeStackView.spacing = 12
 
         toolRailStackView.axis = regularShell ? .vertical : .horizontal
         toolRailStackView.spacing = regularShell ? 10 : 8
         toolRailStackView.alignment = .center
 
-        toolRailWidthConstraint.isActive = regularShell
-        toolRailHeightConstraint.isActive = !regularShell
-        inspectorWidthConstraint.isActive = regularShell
+        toolRailWidthConstraint.isActive = false
+        toolRailHeightConstraint.isActive = false
+        inspectorWidthConstraint.isActive = false
 
         let compactHeader = view.bounds.width < 640
         headerRowStack.axis = compactHeader ? .vertical : .horizontal
@@ -540,20 +537,18 @@ class SceneViewController: UIViewController {
             setPoseLibraryVisible(false, animated: animated)
         }
 
-        toolRailView.isUserInteractionEnabled = isVisible
-        headerPanel.isUserInteractionEnabled = isVisible
-        mainActionsPanel.isUserInteractionEnabled = isVisible
-        inspectorStackView.isUserInteractionEnabled = isVisible
+        toolRailView.isUserInteractionEnabled = false
+        headerPanel.isUserInteractionEnabled = false
+        mainActionsPanel.isUserInteractionEnabled = false
+        inspectorStackView.isUserInteractionEnabled = false
+        jointControlPanel.isUserInteractionEnabled = isVisible
+        transformControlPanel.isUserInteractionEnabled = isVisible
 
         let updates = {
-            self.toolRailView.alpha = isVisible ? 1 : 0
-            self.toolRailView.transform = isVisible ? .identity : CGAffineTransform(translationX: -20, y: 0)
-            self.headerPanel.alpha = isVisible ? 1 : 0
-            self.headerPanel.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: -18)
-            self.mainActionsPanel.alpha = isVisible ? 1 : 0
-            self.mainActionsPanel.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: -12)
-            self.inspectorStackView.alpha = isVisible ? 1 : 0
-            self.inspectorStackView.transform = isVisible ? .identity : CGAffineTransform(translationX: 22, y: 0)
+            self.jointControlPanel.alpha = isVisible ? 1 : 0
+            self.jointControlPanel.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: 14)
+            self.transformControlPanel.alpha = isVisible ? 1 : 0
+            self.transformControlPanel.transform = isVisible ? .identity : CGAffineTransform(translationX: 0, y: 14)
             self.updateControlsToggleButton()
         }
 
@@ -600,20 +595,16 @@ class SceneViewController: UIViewController {
         // Disable interaction with other controls while running
         sceneManager.sceneView.isUserInteractionEnabled = false
         chromeScrollView.isUserInteractionEnabled = false
-        toolRailView.isUserInteractionEnabled = false
-        headerPanel.isUserInteractionEnabled = false
-        mainActionsPanel.isUserInteractionEnabled = false
-        inspectorStackView.isUserInteractionEnabled = false
+        jointControlPanel.isUserInteractionEnabled = false
+        transformControlPanel.isUserInteractionEnabled = false
         poseLibraryPanel.isUserInteractionEnabled = false
 
         // Handle close
         overlay.onClose = { [weak self] in
             self?.sceneManager.sceneView.isUserInteractionEnabled = true
             self?.chromeScrollView.isUserInteractionEnabled = true
-            self?.toolRailView.isUserInteractionEnabled = self?.chromeVisible ?? false
-            self?.headerPanel.isUserInteractionEnabled = self?.chromeVisible ?? false
-            self?.mainActionsPanel.isUserInteractionEnabled = self?.chromeVisible ?? false
-            self?.inspectorStackView.isUserInteractionEnabled = self?.chromeVisible ?? false
+            self?.jointControlPanel.isUserInteractionEnabled = self?.chromeVisible ?? false
+            self?.transformControlPanel.isUserInteractionEnabled = self?.chromeVisible ?? false
             self?.poseLibraryPanel.isUserInteractionEnabled = (self?.poseLibraryVisible ?? false) && (self?.chromeVisible ?? false)
         }
 
@@ -1118,38 +1109,6 @@ extension SceneViewController: PoseLibraryPanelDelegate {
         present(alert, animated: true)
     }
 
-    func didTapExportPoses() {
-        guard let jsonString = PoseStorageManager.shared.exportPosesToJSON() else {
-            print("❌ Failed to export poses to JSON")
-            return
-        }
-
-        let alert = UIAlertController(title: "Export Poses", message: "Copy the JSON string below.", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = jsonString
-        }
-        alert.addAction(UIAlertAction(title: "Copy & Close", style: .default, handler: { _ in
-            UIPasteboard.general.string = jsonString
-        }))
-        alert.addAction(UIAlertAction(title: "Close", style: .cancel))
-        present(alert, animated: true)
-    }
-
-    func didTapImportPoses() {
-        let alert = UIAlertController(title: "Import Poses", message: "Paste the JSON string below to import poses.", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "JSON String"
-        }
-        alert.addAction(UIAlertAction(title: "Import", style: .default, handler: { [weak self] _ in
-            if let text = alert.textFields?.first?.text, !text.isEmpty {
-                PoseStorageManager.shared.importPosesFromJSON(jsonString: text)
-                self?.poseLibraryPanel.refreshPoses()
-            }
-        }))
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        present(alert, animated: true)
-    }
-
     func didTapClosePoseLibrary() {
         setPoseLibraryVisible(false)
     }
@@ -1196,6 +1155,22 @@ extension SceneViewController: PoseLibraryPanelDelegate {
 extension SceneViewController: TransformControlPanelDelegate {
     func didChangeTransformMode(_ mode: TransformMode) {
         setTransformMode(mode)
+    }
+
+    func didTapPoseLibraryFromTransformPanel() {
+        didTapPoseLibrary()
+    }
+
+    func didTapResetPoseFromTransformPanel() {
+        didTapResetPose()
+    }
+
+    func didTapFitViewFromTransformPanel() {
+        didTapFitView()
+    }
+
+    func didTapToggleVisualizationsFromTransformPanel() {
+        didTapToggleVisualizations()
     }
 
     func didBeginContinuousTransform(direction: TransformDirection) {

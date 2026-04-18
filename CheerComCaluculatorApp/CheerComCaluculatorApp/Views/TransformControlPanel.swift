@@ -7,6 +7,10 @@ protocol TransformControlPanelDelegate: AnyObject {
     func didEndContinuousTransform()
     func didTapResetTransform()
     func didChangeTransformStepMultiplier(_ multiplier: Float)
+    func didTapPoseLibraryFromTransformPanel()
+    func didTapResetPoseFromTransformPanel()
+    func didTapFitViewFromTransformPanel()
+    func didTapToggleVisualizationsFromTransformPanel()
 }
 
 class TransformControlPanel: CheerGlassPanel {
@@ -40,7 +44,7 @@ class TransformControlPanel: CheerGlassPanel {
         eyebrowLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
 
         let titleLabel = UILabel()
-        titleLabel.text = "TRANSFORM MATRIX"
+        titleLabel.text = "MODEL TRANSFORM"
         titleLabel.textColor = CheerPalette.textPrimary
         titleLabel.font = cheerRoundedFont(.headline, weight: .bold)
 
@@ -53,6 +57,13 @@ class TransformControlPanel: CheerGlassPanel {
         titleStack.axis = .vertical
         titleStack.spacing = 4
         contentStack.addArrangedSubview(titleStack)
+
+        let helperLabel = UILabel()
+        helperLabel.text = "Use the pad to move the rig around the pose. ↗ and ↙ adjust depth on the Z axis."
+        helperLabel.textColor = CheerPalette.textSecondary
+        helperLabel.font = cheerMonospacedFont(size: 10, weight: .regular)
+        helperLabel.numberOfLines = 0
+        contentStack.addArrangedSubview(helperLabel)
 
         modeSegmentedControl = makeCheerSegmentedControl(items: ["Move", "Rotate", "Scale"])
         modeSegmentedControl.addTarget(self, action: #selector(modeChanged), for: .valueChanged)
@@ -103,6 +114,24 @@ class TransformControlPanel: CheerGlassPanel {
         let resetButton = CheerButton(title: "Reset Transform", symbol: "arrow.counterclockwise.circle", style: .secondary)
         resetButton.addTarget(self, action: #selector(resetTapped), for: .touchUpInside)
         contentStack.addArrangedSubview(resetButton)
+
+        let topActionRow = UIStackView(arrangedSubviews: [
+            makeActionButton(title: "Pose Library", symbol: "square.grid.2x2", style: .accent, action: #selector(poseLibraryTapped)),
+            makeActionButton(title: "Reset Pose", symbol: "figure.stand.line.dotted.figure.stand", style: .danger, action: #selector(resetPoseTapped))
+        ])
+        topActionRow.axis = .horizontal
+        topActionRow.spacing = 8
+        topActionRow.distribution = .fillEqually
+        contentStack.addArrangedSubview(topActionRow)
+
+        let bottomActionRow = UIStackView(arrangedSubviews: [
+            makeActionButton(title: "Fit View", symbol: "viewfinder", style: .neutral, action: #selector(fitViewTapped)),
+            makeActionButton(title: "Visuals", symbol: "sparkles", style: .positive, action: #selector(toggleVisualsTapped))
+        ])
+        bottomActionRow.axis = .horizontal
+        bottomActionRow.spacing = 8
+        bottomActionRow.distribution = .fillEqually
+        contentStack.addArrangedSubview(bottomActionRow)
     }
 
     func updateModeDisplay(mode: TransformMode, step: Float) {
@@ -145,6 +174,10 @@ class TransformControlPanel: CheerGlassPanel {
         let multiplier = stepMultipliers[stepSegmentedControl.selectedSegmentIndex]
         delegate?.didChangeTransformStepMultiplier(multiplier)
     }
+    @objc private func poseLibraryTapped() { delegate?.didTapPoseLibraryFromTransformPanel() }
+    @objc private func resetPoseTapped() { delegate?.didTapResetPoseFromTransformPanel() }
+    @objc private func fitViewTapped() { delegate?.didTapFitViewFromTransformPanel() }
+    @objc private func toggleVisualsTapped() { delegate?.didTapToggleVisualizationsFromTransformPanel() }
 
     // MARK: - Helper
 
@@ -155,6 +188,12 @@ class TransformControlPanel: CheerGlassPanel {
         row.alignment = .center
         row.distribution = .fillEqually
         return row
+    }
+
+    private func makeActionButton(title: String, symbol: String, style: CheerButtonStyle, action: Selector) -> UIButton {
+        let button = CheerButton(title: title, symbol: symbol, style: style, compact: true)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        return button
     }
 
     private func directionButton(title: String, direction: TransformDirection) -> UIButton {

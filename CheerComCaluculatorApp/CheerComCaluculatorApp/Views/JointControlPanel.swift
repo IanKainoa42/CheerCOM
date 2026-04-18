@@ -181,26 +181,6 @@ class JointControlPanel: UIView {
         presetRow.distribution = .fillEqually
         rootStack.addArrangedSubview(presetRow)
 
-        let firstActionRow = UIStackView(arrangedSubviews: [
-            makeActionButton(title: "Library", symbol: "square.grid.2x2", style: .accent, action: #selector(poseLibraryTapped)),
-            makeActionButton(title: "Reset Pose", symbol: "arrow.counterclockwise.circle", style: .danger, action: #selector(resetPoseTapped))
-        ])
-        firstActionRow.axis = .horizontal
-        firstActionRow.spacing = 10
-        firstActionRow.distribution = .fillEqually
-
-        let secondActionRow = UIStackView(arrangedSubviews: [
-            makeActionButton(title: "Fit View", symbol: "viewfinder", style: .secondary, action: #selector(fitViewTapped)),
-            makeActionButton(title: "Visuals", symbol: "sparkles", style: .positive, action: #selector(toggleVisualsTapped))
-        ])
-        secondActionRow.axis = .horizontal
-        secondActionRow.spacing = 10
-        secondActionRow.distribution = .fillEqually
-
-        let footerStack = UIStackView(arrangedSubviews: [firstActionRow, secondActionRow])
-        footerStack.axis = .vertical
-        footerStack.spacing = 8
-        rootStack.addArrangedSubview(footerStack)
     }
 
     private func setupAxisRow(_ row: AxisControlBox) {

@@ -861,12 +861,30 @@ extension SkillAnimatorViewController: TransformControlPanelDelegate {
         scheduleWorkspaceSave()
     }
 
+    func didTapPoseLibraryFromTransformPanel() {
+        openPoseLibraryModal()
+    }
+
+    func didTapResetPoseFromTransformPanel() {
+        didTapResetPose()
+    }
+
+    func didTapFitViewFromTransformPanel() {
+        didTapFitView()
+    }
+
+    func didTapToggleVisualizationsFromTransformPanel() {
+        didTapToggleVisualizations()
+    }
+
     func didTapTransform(direction: TransformDirection) {
         switch direction {
         case .up: transformAxisStep(positive: true, vertical: true)
         case .down: transformAxisStep(positive: false, vertical: true)
         case .left: transformAxisStep(positive: false, vertical: false)
         case .right: transformAxisStep(positive: true, vertical: false)
+        case .forward: transformDepthStep(positive: true)
+        case .backward: transformDepthStep(positive: false)
         }
     }
 
@@ -930,6 +948,20 @@ extension SkillAnimatorViewController: TransformControlPanelDelegate {
                 let s = max(0.1, node.scale.y + sign * transformStep)
                 node.scale = SCNVector3(s, s, s)
             }
+        }
+        scheduleWorkspaceSave()
+    }
+
+    private func transformDepthStep(positive: Bool) {
+        let sign: Float = positive ? 1 : -1
+        let node = sceneManager.characterNode!
+        switch currentTransformMode {
+        case .position:
+            node.position.z += sign * transformStep
+        case .rotation:
+            node.eulerAngles.z += sign * transformStep * .pi / 180
+        case .scale:
+            break
         }
         scheduleWorkspaceSave()
     }

@@ -1,3 +1,4 @@
+import SceneKit
 import UIKit
 
 class DiagnosticsOverlay: UIView {
@@ -85,5 +86,39 @@ class DiagnosticsOverlay: UIView {
         DispatchQueue.main.async { [weak self] in
             self?.textView.text = ""
         }
+    }
+}
+
+final class ValidationOverlayPanel: CheerGlassPanel {
+    private let metricsLabel = UILabel()
+
+    init() {
+        super.init(padding: .init(top: 14, leading: 14, bottom: 14, trailing: 14))
+        setupUI()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupUI() {
+        contentStack.spacing = 6
+
+        let titleLabel = UILabel()
+        titleLabel.text = "Validation Metrics"
+        titleLabel.textColor = CheerPalette.textPrimary
+        titleLabel.font = cheerRoundedFont(.headline, weight: .bold)
+        contentStack.addArrangedSubview(titleLabel)
+
+        metricsLabel.textColor = CheerPalette.textSecondary
+        metricsLabel.font = cheerMonospacedFont(size: 11, weight: .regular)
+        metricsLabel.numberOfLines = 0
+        metricsLabel.text = "Waiting for diagnostics..."
+        contentStack.addArrangedSubview(metricsLabel)
+    }
+
+    func updateMetrics(result: CalculationResult) {
+        let com = result.totalCOM
+        metricsLabel.text = String(format: "COM\nX %.2f cm\nY %.2f cm\nZ %.2f cm", com.x, com.y, com.z)
     }
 }
