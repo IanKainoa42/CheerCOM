@@ -51,6 +51,7 @@ class SceneViewController: UIViewController {
 
     // Validation
     private var validationHarness: CoMValidationHarness?
+    private var validationOverlay: ValidationOverlayPanel?
 
     // Transform State
     var currentTransformMode: TransformMode = .position
@@ -78,6 +79,7 @@ class SceneViewController: UIViewController {
 
         setupBackdrop()
         setupUI()
+        setupValidationOverlay()
 
         // 1. Setup Managers
         sceneManager = CheerCOMSceneManager(view: sceneViewportContainer)
@@ -142,6 +144,24 @@ class SceneViewController: UIViewController {
             backdropView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             backdropView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+
+    // MARK: - Validation Overlay
+
+    private func setupValidationOverlay() {
+        let overlay = ValidationOverlayPanel()
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.isHidden = true
+        view.addSubview(overlay)
+
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            overlay.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            overlay.widthAnchor.constraint(equalToConstant: 300),
+            overlay.heightAnchor.constraint(equalToConstant: 400)
+        ])
+
+        self.validationOverlay = overlay
     }
 
     private func setupUI() {
@@ -570,6 +590,8 @@ class SceneViewController: UIViewController {
 
         print("▶️ Starting Diagnostics...")
 
+        validationOverlay?.isHidden = false
+
         // Show Diagnostics Overlay
         let overlay = DiagnosticsOverlay(frame: view.bounds)
         overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -606,6 +628,7 @@ class SceneViewController: UIViewController {
         ) { [weak self] in
             print("🏁 Diagnostics Finished")
             self?.validationHarness = nil
+            self?.validationOverlay?.isHidden = true
         }
     }
 
@@ -648,6 +671,12 @@ class SceneViewController: UIViewController {
         // Update Visuals
         visualizationsManager.updateCOM(result: result)
         updateSelectedJointHighlightPosition()
+
+        if validationHarness != nil {
+            DispatchQueue.main.async { [weak self] in
+                self?.validationOverlay?.updateMetrics(result: result)
+            }
+        }
 
         // Throttle UI updates
         updateCounter += 1
