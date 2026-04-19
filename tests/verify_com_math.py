@@ -513,6 +513,58 @@ def test_liberty(calculator, t_pose_com):
         print("❌ FAIL: CoM did not rise significantly in Liberty")
         return False
 
+def test_arabesque(calculator, t_pose_com):
+    print("\nTest: Arabesque Pose (Right leg extended back, arms out)")
+    nodes = create_t_pose_nodes()
+
+    # Move right leg backwards (-Z) and up
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 80, -30)
+    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 60, -50)
+    nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 50, -60)
+
+    # Move arms to the side (simulating arabesque arm positions)
+    nodes["mixamorig_RightHand"].position = SCNVector3(60, 130, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-60, 130, 0)
+
+    calculator.bind(nodes)
+    arabesque_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Arabesque CoM: {arabesque_com}")
+
+    z_shift = abs(arabesque_com.z - t_pose_com.z)
+    print(f"   Z Shift from T-Pose: {z_shift:.2f}")
+
+    if z_shift > 1.0:
+        print("✅ PASS: CoM shifted significantly in Z for Arabesque")
+        return True
+    else:
+        print("❌ FAIL: CoM Z shift not significant for Arabesque")
+        return False
+
+def test_scale(calculator, t_pose_com):
+    print("\nTest: Scale Pose (Leg extended to side/up)")
+    nodes = create_t_pose_nodes()
+
+    # Move left leg out and up
+    nodes["mixamorig_LeftLeg"].position = SCNVector3(-40, 80, 0)
+    nodes["mixamorig_LeftFoot"].position = SCNVector3(-60, 90, 0)
+    nodes["mixamorig_LeftToeBase"].position = SCNVector3(-70, 95, 0)
+
+    calculator.bind(nodes)
+    scale_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Scale CoM: {scale_com}")
+
+    lateral_shift = abs(scale_com.x - t_pose_com.x)
+    print(f"   Lateral Shift (X): {lateral_shift:.2f}")
+
+    if lateral_shift > 1.0:
+        print("✅ PASS: CoM shifted laterally for Scale")
+        return True
+    else:
+        print("❌ FAIL: CoM did not shift laterally for Scale")
+        return False
+
 def test_prep_position(calculator, t_pose_com):
     print("\nTest: Prep Position (Slight Squat, Hands at Chest)")
     nodes = create_t_pose_nodes()
@@ -730,6 +782,12 @@ def run_verification():
         sys.exit(1)
 
     if not test_prep_position(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_arabesque(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_scale(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():

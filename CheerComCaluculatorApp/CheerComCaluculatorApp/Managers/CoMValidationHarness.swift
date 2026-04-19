@@ -20,7 +20,9 @@ class CoMValidationHarness {
         .bowAndArrow,
         .lungePose,
         .liberty,
-        .prepPosition
+        .prepPosition,
+        .arabesque,
+        .scale
     ]
 
     private struct ValidationOutcome {
@@ -359,6 +361,26 @@ class CoMValidationHarness {
                 return (true, "CoM dropped slightly by \(String(format: "%.1f", drop)) units (Expected between 1.0 and 10.0)")
             }
             return (false, "CoM drop not in expected range for prep position (Drop: \(String(format: "%.1f", drop)))")
+
+        case .arabesque:
+            // Arabesque: right leg extended back, upper body possibly leaning forward.
+            // Z shift backward for leg should move CoM backward or keep it slightly forward depending on arm extension.
+            // Let's verify it simply changed position significantly.
+            let zShift = abs(com.z - baseline.z)
+            if zShift > 2.0 {
+                return (true, "CoM shifted in Z by \(String(format: "%.1f", zShift)) units due to arabesque leg extension (Expected > 2.0)")
+            }
+            return (false, "CoM Z-axis did not shift significantly for arabesque (Z-Shift: \(String(format: "%.1f", zShift)), Expected > 2.0)")
+
+        case .scale:
+            // Scale: split position with leg extended to side.
+            // This should result in a vertical drop or rise depending on hips, and lateral shift.
+            let lateralShift = abs(com.x - baseline.x)
+            let yDiff = abs(com.y - baseline.y)
+            if lateralShift > 1.0 || yDiff > 1.0 {
+                return (true, "CoM shifted due to scale pose. X-Shift: \(String(format: "%.1f", lateralShift)), Y-Diff: \(String(format: "%.1f", yDiff))")
+            }
+            return (false, "CoM did not shift significantly for scale pose.")
 
         default:
             return (true, "No specific criteria")
