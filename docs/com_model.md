@@ -74,6 +74,7 @@ To verify the CoM calculation in the app:
     *   **Lunge**: Asymmetric leg stance (one forward, one back). CoM should lower compared to T-Pose.
     *   **Liberty**: One leg raised and arms up. CoM should rise compared to T-Pose and shift slightly laterally.
     *   **Prep Position**: Knees slightly bent, hands near chest. CoM should drop slightly but less than a full squat.
+    *   **Bridge**: Backbend pose with hands and feet on the ground. CoM should drop significantly and shift backwards (Z-).
 
     These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, and asymmetry).
 4.  A detailed report is printed to the console and the on-screen overlay, verifying segment masses, individual segment COM points, and the final CoM.

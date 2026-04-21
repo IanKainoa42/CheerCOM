@@ -22,7 +22,8 @@ class CoMValidationHarness {
         .liberty,
         .prepPosition,
         .arabesque,
-        .scale
+        .scale,
+        .bridge
     ]
 
     private struct ValidationOutcome {
@@ -381,6 +382,16 @@ class CoMValidationHarness {
                 return (true, "CoM shifted due to scale pose. X-Shift: \(String(format: "%.1f", lateralShift)), Y-Diff: \(String(format: "%.1f", yDiff))")
             }
             return (false, "CoM did not shift significantly for scale pose.")
+
+        case .bridge:
+            // Bridge: backbend with hands and feet on ground.
+            // CoM should drop significantly compared to T-Pose, and shift backward in Z.
+            let drop = baseline.y - com.y
+            let zShift = com.z - baseline.z // Should be negative (backward)
+            if drop > 10.0 && zShift < -2.0 {
+                return (true, "CoM lowered by \(String(format: "%.1f", drop)) units and shifted backward by \(String(format: "%.1f", zShift)) units (Expected Drop > 10.0, Z-Shift < -2.0)")
+            }
+            return (false, "CoM did not correctly reflect bridge pose (Drop: \(String(format: "%.1f", drop)), Z-Shift: \(String(format: "%.1f", zShift)))")
 
         default:
             return (true, "No specific criteria")

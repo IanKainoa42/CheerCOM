@@ -541,6 +541,44 @@ def test_arabesque(calculator, t_pose_com):
         print("❌ FAIL: CoM Z shift not significant for Arabesque")
         return False
 
+def test_bridge(calculator, t_pose_com):
+    print("\nTest: Bridge Pose (Backbend)")
+    nodes = create_t_pose_nodes()
+
+    # Drop hips and spine significantly
+    nodes["mixamorig_Hips"].position = SCNVector3(0, 50, 0)
+    nodes["mixamorig_Spine"].position = SCNVector3(0, 55, -10)
+    nodes["mixamorig_Spine1"].position = SCNVector3(0, 60, -20)
+    nodes["mixamorig_Spine2"].position = SCNVector3(0, 55, -30)
+    nodes["mixamorig_Neck"].position = SCNVector3(0, 45, -40)
+    nodes["mixamorig_Head"].position = SCNVector3(0, 40, -45)
+    nodes["mixamorig_HeadTop_End"].position = SCNVector3(0, 30, -50)
+
+    # Move arms to the floor behind the head
+    nodes["mixamorig_RightArm"].position = SCNVector3(15, 30, -35)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(20, 15, -40)
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 0, -40)
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-15, 30, -35)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 15, -40)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 0, -40)
+
+    calculator.bind(nodes)
+    bridge_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Bridge CoM: {bridge_com}")
+    drop = t_pose_com.y - bridge_com.y
+    z_shift = bridge_com.z - t_pose_com.z
+
+    print(f"   Drop from T-Pose: {drop:.2f}")
+    print(f"   Z Shift from T-Pose: {z_shift:.2f}")
+
+    if drop > 10.0 and z_shift < -2.0:
+        print("✅ PASS: CoM dropped and shifted backward significantly for Bridge")
+        return True
+    else:
+        print("❌ FAIL: CoM shift not as expected for Bridge")
+        return False
+
 def test_scale(calculator, t_pose_com):
     print("\nTest: Scale Pose (Leg extended to side/up)")
     nodes = create_t_pose_nodes()
@@ -788,6 +826,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_scale(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_bridge(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():
