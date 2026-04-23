@@ -330,6 +330,34 @@ def test_touchdown(calculator, t_pose_com):
         print("❌ FAIL: CoM did not rise significantly")
         return False
 
+def test_layout(calculator, t_pose_com):
+    print("\nTest: Layout Pose (Straight Body, Arms Up)")
+    nodes = create_t_pose_nodes()
+
+    # Arms straight up
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 150, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(20, 180, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 200, 0)
+
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 150, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 180, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 200, 0)
+
+    calculator.bind(nodes)
+    layout_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Layout CoM: {layout_com}")
+
+    rise = layout_com.y - t_pose_com.y
+    print(f"   Rise from T-Pose: {rise:.2f}")
+
+    if rise > 2.0:
+        print("✅ PASS: CoM higher than T-Pose by expected amount")
+        return True
+    else:
+        print("❌ FAIL: CoM not higher than T-Pose")
+        return False
+
 def test_high_v(calculator, t_pose_com):
     print("\nTest: High V Pose (Arms Diagonally Up)")
     nodes = create_t_pose_nodes()
@@ -805,6 +833,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_touchdown(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_layout(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_squat(calculator, t_pose_com):

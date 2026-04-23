@@ -89,6 +89,7 @@ For independent verification of the mathematical model (segment mass ratios, fal
     *   **T-Pose**: Baseline CoM calculation is reasonable.
     *   **High V**: CoM rises when arms are raised diagonally.
     *   **Touchdown**: CoM rises significantly when arms are raised.
+    *   **Layout**: CoM rises similarly to Touchdown when arms are raised and body is straight.
     *   **Squat**: CoM lowers significantly when hips are lowered.
     *   **Lunge**: CoM lowers significantly when stance is widened and hips are lowered.
     *   **Liberty**: CoM rises when one leg is raised and arms are in high V.
