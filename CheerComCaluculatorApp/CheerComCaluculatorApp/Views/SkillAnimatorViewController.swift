@@ -184,6 +184,64 @@ final class SkillAnimatorViewController: UIViewController {
         sceneManager = CheerCOMSceneManager(view: viewportContainer)
         sceneManager.loadCharacter()
         sceneManager.frameCharacter()
+
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleModelPan(_:)))
+        viewportContainer.addGestureRecognizer(panGesture)
+    }
+
+    private var isDraggingModel = false
+    private var initialPanPosition: SCNVector3 = SCNVector3Zero
+    private var panOffset: SCNVector3 = SCNVector3Zero
+
+    @objc private func handleModelPan(_ gesture: UIPanGestureRecognizer) {
+        guard currentTransformMode == .position else { return }
+        let location = gesture.location(in: sceneManager.sceneView)
+
+        switch gesture.state {
+        case .began:
+            let hits = sceneManager.sceneView.hitTest(location, options: [.rootNode: sceneManager.characterNode as Any])
+            if !hits.isEmpty {
+                isDraggingModel = true
+                sceneManager.sceneView.allowsCameraControl = false
+                initialPanPosition = sceneManager.characterNode.position
+
+                // Calculate grab offset relative to XZ plane intersection
+                let p0 = sceneManager.sceneView.unprojectPoint(SCNVector3(Float(location.x), Float(location.y), 0.0))
+                let p1 = sceneManager.sceneView.unprojectPoint(SCNVector3(Float(location.x), Float(location.y), 1.0))
+                let dir = SCNVector3(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z)
+
+                if dir.y != 0 {
+                    let t = (initialPanPosition.y - p0.y) / dir.y
+                    let intersection = SCNVector3(p0.x + dir.x * t, initialPanPosition.y, p0.z + dir.z * t)
+                    panOffset = SCNVector3(initialPanPosition.x - intersection.x, 0, initialPanPosition.z - intersection.z)
+                } else {
+                    panOffset = SCNVector3Zero
+                }
+            } else {
+                isDraggingModel = false
+            }
+        case .changed:
+            guard isDraggingModel else { return }
+            let p0 = sceneManager.sceneView.unprojectPoint(SCNVector3(Float(location.x), Float(location.y), 0.0))
+            let p1 = sceneManager.sceneView.unprojectPoint(SCNVector3(Float(location.x), Float(location.y), 1.0))
+            let dir = SCNVector3(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z)
+
+            if dir.y != 0 {
+                let t = (initialPanPosition.y - p0.y) / dir.y
+                let intersection = SCNVector3(p0.x + dir.x * t, initialPanPosition.y, p0.z + dir.z * t)
+                sceneManager.characterNode.position.x = intersection.x + panOffset.x
+                sceneManager.characterNode.position.z = intersection.z + panOffset.z
+            }
+
+        case .ended, .cancelled:
+            if isDraggingModel {
+                sceneManager.sceneView.allowsCameraControl = true
+                isDraggingModel = false
+                scheduleWorkspaceSave()
+            }
+        default:
+            break
+        }
     }
 
     private func setupControls() {
@@ -920,7 +978,7 @@ extension SkillAnimatorViewController: TransformControlPanelDelegate {
 
     private func baseTransformStep(for mode: TransformMode) -> Float {
         switch mode {
-        case .position: return 0.05
+        case .position: return 0.25
         case .rotation: return 5.0
         case .scale: return 0.1
         }
