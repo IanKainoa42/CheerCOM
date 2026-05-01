@@ -131,11 +131,11 @@ class CoMValidationHarness {
         log("--- System Info ---")
         log("Total Body Mass (Configured): \(calculator.bodyMass) kg")
 
-        let segments = SegmentData.standard
+        let segments = calculator.segments
         log("Number of Segments Defined: \(segments.count)")
 
         // 1. Verify Mass Ratios & Total Mass
-        let totalMassRatio = segments.reduce(0.0) { $0 + $1.massRatio }
+        let totalMassRatio = segments.reduce(0.0) { $0 + $1.mass }
         log("Total Mass Ratio Sum: \(String(format: "%.4f", totalMassRatio))")
 
         if abs(totalMassRatio - 1.0) > 0.001 {
@@ -161,7 +161,7 @@ class CoMValidationHarness {
 
         log("\nSegment Mapping Verification:")
         for segment in segments {
-            log(" - \(segment.name): \(segment.proximalJoint.rawValue) -> \(segment.distalJoint.rawValue)")
+            log(" - \(segment.name): \(segment.prox) -> \(segment.dist)")
         }
         log("")
 
@@ -171,7 +171,7 @@ class CoMValidationHarness {
             let boundNames = Set(result.segmentCOMs.map { $0.name })
             for segment in segments {
                 if !boundNames.contains(segment.name) {
-                    log("   Missing: \(segment.name) (Joints: \(segment.proximalJoint.rawValue) -> \(segment.distalJoint.rawValue))")
+                    log("   Missing: \(segment.name) (Joints: \(segment.prox) -> \(segment.dist))")
                 }
             }
         } else {
