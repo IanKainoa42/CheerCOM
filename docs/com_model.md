@@ -85,6 +85,7 @@ For independent verification of the mathematical model (segment mass ratios, fal
 1.  Run `python3 tests/verify_com_math.py`
 2.  This script mocks the SceneKit vector math and verifies that:
     *   **Mass Ratios**: Total mass ratio sums to exactly 1.0.
+    *   **Segment Mass and COM Points**: The script outputs the segment mass and segment COM points for the baseline T-Pose.
     *   **Hand Fallback**: Correctly defaults to proximal joint if distal tip is missing.
     *   **T-Pose**: Baseline CoM calculation is reasonable.
     *   **High V**: CoM rises when arms are raised diagonally.

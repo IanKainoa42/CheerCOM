@@ -143,6 +143,15 @@ class VisualizationsManager {
         sphere.firstMaterial?.lightingModel = .constant
 
         comMarker = SCNNode(geometry: sphere)
+
+        // Add a secondary glowing halo effect
+        let haloSphere = SCNSphere(radius: 12)
+        haloSphere.firstMaterial?.diffuse.contents = UIColor.green.withAlphaComponent(0.3)
+        haloSphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.3)
+        haloSphere.firstMaterial?.lightingModel = .constant
+        let haloNode = SCNNode(geometry: haloSphere)
+        comMarker.addChildNode(haloNode)
+
         scene.rootNode.addChildNode(comMarker)
 
         print("🔴 Visible COM marker created")

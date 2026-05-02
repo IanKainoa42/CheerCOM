@@ -280,6 +280,11 @@ def test_t_pose(calculator):
     total_com, segments = calculator.calculate_detailed_body_com()
     print(f"   T-Pose CoM: {total_com}")
 
+    print("\n   --- Segment Details ---")
+    for seg in segments:
+        print(f"   {seg['name']:<15} | Mass: {seg['mass']:>5.2f} kg | CoM: {seg['position']}")
+    print("   -----------------------")
+
     # Check Hand Fallback logic (Right Hand missing tip)
     r_hand = next((s for s in segments if s["name"] == "R Hand"), None)
     if r_hand and abs(r_hand['position'].x - 80.0) < 0.001:

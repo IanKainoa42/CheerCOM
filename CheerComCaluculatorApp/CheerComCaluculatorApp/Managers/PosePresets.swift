@@ -291,6 +291,50 @@ class PosePresets {
                 description: "Fully extended straight body position"
             )
 
+        case .testPose1:
+            return PoseDefinition(
+                name: "Test Pose 1",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-85)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(85)),
+                ],
+                description: "Test pose 1"
+            )
+
+        case .testPose2:
+            return PoseDefinition(
+                name: "Test Pose 2",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-170)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(170)),
+                ],
+                description: "Test pose 2"
+            )
+
+        case .testPose3:
+            return PoseDefinition(
+                name: "Test Pose 3",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightUpLeg": SCNVector3(deg(40), deg(0), deg(0)),
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(40), deg(0), deg(0)),
+                ],
+                description: "Test pose 3"
+            )
+
+        case .testPose4:
+            return PoseDefinition(
+                name: "Test Pose 4",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightUpLeg": SCNVector3(deg(-80), deg(0), deg(0)),
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(-80), deg(0), deg(0)),
+                ],
+                description: "Test pose 4"
+            )
+
         case .sideLean:
             return PoseDefinition(
                 name: "Side Lean",
@@ -601,6 +645,7 @@ class PosePresets {
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
             .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose,
+            .testPose1, .testPose2, .testPose3, .testPose4,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
