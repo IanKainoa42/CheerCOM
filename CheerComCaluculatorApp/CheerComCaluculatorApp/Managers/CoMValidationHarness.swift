@@ -431,13 +431,13 @@ class CoMValidationHarness {
             return s.padding(toLength: len, withPad: " ", startingAt: 0)
         }
 
-        log("| " + pad("Segment Name", 20) + " | " + pad("Mass (kg)", 10) + " | " + pad("CoM Position", 25) + " |")
-        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 12) + "|" + String(repeating: "-", count: 27) + "|")
+        log("| " + pad("Segment Name", 20) + " | " + pad("Segment Mass", 12) + " | " + pad("Segment COM", 25) + " |")
+        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 14) + "|" + String(repeating: "-", count: 27) + "|")
 
         for segment in result.segmentCOMs {
             let massString = String(format: "%.3f", segment.mass)
             let posString = formatVector(segment.position)
-            log("| " + pad(segment.name, 20) + " | " + pad(massString, 10) + " | " + pad(posString, 25) + " |")
+            log("| " + pad(segment.name, 20) + " | " + pad(massString, 12) + " | " + pad(posString, 25) + " |")
         }
         log("")
     }

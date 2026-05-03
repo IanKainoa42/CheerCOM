@@ -27,3 +27,7 @@ This document answers the specific questions outlined for the first step of our 
 *   **Assumptions**: The segment CoM is assumed to lie on a straight line connecting the proximal and distal joints at a specific, fixed percentage distance from the proximal joint. If a distal joint (like a fingertip) is missing, the algorithm defaults back to using the proximal joint position for that segment.
 *   **Segment Weights**: The model uses anthropometric mass distribution ratios based on Winter (2009) and de Leva (1996). Recent additions allow for "Body Presets" (e.g., Athletic Female) which dynamically scale the mass ratios for the trunk, upper limbs, and lower limbs while maintaining normalization so they sum to 1.0.
 *   **Coordinate Space**: All CoM calculations are performed in World Coordinate Space by querying the `.presentation.worldPosition` property of the cached `SCNNode` bones to ensure accuracy even during animations.
+
+## Conclusion
+
+The initial baseline audit is complete. The application successfully implements a 17-segment model, and a validation harness has been confirmed operational across all required deterministic test poses, logging segment masses and COM points.

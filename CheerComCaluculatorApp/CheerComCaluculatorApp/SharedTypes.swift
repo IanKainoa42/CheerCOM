@@ -50,6 +50,11 @@ enum PoseType {
     case sideLean
     case lungePose
 
+    case testPose1
+    case testPose2
+    case testPose3
+    case testPose4
+
     // Arms Only Poses
     case armsHighV
     case armsLowV
@@ -106,6 +111,11 @@ enum PoseType {
         case .sideLean: return "Side Lean"
         case .lungePose: return "Lunge"
 
+        case .testPose1: return "Test Pose 1"
+        case .testPose2: return "Test Pose 2"
+        case .testPose3: return "Test Pose 3"
+        case .testPose4: return "Test Pose 4"
+
         // Arms Only
         case .armsHighV: return "High V Arms"
         case .armsLowV: return "Low V Arms"
@@ -149,6 +159,11 @@ enum PoseType {
         case .layout: return "🧍"
         case .sideLean: return "📐"
         case .lungePose: return "🤺"
+
+        case .testPose1: return "🧪"
+        case .testPose2: return "🧪"
+        case .testPose3: return "🧪"
+        case .testPose4: return "🧪"
 
         // Arms
         case .armsHighV: return "🙌"
