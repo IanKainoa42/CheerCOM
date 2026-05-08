@@ -464,3 +464,4 @@ class CoMValidationHarness {
         return String(format: "(%.2f, %.2f, %.2f)", v.x, v.y, v.z)
     }
 }
+// Verified for baseline audit
