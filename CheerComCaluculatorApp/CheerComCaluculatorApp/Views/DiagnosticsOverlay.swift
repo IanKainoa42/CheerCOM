@@ -119,6 +119,14 @@ final class ValidationOverlayPanel: CheerGlassPanel {
 
     func updateMetrics(result: CalculationResult) {
         let com = result.totalCOM
-        metricsLabel.text = String(format: "COM\nX %.2f cm\nY %.2f cm\nZ %.2f cm", com.x, com.y, com.z)
+        var output = String(format: "Final COM: (%.2f, %.2f, %.2f)\n\n", com.x, com.y, com.z)
+
+        output += "Segment Masses & COM Points:\n"
+        for segment in result.segmentCOMs {
+            output += String(format: "%@: %.2f kg | (%.2f, %.2f, %.2f)\n",
+                             segment.name, segment.mass, segment.position.x, segment.position.y, segment.position.z)
+        }
+
+        metricsLabel.text = output
     }
 }

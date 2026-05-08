@@ -152,6 +152,22 @@ class VisualizationsManager {
         let haloNode = SCNNode(geometry: haloSphere)
         comMarker.addChildNode(haloNode)
 
+        // Add a text label node explicitly identifying it as 'CoM'
+        let textGeo = SCNText(string: "CoM", extrusionDepth: 1.0)
+        textGeo.firstMaterial?.diffuse.contents = UIColor.white
+        textGeo.font = UIFont.boldSystemFont(ofSize: 8)
+        let textNode = SCNNode(geometry: textGeo)
+
+        let (min, max) = textNode.boundingBox
+        textNode.pivot = SCNMatrix4MakeTranslation((max.x - min.x) / 2.0, (max.y - min.y) / 2.0, 0)
+        textNode.position = SCNVector3(0, 15, 0) // Positioned slightly above the sphere
+
+        let billboardConstraint = SCNBillboardConstraint()
+        billboardConstraint.freeAxes = .all
+        textNode.constraints = [billboardConstraint]
+
+        comMarker.addChildNode(textNode)
+
         scene.rootNode.addChildNode(comMarker)
 
         print("🔴 Visible COM marker created")
