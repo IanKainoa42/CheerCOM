@@ -320,7 +320,17 @@ class JointLimitsMock:
         "mixamorig_RightLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
         "mixamorig_LeftLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
         "mixamorig_RightForeArm": {"min": SCNVector3(-360, -360, 0), "max": SCNVector3(360, 360, 160)},
-        "mixamorig_LeftForeArm": {"min": SCNVector3(-360, -360, -160), "max": SCNVector3(360, 360, 0)}
+        "mixamorig_LeftForeArm": {"min": SCNVector3(-360, -360, -160), "max": SCNVector3(360, 360, 0)},
+        "mixamorig_RightArm": {"min": SCNVector3(-90, -90, -180), "max": SCNVector3(90, 90, 45)},
+        "mixamorig_LeftArm": {"min": SCNVector3(-90, -90, -45), "max": SCNVector3(90, 90, 180)},
+        "mixamorig_RightUpLeg": {"min": SCNVector3(-180, -90, -90), "max": SCNVector3(45, 90, 90)},
+        "mixamorig_LeftUpLeg": {"min": SCNVector3(-180, -90, -90), "max": SCNVector3(45, 90, 90)},
+        "mixamorig_Spine": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)},
+        "mixamorig_Spine1": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)},
+        "mixamorig_Spine2": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)},
+        "mixamorig_Neck": {"min": SCNVector3(-60, -60, -60), "max": SCNVector3(60, 60, 60)},
+        "mixamorig_RightFoot": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)},
+        "mixamorig_LeftFoot": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)}
     }
 
     @staticmethod
@@ -377,6 +387,32 @@ def test_joint_limits():
         print("✅ PASS: Left Elbow Z clamped to -160 degrees")
     else:
         print(f"❌ FAIL: Left Elbow Z not clamped. Got {math.degrees(clamped_l_elbow.z)}")
+        return False
+
+    # Test Shoulder limits
+    r_shoulder = SCNVector3(0, 0, math.radians(-200))
+    clamped_r_shoulder = JointLimitsMock.clamp_angles("mixamorig_RightArm", r_shoulder)
+    if abs(clamped_r_shoulder.z - math.radians(-180)) < 0.001:
+        print("✅ PASS: Right Shoulder Z clamped to -180 degrees")
+    else:
+        print(f"❌ FAIL: Right Shoulder Z not clamped. Got {math.degrees(clamped_r_shoulder.z)}")
+        return False
+
+    l_shoulder = SCNVector3(0, 0, math.radians(200))
+    clamped_l_shoulder = JointLimitsMock.clamp_angles("mixamorig_LeftArm", l_shoulder)
+    if abs(clamped_l_shoulder.z - math.radians(180)) < 0.001:
+        print("✅ PASS: Left Shoulder Z clamped to 180 degrees")
+    else:
+        print(f"❌ FAIL: Left Shoulder Z not clamped. Got {math.degrees(clamped_l_shoulder.z)}")
+        return False
+
+    # Test Spine limits
+    spine = SCNVector3(math.radians(-90), 0, 0)
+    clamped_spine = JointLimitsMock.clamp_angles("mixamorig_Spine", spine)
+    if abs(clamped_spine.x - math.radians(-45)) < 0.001:
+        print("✅ PASS: Spine X clamped to -45 degrees")
+    else:
+        print(f"❌ FAIL: Spine X not clamped. Got {math.degrees(clamped_spine.x)}")
         return False
 
     return True

@@ -319,6 +319,23 @@ class PosePresets {
                 description: "Side lean with T-arms"
             )
 
+        case .handstand:
+            return PoseDefinition(
+                name: "Handstand",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_Hips": SCNVector3(deg(180), deg(0), deg(0)),
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-180)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(180)),
+                    "mixamorig_RightUpLeg": SCNVector3Zero,
+                    "mixamorig_LeftUpLeg": SCNVector3Zero,
+                    "mixamorig_RightLeg": SCNVector3Zero,
+                    "mixamorig_LeftLeg": SCNVector3Zero,
+                    "mixamorig_Spine": SCNVector3Zero,
+                ],
+                description: "Inverted full body position supported by hands"
+            )
+
         // MARK: - Arms Only Poses
 
         case .armsHighV:
@@ -570,7 +587,7 @@ class PosePresets {
         let allPoses: [PoseType] = [
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean,
+            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .handstand,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,

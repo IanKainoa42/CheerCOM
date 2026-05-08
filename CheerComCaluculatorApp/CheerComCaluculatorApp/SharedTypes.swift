@@ -40,6 +40,7 @@ enum PoseType {
     case pike
     case layout
     case sideLean
+    case handstand
 
     // Arms Only Poses
     case armsHighV
@@ -95,6 +96,7 @@ enum PoseType {
         case .pike: return "Pike"
         case .layout: return "Layout"
         case .sideLean: return "Side Lean"
+        case .handstand: return "Handstand"
 
         // Arms Only
         case .armsHighV: return "High V Arms"

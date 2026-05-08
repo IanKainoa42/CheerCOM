@@ -70,7 +70,17 @@ To verify the CoM calculation in the app:
     *   **Layout**: Straight body. CoM similar to Touchdown/T-Pose but higher than T-Pose.
     *   **Side Lean**: Trunk lateral flexion. CoM should shift laterally (X-axis).
     *   **Bow and Arrow**: Asymmetric arm extension. CoM should shift laterally (X-axis) away from the baseline.
-4.  A detailed report is printed to the console and the on-screen overlay.
+    *   **Handstand**: Inverted position. CoM Y should be elevated similar to Touchdown due to arms supporting the body.
+4.  A detailed report is printed to the console and the on-screen overlay, including a readout of the active Joint Limits.
+
+## Joint Constraints (Realism Goals)
+To ensure poses remain biologically plausible, the system enforces realistic range-of-motion constraints via `JointLimits.swift`.
+These limits clamp the Euler angles (X, Y, Z) of specific `mixamorig_` joints during manual posing and validation:
+*   **Knees**: Clamped to prevent forward bending.
+*   **Elbows**: Clamped to prevent backwards bending.
+*   **Shoulders**: Constrained to prevent impossible overhead rotation.
+*   **Spine**: Constrained to prevent excessive backbends.
+*   **Neck & Ankles**: Constrained within realistic human flexibility bounds.
 
 ### Verification Script (Python)
 

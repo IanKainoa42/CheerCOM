@@ -13,7 +13,8 @@ class CoMValidationHarness {
         .pike,
         .layout,
         .sideLean,
-        .bowAndArrow
+        .bowAndArrow,
+        .handstand
     ]
 
     private struct ValidationOutcome {
@@ -53,7 +54,10 @@ class CoMValidationHarness {
         // 1. Log System Info
         logSystemInfo(calculator: calculator, sceneManager: sceneManager)
 
-        // 2. Iterate Poses recursively
+        // 2. Log Joint Limits
+        logJointLimits()
+
+        // 3. Iterate Poses recursively
         runNextPose(index: 0,
                     sceneManager: sceneManager,
                     calculator: calculator,
@@ -184,6 +188,24 @@ class CoMValidationHarness {
         log("-------------------\n")
     }
 
+    private func logJointLimits() {
+        log("--- Active Joint Limits ---")
+        for (joint, limit) in JointLimits.limits {
+            // Convert to degrees for easier reading
+            let minX = limit.minAngle.x * 180 / .pi
+            let maxX = limit.maxAngle.x * 180 / .pi
+            let minY = limit.minAngle.y * 180 / .pi
+            let maxY = limit.maxAngle.y * 180 / .pi
+            let minZ = limit.minAngle.z * 180 / .pi
+            let maxZ = limit.maxAngle.z * 180 / .pi
+            log("Joint: \(joint)")
+            log("  X: [\(String(format: "%.0f", minX)), \(String(format: "%.0f", maxX))]")
+            log("  Y: [\(String(format: "%.0f", minY)), \(String(format: "%.0f", maxY))]")
+            log("  Z: [\(String(format: "%.0f", minZ)), \(String(format: "%.0f", maxZ))]")
+        }
+        log("---------------------------\n")
+    }
+
     private func validatePose(_ poseType: PoseType,
                               sceneManager: CheerCOMSceneManager,
                               calculator: COMCalculator,
@@ -309,6 +331,15 @@ class CoMValidationHarness {
                 return (true, "CoM shifted laterally by \(String(format: "%.1f", diff)) units due to asymmetric arm pose (Expected > 1.0)")
             }
             return (false, "CoM did not shift laterally significantly for asymmetric arm pose (Diff: \(String(format: "%.1f", diff)), Expected > 1.0)")
+
+        case .handstand:
+            // Handstand is inverted. Y should be higher or near T-Pose but with inverted torso.
+            // A simple check is that arms are up so Y should be elevated similar to Touchdown
+            let diffY = com.y - baseline.y
+            if diffY > 1.0 {
+                return (true, "CoM inverted and elevated by \(String(format: "%.1f", diffY)) units (Expected > 1.0)")
+            }
+            return (false, "CoM failed to elevate for Handstand (Diff: \(String(format: "%.1f", diffY)), Expected > 1.0)")
 
         default:
             return (true, "No specific criteria")
