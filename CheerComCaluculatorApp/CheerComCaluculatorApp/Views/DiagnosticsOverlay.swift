@@ -2,6 +2,18 @@ import UIKit
 
 class DiagnosticsOverlay: UIView {
 
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "CoM Diagnostics & Debug Output"
+        label.textColor = .white
+        label.font = .boldSystemFont(ofSize: 16)
+        label.textAlignment = .center
+        label.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        label.layer.cornerRadius = 8
+        label.layer.masksToBounds = true
+        return label
+    }()
+
     private let textView: UITextView = {
         let tv = UITextView()
         tv.backgroundColor = UIColor.black.withAlphaComponent(0.8)
@@ -39,6 +51,7 @@ class DiagnosticsOverlay: UIView {
     private func setupUI() {
         backgroundColor = UIColor.black.withAlphaComponent(0.5)
 
+        addSubview(titleLabel)
         addSubview(textView)
         addSubview(closeButton)
 
@@ -50,12 +63,20 @@ class DiagnosticsOverlay: UIView {
 
         let padding: CGFloat = 20
         let buttonHeight: CGFloat = 44
+        let titleHeight: CGFloat = 40
 
-        textView.frame = CGRect(
+        titleLabel.frame = CGRect(
             x: padding,
             y: padding + safeAreaInsets.top,
             width: bounds.width - (padding * 2),
-            height: bounds.height - (padding * 3) - safeAreaInsets.top - buttonHeight
+            height: titleHeight
+        )
+
+        textView.frame = CGRect(
+            x: padding,
+            y: titleLabel.frame.maxY + 10,
+            width: bounds.width - (padding * 2),
+            height: bounds.height - (padding * 4) - safeAreaInsets.top - buttonHeight - titleHeight
         )
 
         closeButton.frame = CGRect(

@@ -18,3 +18,9 @@
   - A segment's local CoM position is computed as a fixed percentage along the vector from its proximal joint to its distal joint (`proxPos + (distPos - proxPos) * comRatio`).
   - Total CoM is the mass-weighted average of all 17 segment CoMs: `Sum(segMass * segCOM) / TotalMass`.
   - The coordinate system uses Y-up, X-right, Z-forward. CoM vectors are in world coordinates.
+
+## 3. Realism Goals Assessment
+- **A) Skeletal Rig + Joint Constraints**: A basic 17-segment Mixamo rig is implemented. Joint limits are currently enforced globally via `JointLimits.swift` but need to be visually reported or logged when clamped.
+- **B) Anthropometric Mass Distribution**: Implemented based on Winter (2009) and de Leva (1996). Segment masses are ratios of total mass.
+- **C) Pose -> Segment Transform -> CoM**: The transform order relies on SceneKit's internal scene graph updates. Debug visuals for segment CoM points, CoM marker, ground plane, and axes exist.
+- **D) Move Body Into Any Shape**: Supported via explicit joint angle control and pose presets. IK or other control methods are not currently present.

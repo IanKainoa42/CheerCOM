@@ -127,13 +127,23 @@ class VisualizationsManager {
     private func setupCOMMarker(in scene: SCNScene) {
         let sphere = SCNSphere(radius: 8)
         sphere.firstMaterial?.diffuse.contents = UIColor.green
-        sphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.5)
+        sphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.8)
         sphere.firstMaterial?.lightingModel = .constant
 
         comMarker = SCNNode(geometry: sphere)
+
+        // Add a pulsing animation to the CoM marker for better visibility
+        let pulseAnimation = CABasicAnimation(keyPath: "opacity")
+        pulseAnimation.fromValue = 0.6
+        pulseAnimation.toValue = 1.0
+        pulseAnimation.duration = 1.0
+        pulseAnimation.autoreverses = true
+        pulseAnimation.repeatCount = .infinity
+        comMarker.addAnimation(pulseAnimation, forKey: "pulse")
+
         scene.rootNode.addChildNode(comMarker)
 
-        print("🔴 COM marker created")
+        print("🔴 COM marker created with pulse animation")
     }
 
     private func setupSegmentMarkers(in scene: SCNScene) {

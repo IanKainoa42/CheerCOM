@@ -88,3 +88,9 @@ For independent verification of the mathematical model (segment mass ratios, fal
 1.  **Clavicle Segment**: The shoulder girdle (clavicle) is not modeled as a separate moving segment. Its mass is effectively lumped into the Thorax.
 2.  **Head CoM**: The Head segment uses `Neck` → `Head` joints. This places the CoM lower than anatomical reality (mid-neck vs cranium).
 3.  **Rig Dependency**: The calculation relies on specific `mixamorig_` bone names. If a custom character uses different naming, the calculator must be updated.
+
+## Future Improvements
+
+- Add pose preset import/export functionality to allow users to share custom poses.
+- Further refine the mass distribution models for athletes vs. average builds.
+- Eliminate per-frame memory allocations when rendering segment visualizations to improve performance.
