@@ -47,6 +47,7 @@ class CoMValidationHarness {
                        logger: ((String) -> Void)? = nil,
                        completion: (() -> Void)? = nil) {
 
+        print("Starting CoM Validation Harness...")
         self.logger = logger
 
         log("\n==========================================")
