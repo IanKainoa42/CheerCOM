@@ -114,11 +114,30 @@ final class ValidationOverlayPanel: CheerGlassPanel {
         metricsLabel.font = cheerMonospacedFont(size: 11, weight: .regular)
         metricsLabel.numberOfLines = 0
         metricsLabel.text = "Waiting for diagnostics..."
-        contentStack.addArrangedSubview(metricsLabel)
+
+        let scrollView = UIScrollView()
+        scrollView.heightAnchor.constraint(equalToConstant: 120).isActive = true
+        scrollView.addSubview(metricsLabel)
+        metricsLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            metricsLabel.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            metricsLabel.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            metricsLabel.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            metricsLabel.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            metricsLabel.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+        ])
+
+        contentStack.addArrangedSubview(scrollView)
     }
 
     func updateMetrics(result: CalculationResult) {
         let com = result.totalCOM
-        metricsLabel.text = String(format: "COM\nX %.2f cm\nY %.2f cm\nZ %.2f cm", com.x, com.y, com.z)
+        var text = String(format: "TOTAL COM\nX %.2f  Y %.2f  Z %.2f\n\nSEGMENTS:\n", com.x, com.y, com.z)
+
+        for seg in result.segmentCOMs {
+            text += String(format: "%@: %.2fkg @ (%.1f, %.1f, %.1f)\n", seg.name, seg.mass, seg.position.x, seg.position.y, seg.position.z)
+        }
+
+        metricsLabel.text = text
     }
 }
