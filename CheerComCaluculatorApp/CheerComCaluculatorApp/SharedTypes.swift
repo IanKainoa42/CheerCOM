@@ -206,3 +206,47 @@ enum TransformDirection: String, Codable {
     case forward
     case backward
 }
+
+public struct SegmentData {
+    public let name: String
+    public let proximalJoint: Joint
+    public let distalJoint: Joint
+    public let massRatio: Double
+    public let comRatio: Double
+
+    public init(name: String, proximalJoint: Joint, distalJoint: Joint, massRatio: Double, comRatio: Double) {
+        self.name = name
+        self.proximalJoint = proximalJoint
+        self.distalJoint = distalJoint
+        self.massRatio = massRatio
+        self.comRatio = comRatio
+    }
+}
+
+public enum Joint: String, CaseIterable, Codable {
+    case hips = "mixamorig_Hips"
+    case spine = "mixamorig_Spine"
+    case spine1 = "mixamorig_Spine1"
+    case spine2 = "mixamorig_Spine2"
+    case neck = "mixamorig_Neck"
+    case head = "mixamorig_Head"
+    case headTop_End = "mixamorig_HeadTop_End"
+    case rightShoulder = "mixamorig_RightShoulder"
+    case rightArm = "mixamorig_RightArm"
+    case rightForeArm = "mixamorig_RightForeArm"
+    case rightHand = "mixamorig_RightHand"
+    case rightHandMiddle1 = "mixamorig_RightHandMiddle1"
+    case leftShoulder = "mixamorig_LeftShoulder"
+    case leftArm = "mixamorig_LeftArm"
+    case leftForeArm = "mixamorig_LeftForeArm"
+    case leftHand = "mixamorig_LeftHand"
+    case leftHandMiddle1 = "mixamorig_LeftHandMiddle1"
+    case rightUpLeg = "mixamorig_RightUpLeg"
+    case rightLeg = "mixamorig_RightLeg"
+    case rightFoot = "mixamorig_RightFoot"
+    case leftUpLeg = "mixamorig_LeftUpLeg"
+    case leftLeg = "mixamorig_LeftLeg"
+    case leftFoot = "mixamorig_LeftFoot"
+    case leftToeBase = "mixamorig_LeftToeBase"
+    case rightToeBase = "mixamorig_RightToeBase"
+}
