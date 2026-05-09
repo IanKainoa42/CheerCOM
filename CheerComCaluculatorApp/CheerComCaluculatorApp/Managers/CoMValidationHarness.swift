@@ -131,7 +131,7 @@ class CoMValidationHarness {
         log("--- System Info ---")
         log("Total Body Mass (Configured): \(calculator.bodyMass) kg")
 
-        let segments = SegmentData.standard
+        let segments = calculator.segments
         log("Number of Segments Defined: \(segments.count)")
 
         // 1. Verify Mass Ratios & Total Mass
