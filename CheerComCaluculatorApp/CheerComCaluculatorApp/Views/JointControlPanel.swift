@@ -1,6 +1,6 @@
 import UIKit
 import SceneKit
-import ModelRigKit
+
 
 
 protocol JointControlPanelDelegate: AnyObject {
@@ -95,9 +95,9 @@ class JointControlPanel: UIView {
     private let sectionLabel = UILabel()
     private var jointSelectionButton: CheerButton!
     
-    private let xAxisRow = AxisControlBox(axis: .x)
-    private let yAxisRow = AxisControlBox(axis: .y)
-    private let zAxisRow = AxisControlBox(axis: .z)
+    private let xAxisRow = AxisControlBox(axis: .xAxis)
+    private let yAxisRow = AxisControlBox(axis: .yAxis)
+    private let zAxisRow = AxisControlBox(axis: .zAxis)
 
     init(width: CGFloat) {
         super.init(frame: .zero)
@@ -275,9 +275,9 @@ class JointControlPanel: UIView {
 private extension JointAxis {
     var shortLabel: String {
         switch self {
-        case .x: return "X"
-        case .y: return "Y"
-        case .z: return "Z"
+        case .xAxis: return "X"
+        case .yAxis: return "Y"
+        case .zAxis: return "Z"
         }
     }
 }

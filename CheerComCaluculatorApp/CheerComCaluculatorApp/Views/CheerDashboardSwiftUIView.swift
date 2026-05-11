@@ -1,5 +1,5 @@
 import SwiftUI
-import ModelRigKit
+
 
 struct CheerDashboardSwiftUIView: View {
     enum Axis: String, CaseIterable, Identifiable {

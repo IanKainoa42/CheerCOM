@@ -9,9 +9,13 @@ enum BodyPreset: String, CaseIterable, Identifiable {
 }
 
 enum JointAxis: String, CaseIterable, Codable {
-    case x = "X-Axis"
-    case y = "Y-Axis"
-    case z = "Z-Axis"
+    case xAxis = "X-Axis"
+    case yAxis = "Y-Axis"
+    case zAxis = "Z-Axis"
+
+
+
+
 }
 
 enum PoseCategory {
