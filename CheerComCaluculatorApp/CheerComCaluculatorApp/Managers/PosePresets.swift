@@ -293,46 +293,46 @@ class PosePresets {
 
         case .testPose1:
             return PoseDefinition(
-                name: "Test Pose 1",
+                name: "Baseline Validation 1",
                 category: .fullBody,
                 jointAngles: [
                     "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-85)),
                     "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(85)),
                 ],
-                description: "Test pose 1"
+                description: "Deterministic baseline pose for CoM validation (Arms low)"
             )
 
         case .testPose2:
             return PoseDefinition(
-                name: "Test Pose 2",
+                name: "Baseline Validation 2",
                 category: .fullBody,
                 jointAngles: [
                     "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-170)),
                     "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(170)),
                 ],
-                description: "Test pose 2"
+                description: "Deterministic baseline pose for CoM validation (Arms high)"
             )
 
         case .testPose3:
             return PoseDefinition(
-                name: "Test Pose 3",
+                name: "Baseline Validation 3",
                 category: .fullBody,
                 jointAngles: [
                     "mixamorig_RightUpLeg": SCNVector3(deg(40), deg(0), deg(0)),
                     "mixamorig_LeftUpLeg": SCNVector3(deg(40), deg(0), deg(0)),
                 ],
-                description: "Test pose 3"
+                description: "Deterministic baseline pose for CoM validation (Legs forward)"
             )
 
         case .testPose4:
             return PoseDefinition(
-                name: "Test Pose 4",
+                name: "Baseline Validation 4",
                 category: .fullBody,
                 jointAngles: [
                     "mixamorig_RightUpLeg": SCNVector3(deg(-80), deg(0), deg(0)),
                     "mixamorig_LeftUpLeg": SCNVector3(deg(-80), deg(0), deg(0)),
                 ],
-                description: "Test pose 4"
+                description: "Deterministic baseline pose for CoM validation (Legs squatting)"
             )
 
         case .sideLean:

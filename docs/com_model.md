@@ -57,7 +57,7 @@ Left and Right sides are symmetric.
 11. **Foot** (1.45%): Ankle → Toes
     *   *Joints*: `mixamorig_RightFoot` → `mixamorig_RightToeBase`
 
-## Verification
+## How to verify correctness (Verification)
 
 To verify the CoM calculation in the app:
 1.  Launch the app.
