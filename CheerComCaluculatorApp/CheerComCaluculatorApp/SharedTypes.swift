@@ -1,9 +1,21 @@
 import Foundation
 
-enum JointAxis: String {
-    case x = "X-Axis"
-    case y = "Y-Axis"
-    case z = "Z-Axis"
+enum BodyPreset: String, CaseIterable, Identifiable {
+    case averageNeutral = "Neutral"
+    case athleticFemale = "Athletic F"
+    case athleticMale = "Athletic M"
+
+    var id: String { rawValue }
+}
+
+enum JointAxis: String, CaseIterable, Codable {
+    case xAxis = "X-Axis"
+    case yAxis = "Y-Axis"
+    case zAxis = "Z-Axis"
+
+
+
+
 }
 
 enum PoseCategory {
@@ -40,7 +52,12 @@ enum PoseType {
     case pike
     case layout
     case sideLean
-    case handstand
+    case lungePose
+
+    case testPose1
+    case testPose2
+    case testPose3
+    case testPose4
 
     // Arms Only Poses
     case armsHighV
@@ -66,7 +83,7 @@ enum PoseType {
     var category: PoseCategory {
         switch self {
         case .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque, .bridge,
-            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .handstand:
+            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose:
             return .fullBody
         case .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow, .armsDaggers,
             .armsBrokenT, .armsHalfHighVHalfT:
@@ -96,7 +113,12 @@ enum PoseType {
         case .pike: return "Pike"
         case .layout: return "Layout"
         case .sideLean: return "Side Lean"
-        case .handstand: return "Handstand"
+        case .lungePose: return "Lunge"
+
+        case .testPose1: return "Test Pose 1"
+        case .testPose2: return "Test Pose 2"
+        case .testPose3: return "Test Pose 3"
+        case .testPose4: return "Test Pose 4"
 
         // Arms Only
         case .armsHighV: return "High V Arms"
@@ -140,7 +162,12 @@ enum PoseType {
         case .pike: return "📐"
         case .layout: return "🧍"
         case .sideLean: return "📐"
-        case .handstand: return "🤸"
+        case .lungePose: return "🤺"
+
+        case .testPose1: return "🧪"
+        case .testPose2: return "🧪"
+        case .testPose3: return "🧪"
+        case .testPose4: return "🧪"
 
         // Arms
         case .armsHighV: return "🙌"
@@ -169,10 +196,61 @@ enum RotationDirection {
     case negative
 }
 
-enum TransformMode {
-    case position, rotation, scale
+enum TransformMode: String, CaseIterable, Codable {
+    case position
+    case rotation
+    case scale
 }
 
-enum TransformDirection {
-    case up, down, left, right
+enum TransformDirection: String, Codable {
+    case up
+    case down
+    case left
+    case right
+    case forward
+    case backward
+}
+
+public struct SegmentData {
+    public let name: String
+    public let proximalJoint: Joint
+    public let distalJoint: Joint
+    public let massRatio: Double
+    public let comRatio: Double
+
+    public init(name: String, proximalJoint: Joint, distalJoint: Joint, massRatio: Double, comRatio: Double) {
+        self.name = name
+        self.proximalJoint = proximalJoint
+        self.distalJoint = distalJoint
+        self.massRatio = massRatio
+        self.comRatio = comRatio
+    }
+}
+
+public enum Joint: String, CaseIterable, Codable {
+    case hips = "mixamorig_Hips"
+    case spine = "mixamorig_Spine"
+    case spine1 = "mixamorig_Spine1"
+    case spine2 = "mixamorig_Spine2"
+    case neck = "mixamorig_Neck"
+    case head = "mixamorig_Head"
+    case headTop_End = "mixamorig_HeadTop_End"
+    case rightShoulder = "mixamorig_RightShoulder"
+    case rightArm = "mixamorig_RightArm"
+    case rightForeArm = "mixamorig_RightForeArm"
+    case rightHand = "mixamorig_RightHand"
+    case rightHandMiddle1 = "mixamorig_RightHandMiddle1"
+    case leftShoulder = "mixamorig_LeftShoulder"
+    case leftArm = "mixamorig_LeftArm"
+    case leftForeArm = "mixamorig_LeftForeArm"
+    case leftHand = "mixamorig_LeftHand"
+    case leftHandMiddle1 = "mixamorig_LeftHandMiddle1"
+    case rightUpLeg = "mixamorig_RightUpLeg"
+    case rightLeg = "mixamorig_RightLeg"
+    case rightFoot = "mixamorig_RightFoot"
+    case leftUpLeg = "mixamorig_LeftUpLeg"
+    case leftLeg = "mixamorig_LeftLeg"
+    case leftFoot = "mixamorig_LeftFoot"
+    case leftToeBase = "mixamorig_LeftToeBase"
+    case rightToeBase = "mixamorig_RightToeBase"
 }

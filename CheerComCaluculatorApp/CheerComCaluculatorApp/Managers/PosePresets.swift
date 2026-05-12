@@ -1,6 +1,7 @@
 import Foundation
 import SceneKit
 
+
 struct PoseDefinition {
     let name: String
     let category: PoseCategory
@@ -290,6 +291,50 @@ class PosePresets {
                 description: "Fully extended straight body position"
             )
 
+        case .testPose1:
+            return PoseDefinition(
+                name: "Test Pose 1",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-85)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(85)),
+                ],
+                description: "Test pose 1"
+            )
+
+        case .testPose2:
+            return PoseDefinition(
+                name: "Test Pose 2",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-170)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(170)),
+                ],
+                description: "Test pose 2"
+            )
+
+        case .testPose3:
+            return PoseDefinition(
+                name: "Test Pose 3",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightUpLeg": SCNVector3(deg(40), deg(0), deg(0)),
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(40), deg(0), deg(0)),
+                ],
+                description: "Test pose 3"
+            )
+
+        case .testPose4:
+            return PoseDefinition(
+                name: "Test Pose 4",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightUpLeg": SCNVector3(deg(-80), deg(0), deg(0)),
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(-80), deg(0), deg(0)),
+                ],
+                description: "Test pose 4"
+            )
+
         case .sideLean:
             return PoseDefinition(
                 name: "Side Lean",
@@ -319,21 +364,33 @@ class PosePresets {
                 description: "Side lean with T-arms"
             )
 
-        case .handstand:
+        case .lungePose:
             return PoseDefinition(
-                name: "Handstand",
+                name: "Lunge",
                 category: .fullBody,
                 jointAngles: [
-                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-180)),
-                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(180)),
-                    "mixamorig_RightUpLeg": SCNVector3Zero,
-                    "mixamorig_RightLeg": SCNVector3Zero,
-                    "mixamorig_LeftUpLeg": SCNVector3Zero,
+                    "mixamorig_Hips": SCNVector3Zero,
+                    "mixamorig_Spine": SCNVector3Zero,
+                    "mixamorig_Spine1": SCNVector3Zero,
+                    "mixamorig_Spine2": SCNVector3Zero,
+                    "mixamorig_Neck": SCNVector3Zero,
+                    "mixamorig_Head": SCNVector3Zero,
+                    "mixamorig_RightShoulder": SCNVector3Zero,
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-90)),
+                    "mixamorig_RightForeArm": SCNVector3Zero,
+                    "mixamorig_RightHand": SCNVector3Zero,
+                    "mixamorig_LeftShoulder": SCNVector3Zero,
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(90)),
+                    "mixamorig_LeftForeArm": SCNVector3Zero,
+                    "mixamorig_LeftHand": SCNVector3Zero,
+                    "mixamorig_RightUpLeg": SCNVector3(deg(70), deg(0), deg(0)),
+                    "mixamorig_RightLeg": SCNVector3(deg(-90), deg(0), deg(0)),
+                    "mixamorig_RightFoot": SCNVector3Zero,
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(-10), deg(0), deg(0)),
                     "mixamorig_LeftLeg": SCNVector3Zero,
-                    "mixamorig_RightHand": SCNVector3(deg(90), deg(0), deg(0)),
-                    "mixamorig_LeftHand": SCNVector3(deg(90), deg(0), deg(0)),
+                    "mixamorig_LeftFoot": SCNVector3Zero,
                 ],
-                description: "Handstand position with body straight and hands flexed"
+                description: "Lunge with front knee bent 90°, T-arms"
             )
 
         // MARK: - Arms Only Poses
@@ -587,8 +644,8 @@ class PosePresets {
         let allPoses: [PoseType] = [
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean,
-            .handstand,
+            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose,
+            .testPose1, .testPose2, .testPose3, .testPose4,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
