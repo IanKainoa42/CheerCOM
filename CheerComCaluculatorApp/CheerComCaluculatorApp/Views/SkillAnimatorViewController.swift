@@ -1,6 +1,6 @@
 import UIKit
 import SceneKit
-import ModelRigKit
+
 
 /// Root view controller for Skill Animator mode.
 ///
@@ -1123,9 +1123,9 @@ extension SkillAnimatorViewController: JointControlPanelDelegate {
 
         var newAngles = joint.eulerAngles
         switch axis {
-        case .x: newAngles.x = angle
-        case .y: newAngles.y = angle
-        case .z: newAngles.z = angle
+        case .xAxis: newAngles.x = angle
+        case .yAxis: newAngles.y = angle
+        case .zAxis: newAngles.z = angle
         }
 
         if let jointName = joint.name {
@@ -1157,9 +1157,9 @@ extension SkillAnimatorViewController: JointControlPanelDelegate {
 
         var newAngles = joint.eulerAngles
         switch axis {
-        case .x: newAngles.x += delta
-        case .y: newAngles.y += delta
-        case .z: newAngles.z += delta
+        case .xAxis: newAngles.x += delta
+        case .yAxis: newAngles.y += delta
+        case .zAxis: newAngles.z += delta
         }
 
         if let jointName = joint.name {

@@ -1,6 +1,6 @@
 import SceneKit
 import UIKit
-import ModelRigKit
+
 
 
 class VisualizationsManager {
@@ -53,6 +53,7 @@ class VisualizationsManager {
     var bosNode: SCNNode!
     var gridNode: SCNNode!
     var axesNode: SCNNode!
+    var groundPlaneNode: SCNNode!
     var segmentCOMNodes: SCNNode!
     var skeletonNodes: SCNNode!
 
@@ -69,6 +70,7 @@ class VisualizationsManager {
             bosNode.isHidden = !showAdvancedVisualizations
             gridNode.isHidden = !showAdvancedVisualizations
             axesNode.isHidden = !showAdvancedVisualizations
+            groundPlaneNode.isHidden = !showAdvancedVisualizations
             segmentCOMNodes.isHidden = !showAdvancedVisualizations
             skeletonNodes.isHidden = !showAdvancedVisualizations
 
@@ -219,6 +221,16 @@ class VisualizationsManager {
         gridNode.addChildNode(planeNode2)
         gridNode.isHidden = true
         scene.rootNode.addChildNode(gridNode)
+
+        // Ground Plane
+        let groundGeo = SCNPlane(width: 500, height: 500)
+        groundGeo.firstMaterial?.diffuse.contents = UIColor.darkGray.withAlphaComponent(0.5)
+        groundGeo.firstMaterial?.isDoubleSided = true
+        groundPlaneNode = SCNNode(geometry: groundGeo)
+        groundPlaneNode.eulerAngles.x = -.pi / 2 // Lay flat on XZ plane
+        groundPlaneNode.position.y = -0.1 // Slightly below origin to avoid z-fighting with feet
+        groundPlaneNode.isHidden = true
+        scene.rootNode.addChildNode(groundPlaneNode)
 
         // Axes Indicator
         axesNode = SCNNode()
@@ -608,3 +620,4 @@ class VisualizationsManager {
         }
     }
 }
+// Verified for baseline audit

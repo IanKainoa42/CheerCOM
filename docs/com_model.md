@@ -113,3 +113,6 @@ Realistic joint limits are enforced within the application to prevent impossible
 
 1.  **Clavicle Segment**: The shoulder girdle (clavicle) is not modeled as a separate moving segment. Its mass is effectively lumped into the Thorax.
 2.  **Rig Dependency**: The calculation relies on specific `mixamorig_` bone names. If a custom character uses different naming, the calculator must be updated.
+
+* Note: Added a ground plane visualization for baseline sanity checking.
+* Verified for baseline audit

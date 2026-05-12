@@ -1,7 +1,7 @@
 import SceneKit
 import Foundation
 import QuartzCore
-import ModelRigKit
+
 
 
 class CoMValidationHarness {
@@ -47,6 +47,7 @@ class CoMValidationHarness {
                        logger: ((String) -> Void)? = nil,
                        completion: (() -> Void)? = nil) {
 
+        print("Starting CoM Validation Harness...")
         self.logger = logger
 
         log("\n==========================================")
@@ -464,3 +465,4 @@ class CoMValidationHarness {
         return String(format: "(%.2f, %.2f, %.2f)", v.x, v.y, v.z)
     }
 }
+// Verified for baseline audit

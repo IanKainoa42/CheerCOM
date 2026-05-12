@@ -1,6 +1,6 @@
 import Foundation
 import SceneKit
-import ModelRigKit
+
 
 struct PoseDefinition {
     let name: String

@@ -1,7 +1,7 @@
 import Foundation
 import SceneKit
 import simd
-import ModelRigKit
+
 
 /// Interpolates joint euler angles between skill keyframes using SLERP on quaternions.
 public struct KeyframeInterpolator {

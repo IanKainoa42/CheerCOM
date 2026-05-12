@@ -20,33 +20,33 @@ class COMCalculator {
     // Based on anthropometric data from Winter (2009) and de Leva (1996)
     // Updated for Mixamo skeleton with mixamorig_ prefix
     // Note: Clavicle mass is assumed to be integrated into Thorax.
-    let segments: [(name: String, prox: String, dist: String, mass: Double, com: Double)] = [
+    let segments: [SegmentData] = [
         // Trunk subdivision (Total 49.7%)
-        ("Pelvis", "mixamorig_Hips", "mixamorig_Spine", 0.146, 0.50),
-        ("Abdomen Lower", "mixamorig_Spine", "mixamorig_Spine1", 0.0855, 0.50),
-        ("Abdomen Upper", "mixamorig_Spine1", "mixamorig_Spine2", 0.0855, 0.50),
-        ("Thorax", "mixamorig_Spine2", "mixamorig_Neck", 0.180, 0.50),
+        SegmentData(name: "Pelvis", proximalJoint: .hips, distalJoint: .spine, massRatio: 0.146, comRatio: 0.50),
+        SegmentData(name: "Abdomen Lower", proximalJoint: .spine, distalJoint: .spine1, massRatio: 0.0855, comRatio: 0.50),
+        SegmentData(name: "Abdomen Upper", proximalJoint: .spine1, distalJoint: .spine2, massRatio: 0.0855, comRatio: 0.50),
+        SegmentData(name: "Thorax", proximalJoint: .spine2, distalJoint: .neck, massRatio: 0.180, comRatio: 0.50),
 
         // Head (Total 8.1%)
-        ("Head", "mixamorig_Head", "mixamorig_HeadTop_End", 0.081, 0.50),
+        SegmentData(name: "Head", proximalJoint: .head, distalJoint: .headTop_End, massRatio: 0.081, comRatio: 0.50),
 
         // Upper Limbs (Total 10.0%)
         // RightArm = Humerus (Shoulder to Elbow)
-        ("R Upper Arm", "mixamorig_RightArm", "mixamorig_RightForeArm", 0.028, 0.44),
+        SegmentData(name: "R Upper Arm", proximalJoint: .rightArm, distalJoint: .rightForeArm, massRatio: 0.028, comRatio: 0.44),
         // RightForeArm = Radius/Ulna (Elbow to Wrist)
-        ("R Forearm", "mixamorig_RightForeArm", "mixamorig_RightHand", 0.016, 0.43),
+        SegmentData(name: "R Forearm", proximalJoint: .rightForeArm, distalJoint: .rightHand, massRatio: 0.016, comRatio: 0.43),
         // RightHand = Hand (Wrist to Knuckles)
-        ("R Hand", "mixamorig_RightHand", "mixamorig_RightHandMiddle1", 0.006, 0.50),
+        SegmentData(name: "R Hand", proximalJoint: .rightHand, distalJoint: .rightHandMiddle1, massRatio: 0.006, comRatio: 0.50),
 
-        ("L Upper Arm", "mixamorig_LeftArm", "mixamorig_LeftForeArm", 0.028, 0.44),
-        ("L Forearm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", 0.016, 0.43),
-        ("L Hand", "mixamorig_LeftHand", "mixamorig_LeftHandMiddle1", 0.006, 0.50),
-        ("R Thigh", "mixamorig_RightUpLeg", "mixamorig_RightLeg", 0.100, 0.43),
-        ("R Shank", "mixamorig_RightLeg", "mixamorig_RightFoot", 0.0465, 0.43),
-        ("R Foot", "mixamorig_RightFoot", "mixamorig_RightToeBase", 0.0145, 0.50),
-        ("L Thigh", "mixamorig_LeftUpLeg", "mixamorig_LeftLeg", 0.100, 0.43),
-        ("L Shank", "mixamorig_LeftLeg", "mixamorig_LeftFoot", 0.0465, 0.43),
-        ("L Foot", "mixamorig_LeftFoot", "mixamorig_LeftToeBase", 0.0145, 0.50)
+        SegmentData(name: "L Upper Arm", proximalJoint: .leftArm, distalJoint: .leftForeArm, massRatio: 0.028, comRatio: 0.44),
+        SegmentData(name: "L Forearm", proximalJoint: .leftForeArm, distalJoint: .leftHand, massRatio: 0.016, comRatio: 0.43),
+        SegmentData(name: "L Hand", proximalJoint: .leftHand, distalJoint: .leftHandMiddle1, massRatio: 0.006, comRatio: 0.50),
+        SegmentData(name: "R Thigh", proximalJoint: .rightUpLeg, distalJoint: .rightLeg, massRatio: 0.100, comRatio: 0.43),
+        SegmentData(name: "R Shank", proximalJoint: .rightLeg, distalJoint: .rightFoot, massRatio: 0.0465, comRatio: 0.43),
+        SegmentData(name: "R Foot", proximalJoint: .rightFoot, distalJoint: .rightToeBase, massRatio: 0.0145, comRatio: 0.50),
+        SegmentData(name: "L Thigh", proximalJoint: .leftUpLeg, distalJoint: .leftLeg, massRatio: 0.100, comRatio: 0.43),
+        SegmentData(name: "L Shank", proximalJoint: .leftLeg, distalJoint: .leftFoot, massRatio: 0.0465, comRatio: 0.43),
+        SegmentData(name: "L Foot", proximalJoint: .leftFoot, distalJoint: .leftToeBase, massRatio: 0.0145, comRatio: 0.50)
     ]
 
     // MARK: - Optimization
@@ -73,20 +73,20 @@ class COMCalculator {
         var missingCount = 0
 
         for segment in segments {
-            guard let proxNode = jointNodes[segment.prox] else {
-                print("⚠️ Missing proximal joint for binding: \(segment.prox)")
+            guard let proxNode = jointNodes[segment.proximalJoint.rawValue] else {
+                print("⚠️ Missing proximal joint for binding: \(segment.proximalJoint.rawValue)")
                 missingCount += 1
                 continue
             }
 
-            var distNode = jointNodes[segment.dist]
+            var distNode = jointNodes[segment.distalJoint.rawValue]
             if distNode == nil {
                 // Special handling for Hand tips: use proximal if distal is missing (CoM at wrist)
                 if segment.name.contains("Hand") {
-                    print("⚠️ Hand distal \(segment.dist) missing, using proximal as fallback (CoM at wrist)")
+                    print("⚠️ Hand distal \(segment.distalJoint.rawValue) missing, using proximal as fallback (CoM at wrist)")
                     distNode = proxNode
                 } else {
-                    print("⚠️ Missing distal joint for binding: \(segment.dist)")
+                    print("⚠️ Missing distal joint for binding: \(segment.distalJoint.rawValue)")
                     missingCount += 1
                     continue
                 }
@@ -96,9 +96,9 @@ class COMCalculator {
                 name: segment.name, // Use descriptive segment name
                 prox: proxNode,
                 dist: distNode!,
-                baseMassRatio: segment.mass,
-                currentMassRatio: segment.mass,
-                comRatio: segment.com
+                baseMassRatio: segment.massRatio,
+                currentMassRatio: segment.massRatio,
+                comRatio: segment.comRatio
             ))
         }
 
