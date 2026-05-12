@@ -64,7 +64,10 @@ class CoMValidationHarness {
         // 1. Log System Info
         logSystemInfo(calculator: calculator, sceneManager: sceneManager)
 
-        // 2. Iterate Poses recursively
+        // 2. Log Joint Limits
+        logJointLimits()
+
+        // 3. Iterate Poses recursively
         runNextPose(index: 0,
                     sceneManager: sceneManager,
                     calculator: calculator,
@@ -201,6 +204,24 @@ class CoMValidationHarness {
         }
 
         log("-------------------\n")
+    }
+
+    private func logJointLimits() {
+        log("--- Active Joint Limits ---")
+        for (joint, limit) in JointLimits.limits {
+            // Convert to degrees for easier reading
+            let minX = limit.minAngle.x * 180 / .pi
+            let maxX = limit.maxAngle.x * 180 / .pi
+            let minY = limit.minAngle.y * 180 / .pi
+            let maxY = limit.maxAngle.y * 180 / .pi
+            let minZ = limit.minAngle.z * 180 / .pi
+            let maxZ = limit.maxAngle.z * 180 / .pi
+            log("Joint: \(joint)")
+            log("  X: [\(String(format: "%.0f", minX)), \(String(format: "%.0f", maxX))]")
+            log("  Y: [\(String(format: "%.0f", minY)), \(String(format: "%.0f", maxY))]")
+            log("  Z: [\(String(format: "%.0f", minZ)), \(String(format: "%.0f", maxZ))]")
+        }
+        log("---------------------------\n")
     }
 
     private func validatePose(_ poseType: PoseType,
