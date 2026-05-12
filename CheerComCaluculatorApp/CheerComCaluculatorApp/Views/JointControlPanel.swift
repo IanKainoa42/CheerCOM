@@ -1,12 +1,20 @@
 import UIKit
+import SceneKit
+
+
 
 protocol JointControlPanelDelegate: AnyObject {
     func didTapJointSelection(sourceView: UIView)
-    func didSelectAxis(_ axis: JointAxis)
-    func didChangeJointAngle(value: Float)
-    func didIncrementAngle()
-    func didDecrementAngle()
+    func didChangeJointAngle(axis: JointAxis, value: Float)
+    func didIncrementAngle(axis: JointAxis)
+    func didDecrementAngle(axis: JointAxis)
+    func didBeginIncrementingAngle(axis: JointAxis)
+    func didEndIncrementingAngle(axis: JointAxis)
+    func didBeginDecrementingAngle(axis: JointAxis)
+    func didEndDecrementingAngle(axis: JointAxis)
     func didResetSelectedJoint()
+    func didTapJointPresets(sourceView: UIView)
+    func didTapSaveJointPreset()
 
     func didTapPoseLibrary()
     func didTapResetPose()
@@ -15,215 +23,230 @@ protocol JointControlPanelDelegate: AnyObject {
     func didTapToggleVisualizations()
 }
 
-class JointControlPanel: UIVisualEffectView {
+class AxisControlBox: UIStackView {
+    let jointAxis: JointAxis
+    let slider = UISlider()
+    let angleLabel = PaddingLabel()
+    let decrementBtn = CheerButton(title: "-", style: .neutral, compact: true)
+    let incrementBtn = CheerButton(title: "+", style: .neutral, compact: true)
+
+    init(axis: JointAxis) {
+        self.jointAxis = axis
+        super.init(frame: .zero)
+        self.axis = .vertical
+        spacing = 6
+        alignment = .fill
+
+        let axisTitle = UILabel()
+        axisTitle.text = self.jointAxis.shortLabel
+        axisTitle.textColor = CheerPalette.textSecondary
+        axisTitle.font = cheerMonospacedFont(size: 14, weight: .bold)
+
+        angleLabel.text = "0.0°"
+        angleLabel.textColor = CheerPalette.textPrimary
+        angleLabel.font = cheerMonospacedFont(size: 11, weight: .bold)
+        angleLabel.backgroundColor = CheerPalette.storm
+        angleLabel.layer.cornerRadius = 8
+        angleLabel.layer.borderWidth = 1
+        angleLabel.layer.borderColor = CheerPalette.panelBorder.cgColor
+        angleLabel.layer.masksToBounds = true
+        angleLabel.textAlignment = .center
+        angleLabel.widthAnchor.constraint(equalToConstant: 50).isActive = true
+
+        decrementBtn.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
+        decrementBtn.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        decrementBtn.heightAnchor.constraint(equalToConstant: 34).isActive = true
+
+        incrementBtn.titleLabel?.font = cheerRoundedFont(.title3, weight: .bold)
+        incrementBtn.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        incrementBtn.heightAnchor.constraint(equalToConstant: 34).isActive = true
+
+        slider.minimumValue = -180
+        slider.maximumValue = 180
+        slider.value = 0
+        slider.tintColor = CheerPalette.accentBlue
+        slider.minimumTrackTintColor = CheerPalette.accentBlue
+        slider.maximumTrackTintColor = UIColor.white.withAlphaComponent(0.12)
+        slider.heightAnchor.constraint(equalToConstant: 36).isActive = true
+
+        let buttonStack = UIStackView(arrangedSubviews: [decrementBtn, incrementBtn])
+        buttonStack.axis = .horizontal
+        buttonStack.spacing = 8
+        buttonStack.alignment = .center
+
+        let headerRow = UIStackView(arrangedSubviews: [axisTitle, UIView(), buttonStack, angleLabel])
+        headerRow.axis = .horizontal
+        headerRow.spacing = 8
+        headerRow.alignment = .center
+
+        addArrangedSubview(headerRow)
+        addArrangedSubview(slider)
+    }
+
+    required init(coder: NSCoder) { fatalError() }
+}
+
+class JointControlPanel: UIView {
 
     weak var delegate: JointControlPanelDelegate?
 
-    // UI Elements
-    private var jointSelectionButton: UIButton!
-    private var axisSegmentedControl: UISegmentedControl!
-    private var jointAngleSlider: UISlider!
-    private var jointAngleLabel: UILabel!
+    private let panel = CheerGlassPanel(padding: .init(top: 14, leading: 14, bottom: 14, trailing: 14))
+    private let contentContainer = UIView()
+    private let sectionLabel = UILabel()
+    private var jointSelectionButton: CheerButton!
+    
+    private let xAxisRow = AxisControlBox(axis: .xAxis)
+    private let yAxisRow = AxisControlBox(axis: .yAxis)
+    private let zAxisRow = AxisControlBox(axis: .zAxis)
 
     init(width: CGFloat) {
-        let blurEffect = UIBlurEffect(style: .dark)
-        super.init(effect: blurEffect)
-        self.frame = CGRect(x: 0, y: 0, width: width, height: 1)
-        setupUI(width: width)
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        setupUI()
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupUI(width: CGFloat) {
-        let controlHeight: CGFloat = 180  // Reduced height with fewer buttons
-        self.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
+    private func setupUI() {
+        addSubview(panel)
+        NSLayoutConstraint.activate([
+            panel.topAnchor.constraint(equalTo: topAnchor),
+            panel.leadingAnchor.constraint(equalTo: leadingAnchor),
+            panel.trailingAnchor.constraint(equalTo: trailingAnchor),
+            panel.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
 
-        let padding: CGFloat = 20
-        let contentWidth = width - (padding * 2)
+        panel.contentView.addSubview(contentContainer)
+        contentContainer.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            contentContainer.topAnchor.constraint(equalTo: panel.contentView.layoutMarginsGuide.topAnchor),
+            contentContainer.leadingAnchor.constraint(equalTo: panel.contentView.layoutMarginsGuide.leadingAnchor),
+            contentContainer.trailingAnchor.constraint(equalTo: panel.contentView.layoutMarginsGuide.trailingAnchor),
+            contentContainer.centerXAnchor.constraint(equalTo: panel.contentView.centerXAnchor),
+            contentContainer.bottomAnchor.constraint(equalTo: panel.contentView.layoutMarginsGuide.bottomAnchor),
+            contentContainer.widthAnchor.constraint(lessThanOrEqualToConstant: 1100)
+        ])
 
-        // 1. Header Row: Joint Selection & Reset
-        let row1Y: CGFloat = 15
+        let rootStack = UIStackView()
+        rootStack.translatesAutoresizingMaskIntoConstraints = false
+        rootStack.axis = .vertical
+        rootStack.spacing = 10
+        contentContainer.addSubview(rootStack)
 
-        jointSelectionButton = UIButton(type: .system)
-        jointSelectionButton.frame = CGRect(
-            x: padding, y: row1Y, width: contentWidth * 0.6, height: 35)
-        jointSelectionButton.setTitle("Select Joint...", for: .normal)
-        jointSelectionButton.setTitleColor(.white, for: .normal)
-        jointSelectionButton.titleLabel?.font = .boldSystemFont(ofSize: 16)
-        jointSelectionButton.backgroundColor = UIColor.systemTeal.withAlphaComponent(0.8)
-        jointSelectionButton.layer.cornerRadius = 8
-        jointSelectionButton.addTarget(
-            self, action: #selector(jointSelectionTapped), for: .touchUpInside)
-        contentView.addSubview(jointSelectionButton)
+        NSLayoutConstraint.activate([
+            rootStack.topAnchor.constraint(equalTo: contentContainer.topAnchor),
+            rootStack.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
+            rootStack.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
+            rootStack.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor)
+        ])
 
-        let resetJointBtn = createButton(
-            title: "Reset Joint",
-            x: width - padding - (contentWidth * 0.35),
-            y: row1Y,
-            width: contentWidth * 0.35,
-            height: 35,
-            action: #selector(resetJointTapped)
-        )
-        resetJointBtn.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.8)
-        contentView.addSubview(resetJointBtn)
+        sectionLabel.text = "JOINT OVERRIDES"
+        sectionLabel.textColor = CheerPalette.accentMint
+        sectionLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
+        rootStack.addArrangedSubview(sectionLabel)
 
-        // 2. Axis Selection Row
-        let row2Y = row1Y + 45
-        let items = ["X-Axis", "Y-Axis", "Z-Axis"]
-        axisSegmentedControl = UISegmentedControl(items: items)
-        axisSegmentedControl.frame = CGRect(x: padding, y: row2Y, width: contentWidth, height: 32)
-        axisSegmentedControl.selectedSegmentIndex = 0
-        axisSegmentedControl.backgroundColor = UIColor.white.withAlphaComponent(0.2)
-        axisSegmentedControl.selectedSegmentTintColor = UIColor.systemBlue
-        axisSegmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
-        axisSegmentedControl.setTitleTextAttributes(
-            [.foregroundColor: UIColor.white], for: .selected)
-        axisSegmentedControl.addTarget(self, action: #selector(axisChanged), for: .valueChanged)
-        contentView.addSubview(axisSegmentedControl)
+        jointSelectionButton = CheerButton(title: "Select Joint", style: .accent)
+        jointSelectionButton.titleLabel?.adjustsFontSizeToFitWidth = true
+        jointSelectionButton.titleLabel?.minimumScaleFactor = 0.82
+        jointSelectionButton.addTarget(self, action: #selector(jointSelectionTapped), for: .touchUpInside)
 
-        // 3. Slider Row
-        let row3Y = row2Y + 45
+        let resetJointButton = CheerButton(title: "Reset", symbol: "arrow.counterclockwise", style: .secondary, compact: true)
+        resetJointButton.addTarget(self, action: #selector(resetJointTapped), for: .touchUpInside)
 
-        // Decrement Button
-        let decBtn = createButton(
-            title: "-", x: padding, y: row3Y, width: 40, height: 40,
-            action: #selector(decrementTapped))
-        decBtn.titleLabel?.font = .boldSystemFont(ofSize: 24)
-        contentView.addSubview(decBtn)
+        let headerRow = UIStackView(arrangedSubviews: [jointSelectionButton, resetJointButton])
+        headerRow.axis = .horizontal
+        headerRow.spacing = 10
+        headerRow.alignment = .fill
+        jointSelectionButton.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        resetJointButton.setContentHuggingPriority(.required, for: .horizontal)
+        rootStack.addArrangedSubview(headerRow)
 
-        // Increment Button
-        let incBtn = createButton(
-            title: "+", x: width - padding - 40, y: row3Y, width: 40, height: 40,
-            action: #selector(incrementTapped))
-        incBtn.titleLabel?.font = .boldSystemFont(ofSize: 24)
-        contentView.addSubview(incBtn)
+        let slidersContainer = UIStackView(arrangedSubviews: [xAxisRow, yAxisRow, zAxisRow])
+        slidersContainer.axis = .vertical
+        slidersContainer.spacing = 8
+        rootStack.addArrangedSubview(slidersContainer)
+        
+        setupAxisRow(xAxisRow)
+        setupAxisRow(yAxisRow)
+        setupAxisRow(zAxisRow)
 
-        // Slider
-        let sliderX = padding + 50
-        let sliderWidth = width - (padding * 2) - 100
-        jointAngleSlider = UISlider(
-            frame: CGRect(x: sliderX, y: row3Y + 5, width: sliderWidth, height: 30))
-        jointAngleSlider.minimumValue = -180
-        jointAngleSlider.maximumValue = 180
-        jointAngleSlider.value = 0
-        jointAngleSlider.tintColor = .systemBlue
-        jointAngleSlider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
-        contentView.addSubview(jointAngleSlider)
+        let presetRow = UIStackView(arrangedSubviews: [
+            makeActionButton(title: "Joint Presets", symbol: "slider.horizontal.3", style: .secondary, action: #selector(jointPresetsTapped)),
+            makeActionButton(title: "Save Joint", symbol: "bookmark.fill", style: .accent, action: #selector(saveJointPresetTapped))
+        ])
+        presetRow.axis = .horizontal
+        presetRow.spacing = 10
+        presetRow.distribution = .fillEqually
+        rootStack.addArrangedSubview(presetRow)
 
-        // Angle Label (Centered below slider)
-        jointAngleLabel = UILabel(frame: CGRect(x: 0, y: row3Y - 15, width: width, height: 20))
-        jointAngleLabel.text = "0.0°"
-        jointAngleLabel.textColor = .white
-        jointAngleLabel.font = .monospacedSystemFont(ofSize: 12, weight: .bold)
-        jointAngleLabel.textAlignment = .center
-        contentView.addSubview(jointAngleLabel)
-
-        // 4. Bottom Control Row (Pose Library, Reset, Utilities)
-        let row4Y = row3Y + 50
-
-        let bottomBtnWidth = (contentWidth - 30) / 4
-
-        let poseLibraryBtn = createButton(
-            title: "🎭 Pose Library", x: padding, y: row4Y, width: bottomBtnWidth * 1.5, height: 35,
-            action: #selector(poseLibraryTapped))
-        poseLibraryBtn.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.8)
-        contentView.addSubview(poseLibraryBtn)
-
-        let resetPoseBtn = createButton(
-            title: "Reset to T-Pose", x: padding + bottomBtnWidth * 1.5 + 10, y: row4Y,
-            width: bottomBtnWidth,
-            height: 35, action: #selector(resetPoseTapped))
-        resetPoseBtn.backgroundColor = UIColor.systemRed.withAlphaComponent(0.8)
-        contentView.addSubview(resetPoseBtn)
-
-        let fitViewBtn = createButton(
-            title: "Fit View", x: padding + bottomBtnWidth * 2.5 + 20, y: row4Y,
-            width: bottomBtnWidth * 0.9,
-            height: 35, action: #selector(fitViewTapped))
-        fitViewBtn.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.8)
-        contentView.addSubview(fitViewBtn)
-
-        let visualsBtn = createButton(
-            title: "Visuals", x: padding + bottomBtnWidth * 3.4 + 30, y: row4Y,
-            width: bottomBtnWidth * 0.7, height: 35, action: #selector(toggleVisualsTapped))
-        visualsBtn.backgroundColor = UIColor.systemIndigo.withAlphaComponent(0.8)
-        contentView.addSubview(visualsBtn)
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        // Determine control height to match setupUI
-        let controlHeight: CGFloat = 180
-
-        // Determine available width from current bounds or superview
-        let availableWidth: CGFloat
-        if let superview = self.superview {
-            availableWidth = superview.bounds.width
-        } else {
-            availableWidth = self.bounds.width
-        }
-
-        // Determine screen height from context when possible
-        var screenHeight: CGFloat?
-        if let window = self.window, let screen = window.windowScene?.screen {
-            screenHeight = screen.bounds.height
-        }
-
-        // Fallback to our current superview height if screen isn't available yet
-        let containerHeight = screenHeight ?? self.superview?.bounds.height ?? self.bounds.height
-
-        // Pin the panel to the bottom using context-derived sizes
-        self.frame = CGRect(
-            x: 0,
-            y: max(0, containerHeight - controlHeight),
-            width: availableWidth,
-            height: controlHeight
-        )
+    private func setupAxisRow(_ row: AxisControlBox) {
+        row.slider.addTarget(self, action: #selector(sliderChanged(_:)), for: .valueChanged)
+        
+        row.decrementBtn.addTarget(self, action: #selector(decrementTapped(_:)), for: .touchUpInside)
+        row.decrementBtn.addTarget(self, action: #selector(decrementTouchDown(_:)), for: .touchDown)
+        row.decrementBtn.addTarget(self, action: #selector(decrementTouchUp(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        
+        row.incrementBtn.addTarget(self, action: #selector(incrementTapped(_:)), for: .touchUpInside)
+        row.incrementBtn.addTarget(self, action: #selector(incrementTouchDown(_:)), for: .touchDown)
+        row.incrementBtn.addTarget(self, action: #selector(incrementTouchUp(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
     }
 
     // MARK: - Public Methods
 
-    func updateJointSelection(name: String, angle: Float) {
+    func updateJointSelection(name: String, angles: SCNVector3) {
         jointSelectionButton.setTitle(name, for: .normal)
-        updateAngleDisplay(angle: angle)
+        updateAngleDisplays(angles: angles)
     }
 
-    func updateAngleDisplay(angle: Float) {
-        jointAngleSlider.value = angle
-        jointAngleLabel.text = String(format: "%.1f°", angle)
-    }
-
-    func updateSelectedAxis(_ axis: JointAxis) {
-        switch axis {
-        case .x: axisSegmentedControl.selectedSegmentIndex = 0
-        case .y: axisSegmentedControl.selectedSegmentIndex = 1
-        case .z: axisSegmentedControl.selectedSegmentIndex = 2
-        }
+    func updateAngleDisplays(angles: SCNVector3) {
+        let x = angles.x * 180 / .pi
+        let y = angles.y * 180 / .pi
+        let z = angles.z * 180 / .pi
+        
+        xAxisRow.slider.value = x
+        xAxisRow.angleLabel.text = String(format: "%.0f°", x)
+        
+        yAxisRow.slider.value = y
+        yAxisRow.angleLabel.text = String(format: "%.0f°", y)
+        
+        zAxisRow.slider.value = z
+        zAxisRow.angleLabel.text = String(format: "%.0f°", z)
     }
 
     // MARK: - Actions
 
-    @objc private func jointSelectionTapped() {
-        delegate?.didTapJointSelection(sourceView: jointSelectionButton)
+    private func axisFor(view: UIView) -> JointAxis? {
+        var current: UIView? = view
+        while let view = current {
+            if let row = view as? AxisControlBox { return row.jointAxis }
+            current = view.superview
+        }
+        return nil
     }
+
+    @objc private func jointSelectionTapped() { delegate?.didTapJointSelection(sourceView: jointSelectionButton) }
     @objc private func resetJointTapped() { delegate?.didResetSelectedJoint() }
 
-    @objc private func axisChanged() {
-        let index = axisSegmentedControl.selectedSegmentIndex
-        let axis: JointAxis = (index == 0) ? .x : (index == 1) ? .y : .z
-        delegate?.didSelectAxis(axis)
+    @objc private func sliderChanged(_ sender: UISlider) {
+        guard let axis = axisFor(view: sender) else { return }
+        delegate?.didChangeJointAngle(axis: axis, value: sender.value)
+        updateAngleLabel(for: sender, value: sender.value)
     }
 
-    @objc private func sliderChanged() {
-        delegate?.didChangeJointAngle(value: jointAngleSlider.value)
-        jointAngleLabel.text = String(format: "%.1f°", jointAngleSlider.value)
-    }
+    @objc private func decrementTapped(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didDecrementAngle(axis: ax) } }
+    @objc private func incrementTapped(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didIncrementAngle(axis: ax) } }
 
-    @objc private func decrementTapped() { delegate?.didDecrementAngle() }
-    @objc private func incrementTapped() { delegate?.didIncrementAngle() }
+    @objc private func decrementTouchDown(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didBeginDecrementingAngle(axis: ax) } }
+    @objc private func decrementTouchUp(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didEndDecrementingAngle(axis: ax) } }
+    @objc private func incrementTouchDown(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didBeginIncrementingAngle(axis: ax) } }
+    @objc private func incrementTouchUp(_ btn: UIButton) { if let ax = axisFor(view: btn) { delegate?.didEndIncrementingAngle(axis: ax) } }
 
+    @objc private func jointPresetsTapped(_ sender: UIButton) { delegate?.didTapJointPresets(sourceView: sender) }
+    @objc private func saveJointPresetTapped() { delegate?.didTapSaveJointPreset() }
     @objc private func poseLibraryTapped() { delegate?.didTapPoseLibrary() }
     @objc private func resetPoseTapped() { delegate?.didTapResetPose() }
     @objc private func fitViewTapped() { delegate?.didTapFitView() }
@@ -231,16 +254,30 @@ class JointControlPanel: UIVisualEffectView {
 
     // MARK: - Helper
 
-    private func createButton(
-        title: String, x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat, action: Selector
-    ) -> UIButton {
-        let button = UIButton(frame: CGRect(x: x, y: y, width: width, height: height))
-        button.setTitle(title, for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = .boldSystemFont(ofSize: 14)
-        button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.8)
-        button.layer.cornerRadius = 8
+    private func makeActionButton(title: String, symbol: String, style: CheerButtonStyle, action: Selector) -> UIButton {
+        let button = CheerButton(title: title, symbol: symbol, style: style, compact: true)
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
+    }
+
+    private func updateAngleLabel(for view: UIView, value: Float) {
+        var current: UIView? = view
+        while let view = current {
+            if let row = view as? AxisControlBox {
+                row.angleLabel.text = String(format: "%.0f°", value)
+                return
+            }
+            current = view.superview
+        }
+    }
+}
+
+private extension JointAxis {
+    var shortLabel: String {
+        switch self {
+        case .xAxis: return "X"
+        case .yAxis: return "Y"
+        case .zAxis: return "Z"
+        }
     }
 }

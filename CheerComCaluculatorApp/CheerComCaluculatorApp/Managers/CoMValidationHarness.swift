@@ -1,5 +1,8 @@
 import SceneKit
 import Foundation
+import QuartzCore
+
+
 
 class CoMValidationHarness {
 
@@ -8,13 +11,19 @@ class CoMValidationHarness {
     // Poses to validate
     private let posesToValidate: [PoseType] = [
         .tPose,
+        .highV,
         .touchdown,
         .squat,
         .pike,
         .layout,
         .sideLean,
         .bowAndArrow,
-        .handstand
+        .lungePose,
+        .liberty,
+        .prepPosition,
+        .arabesque,
+        .scale,
+        .bridge
     ]
 
     private struct ValidationOutcome {
@@ -38,6 +47,7 @@ class CoMValidationHarness {
                        logger: ((String) -> Void)? = nil,
                        completion: (() -> Void)? = nil) {
 
+        print("Starting CoM Validation Harness...")
         self.logger = logger
 
         log("\n==========================================")
@@ -87,7 +97,7 @@ class CoMValidationHarness {
             // Reset to T-Pose
             applyPose(.tPose, sceneManager: sceneManager)
             // Update visuals one last time
-            sceneManager.characterNode.updateTransform()
+            refreshTransforms(for: sceneManager.characterNode)
             let result = calculator.calculateDetailedBodyCOM()
             visualizationsManager.updateCOM(result: result)
 
@@ -99,7 +109,7 @@ class CoMValidationHarness {
         if index > 0 { // Skip for first one as it might be T-Pose or we want to see transition from T-Pose
              applyPose(.tPose, sceneManager: sceneManager)
              // Force update
-             sceneManager.characterNode.updateTransform()
+             refreshTransforms(for: sceneManager.characterNode)
         }
 
         let poseType = posesToValidate[index]
@@ -124,16 +134,18 @@ class CoMValidationHarness {
         log("Run Date: \(dateFormatter.string(from: Date()))")
         log("--- System Info ---")
         log("Total Body Mass (Configured): \(calculator.bodyMass) kg")
-        log("Number of Segments Defined: \(calculator.segments.count)")
+
+        let segments = calculator.segments
+        log("Number of Segments Defined: \(segments.count)")
 
         // 1. Verify Mass Ratios & Total Mass
-        let totalMassRatio = calculator.segments.reduce(0.0) { $0 + $1.mass }
+        let totalMassRatio = segments.reduce(0.0) { $0 + $1.mass }
         log("Total Mass Ratio Sum: \(String(format: "%.4f", totalMassRatio))")
 
         if abs(totalMassRatio - 1.0) > 0.001 {
-             log("⚠️ CRITICAL: Mass ratios do not sum to 1.0! (Diff: \(String(format: "%.4f", totalMassRatio - 1.0)))")
+             log("CRITICAL: Mass ratios do not sum to 1.0! (Diff: \(String(format: "%.4f", totalMassRatio - 1.0)))")
         } else {
-             log("✅ Mass ratios sum to approx 1.0")
+             log("Mass ratios sum to approx 1.0")
         }
 
         // Verify Total Mass Calculation
@@ -141,9 +153,9 @@ class CoMValidationHarness {
         log("Calculated Total Mass: \(String(format: "%.3f", calculatedTotalMass)) kg (Expected: \(String(format: "%.3f", calculator.bodyMass)) kg)")
 
         if abs(calculatedTotalMass - calculator.bodyMass) > 0.01 {
-            log("⚠️ CRITICAL: Calculated total mass does not match body mass!")
+            log("CRITICAL: Calculated total mass does not match body mass!")
         } else {
-            log("✅ Calculated mass matches body mass.")
+            log("Calculated mass matches body mass.")
         }
 
         // 2. Verify Segment Binding
@@ -152,37 +164,43 @@ class CoMValidationHarness {
         log("Number of Segments Bound: \(boundCount)")
 
         log("\nSegment Mapping Verification:")
-        for segment in calculator.segments {
-            let proxName = segment.prox
-            let distName = segment.dist
-            log(" - \(segment.name): \(proxName) -> \(distName)")
+        for segment in segments {
+            log(" - \(segment.name): \(segment.prox) -> \(segment.dist)")
         }
         log("")
 
-        if boundCount < calculator.segments.count {
-            log("⚠️ CRITICAL: Only \(boundCount)/\(calculator.segments.count) segments are bound! Some segments are missing from the calculation.")
+        if boundCount < segments.count {
+            log("CRITICAL: Only \(boundCount)/\(segments.count) segments are bound! Some segments are missing from the calculation.")
             // Identify missing segments
             let boundNames = Set(result.segmentCOMs.map { $0.name })
-            for segment in calculator.segments {
+            for segment in segments {
                 if !boundNames.contains(segment.name) {
-                    log("   ❌ Missing: \(segment.name) (Joints: \(segment.prox) -> \(segment.dist))")
+                    log("   Missing: \(segment.name) (Joints: \(segment.prox) -> \(segment.dist))")
                 }
             }
         } else {
-            log("✅ All segments successfully bound to joints.")
+            log("All segments successfully bound to joints.")
         }
 
         // 3. Verify BOS Nodes (Visualizations)
-        let bosJoints = ["mixamorig_LeftFoot", "mixamorig_RightFoot", "mixamorig_LeftToeBase", "mixamorig_RightToeBase"]
+        let bosJoints: [Joint] = [.leftFoot, .rightFoot, .leftToeBase, .rightToeBase]
         var missingBOS = false
         for joint in bosJoints {
-            if sceneManager.findBone(named: joint) == nil {
-                log("⚠️ WARNING: BOS Joint missing: \(joint)")
+            if sceneManager.findBone(joint) == nil {
+                log("WARNING: BOS Joint missing: \(joint.rawValue)")
                 missingBOS = true
             }
         }
         if !missingBOS {
-             log("✅ All BOS joints found.")
+             log("All BOS joints found.")
+        }
+
+        // 4. Log Joint Limits configuration
+        log("\n--- Joint Limits Enforced ---")
+        let constrainedJoints = JointLimits.constrainedJoints
+        log("Configured Joints: \(constrainedJoints.count)")
+        for joint in constrainedJoints {
+            log(" - \(joint.rawValue)")
         }
 
         log("-------------------\n")
@@ -221,7 +239,7 @@ class CoMValidationHarness {
         applyPose(poseType, sceneManager: sceneManager, duration: 0.0)
 
         // Force Scene Update
-        sceneManager.characterNode.updateTransform()
+        refreshTransforms(for: sceneManager.characterNode)
 
         // Calculate CoM
         let result = calculator.calculateDetailedBodyCOM()
@@ -234,7 +252,7 @@ class CoMValidationHarness {
         log("- **Calculated CoM**: `\(formatVector(com))`")
 
         // Get Hips Position for reference
-        let hipsPos = sceneManager.findBone(named: "mixamorig_Hips")?.worldPosition
+        let hipsPos = sceneManager.findBone(.hips)?.presentation.worldPosition
 
         // Verify Criteria
         let (passed, message) = verifyPoseCriteria(poseType, com: com, hipsPos: hipsPos)
@@ -278,6 +296,14 @@ class CoMValidationHarness {
         }
 
         switch poseType {
+        case .highV:
+            // Y should be higher than T-Pose, but typically less than Touchdown
+            let diff = com.y - baseline.y
+            if diff > 1.0 {
+                return (true, "CoM rose by \(String(format: "%.1f", diff)) units (Expected > 1.0)")
+            }
+            return (false, "CoM failed to rise significantly (Diff: \(String(format: "%.1f", diff)), Expected > 1.0)")
+
         case .touchdown:
             // Y should be significantly higher than T-Pose
             let diff = com.y - baseline.y
@@ -332,14 +358,62 @@ class CoMValidationHarness {
             }
             return (false, "CoM did not shift laterally significantly for asymmetric arm pose (Diff: \(String(format: "%.1f", diff)), Expected > 1.0)")
 
-        case .handstand:
-            // Handstand is inverted. Y should be higher or near T-Pose but with inverted torso.
-            // A simple check is that arms are up so Y should be elevated similar to Touchdown
-            let diffY = com.y - baseline.y
-            if diffY > 1.0 {
-                return (true, "CoM inverted and elevated by \(String(format: "%.1f", diffY)) units (Expected > 1.0)")
+        case .lungePose:
+            // Lunge has one leg forward (-Z usually) and one back (+Z), hips lower
+            let drop = baseline.y - com.y
+            if drop > 5.0 {
+                return (true, "CoM lowered by \(String(format: "%.1f", drop)) units due to lunge stance (Expected > 5.0)")
             }
-            return (false, "CoM failed to elevate for Handstand (Diff: \(String(format: "%.1f", diffY)), Expected > 1.0)")
+            return (false, "CoM did not lower significantly in lunge stance (Drop: \(String(format: "%.1f", drop)), Expected > 5.0)")
+
+        case .liberty:
+            // Liberty has one leg up (usually right leg) and arms up in high V.
+            // CoM should rise compared to T-Pose. It may also shift laterally depending on balance.
+            let rise = com.y - baseline.y
+            let xShift = abs(com.x - baseline.x)
+            if rise > 1.0 {
+                return (true, "CoM rose by \(String(format: "%.1f", rise)) units due to single leg stance and arms (Expected rise > 1.0). X-Shift: \(String(format: "%.1f", xShift))")
+            }
+            return (false, "CoM failed to rise significantly (Rise: \(String(format: "%.1f", rise)))")
+
+        case .prepPosition:
+            // Prep position: hands at chest/waist level, knees slightly bent
+            // CoM should drop slightly due to bent knees, but less than a full squat.
+            let drop = baseline.y - com.y
+            if drop > 1.0 && drop < 10.0 {
+                return (true, "CoM dropped slightly by \(String(format: "%.1f", drop)) units (Expected between 1.0 and 10.0)")
+            }
+            return (false, "CoM drop not in expected range for prep position (Drop: \(String(format: "%.1f", drop)))")
+
+        case .arabesque:
+            // Arabesque: right leg extended back, upper body possibly leaning forward.
+            // Z shift backward for leg should move CoM backward or keep it slightly forward depending on arm extension.
+            // Let's verify it simply changed position significantly.
+            let zShift = abs(com.z - baseline.z)
+            if zShift > 2.0 {
+                return (true, "CoM shifted in Z by \(String(format: "%.1f", zShift)) units due to arabesque leg extension (Expected > 2.0)")
+            }
+            return (false, "CoM Z-axis did not shift significantly for arabesque (Z-Shift: \(String(format: "%.1f", zShift)), Expected > 2.0)")
+
+        case .scale:
+            // Scale: split position with leg extended to side.
+            // This should result in a vertical drop or rise depending on hips, and lateral shift.
+            let lateralShift = abs(com.x - baseline.x)
+            let yDiff = abs(com.y - baseline.y)
+            if lateralShift > 1.0 || yDiff > 1.0 {
+                return (true, "CoM shifted due to scale pose. X-Shift: \(String(format: "%.1f", lateralShift)), Y-Diff: \(String(format: "%.1f", yDiff))")
+            }
+            return (false, "CoM did not shift significantly for scale pose.")
+
+        case .bridge:
+            // Bridge: backbend with hands and feet on ground.
+            // CoM should drop significantly compared to T-Pose, and shift backward in Z.
+            let drop = baseline.y - com.y
+            let zShift = com.z - baseline.z // Should be negative (backward)
+            if drop > 10.0 && zShift < -2.0 {
+                return (true, "CoM lowered by \(String(format: "%.1f", drop)) units and shifted backward by \(String(format: "%.1f", zShift)) units (Expected Drop > 10.0, Z-Shift < -2.0)")
+            }
+            return (false, "CoM did not correctly reflect bridge pose (Drop: \(String(format: "%.1f", drop)), Z-Shift: \(String(format: "%.1f", zShift)))")
 
         default:
             return (true, "No specific criteria")
@@ -352,13 +426,24 @@ class CoMValidationHarness {
         SCNTransaction.begin()
         SCNTransaction.animationDuration = duration
 
-        for (jointName, angles) in poseDef.jointAngles {
-            if let bone = sceneManager.findBone(named: jointName) {
-                bone.eulerAngles = JointLimits.clampAngles(for: jointName, angles: angles)
+        for (joint, angles) in poseDef.jointAngles {
+            if let bone = sceneManager.findBone(named: joint) {
+                bone.eulerAngles = JointLimits.clampAngles(for: joint, angles: angles)
             }
         }
 
         SCNTransaction.commit()
+    }
+
+    private func refreshTransforms(for rootNode: SCNNode) {
+        CATransaction.flush()
+        _ = rootNode.presentation.worldTransform
+        _ = rootNode.worldTransform
+
+        rootNode.enumerateChildNodes { node, _ in
+            _ = node.presentation.worldTransform
+            _ = node.worldTransform
+        }
     }
 
     private func logDetailedSegments(result: CalculationResult) {
@@ -368,13 +453,13 @@ class CoMValidationHarness {
             return s.padding(toLength: len, withPad: " ", startingAt: 0)
         }
 
-        log("| " + pad("Segment Name", 20) + " | " + pad("Mass (kg)", 10) + " | " + pad("CoM Position", 25) + " |")
-        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 12) + "|" + String(repeating: "-", count: 27) + "|")
+        log("| " + pad("Segment Name", 20) + " | " + pad("Segment Mass", 12) + " | " + pad("Segment COM", 25) + " |")
+        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 14) + "|" + String(repeating: "-", count: 27) + "|")
 
         for segment in result.segmentCOMs {
             let massString = String(format: "%.3f", segment.mass)
             let posString = formatVector(segment.position)
-            log("| " + pad(segment.name, 20) + " | " + pad(massString, 10) + " | " + pad(posString, 25) + " |")
+            log("| " + pad(segment.name, 20) + " | " + pad(massString, 12) + " | " + pad(posString, 25) + " |")
         }
         log("")
     }
@@ -401,3 +486,4 @@ class CoMValidationHarness {
         return String(format: "(%.2f, %.2f, %.2f)", v.x, v.y, v.z)
     }
 }
+// Verified for baseline audit

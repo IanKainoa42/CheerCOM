@@ -1,6 +1,8 @@
 import SceneKit
 import UIKit
 
+
+
 class CheerCOMSceneManager {
     var sceneView: SCNView!
     var scene: SCNScene!
@@ -9,28 +11,39 @@ class CheerCOMSceneManager {
     var feetAndToes = Set<SCNNode>()
 
     // List of controllable joints (in order from root to extremities)
-    let controllableJoints = [
-        "mixamorig_Hips",
-        "mixamorig_Spine",
-        "mixamorig_Spine1",
-        "mixamorig_Spine2",
-        "mixamorig_Neck",
-        "mixamorig_Head",
-        "mixamorig_RightShoulder",
-        "mixamorig_RightArm",
-        "mixamorig_RightForeArm",
-        "mixamorig_RightHand",
-        "mixamorig_LeftShoulder",
-        "mixamorig_LeftArm",
-        "mixamorig_LeftForeArm",
-        "mixamorig_LeftHand",
-        "mixamorig_RightUpLeg",
-        "mixamorig_RightLeg",
-        "mixamorig_RightFoot",
-        "mixamorig_LeftUpLeg",
-        "mixamorig_LeftLeg",
-        "mixamorig_LeftFoot",
+    let controllableJoints: [Joint] = [
+        .hips,
+        .spine,
+        .spine1,
+        .spine2,
+        .neck,
+        .head,
+        .rightShoulder,
+        .rightArm,
+        .rightForeArm,
+        .rightHand,
+        .leftShoulder,
+        .leftArm,
+        .leftForeArm,
+        .leftHand,
+        .rightUpLeg,
+        .rightLeg,
+        .rightFoot,
+        .leftUpLeg,
+        .leftLeg,
+        .leftFoot,
     ]
+
+    /// Returns a Joint-keyed dictionary of cached bone nodes suitable for COMCalculator.bind().
+    var jointNodeMap: [Joint: SCNNode] {
+        var map: [Joint: SCNNode] = [:]
+        for joint in Joint.allCases {
+            if let node = cachedBoneNodes[joint.rawValue] {
+                map[joint] = node
+            }
+        }
+        return map
+    }
 
     init(view: UIView) {
         setupScene(in: view)
@@ -40,6 +53,9 @@ class CheerCOMSceneManager {
         // Create scene view
         sceneView = SCNView(frame: view.bounds)
         sceneView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        sceneView.isOpaque = false
+        sceneView.backgroundColor = .clear
+        sceneView.antialiasingMode = .multisampling4X
         view.addSubview(sceneView)
 
         // Create scene
@@ -48,38 +64,40 @@ class CheerCOMSceneManager {
 
         // Enable free camera controls
         sceneView.allowsCameraControl = true
-        sceneView.backgroundColor = UIColor(white: 0.15, alpha: 1.0)  // Dark gray background
+        scene.background.contents = UIColor.clear
 
         // Show statistics (FPS, etc)
         sceneView.showsStatistics = false
 
-        print("📷 Scene view frame: \(view.bounds)")
+        print("Scene view frame: \(view.bounds)")
 
         setupLighting()
         setupGround()
     }
 
     private func setupLighting() {
-        // Add lights - brighter setup
+        // Add lights with a cooler studio palette so the 3D view matches the new chrome.
         let ambientLight = SCNNode()
         ambientLight.light = SCNLight()
         ambientLight.light!.type = .ambient
-        ambientLight.light!.color = UIColor(white: 0.6, alpha: 1.0)
-        ambientLight.light!.intensity = 1000
+        ambientLight.light!.color = UIColor(hex: 0xA3B7C8)
+        ambientLight.light!.intensity = 900
         scene.rootNode.addChildNode(ambientLight)
 
         let directionalLight = SCNNode()
         directionalLight.light = SCNLight()
         directionalLight.light!.type = .directional
+        directionalLight.light!.color = UIColor(hex: 0xFFF3D0)
         directionalLight.light!.intensity = 1500
         directionalLight.position = SCNVector3(x: 0, y: 100, z: 100)
         directionalLight.look(at: SCNVector3Zero)
         scene.rootNode.addChildNode(directionalLight)
 
-        // Add a second light from the side
+        // Add a side rim light for depth.
         let sideLight = SCNNode()
         sideLight.light = SCNLight()
         sideLight.light!.type = .omni
+        sideLight.light!.color = UIColor(hex: 0x66C7FF)
         sideLight.light!.intensity = 800
         sideLight.position = SCNVector3(x: -100, y: 50, z: 50)
         scene.rootNode.addChildNode(sideLight)
@@ -88,8 +106,9 @@ class CheerCOMSceneManager {
     private func setupGround() {
         // Add a subtle ground plane for visual reference
         let ground = SCNFloor()
-        ground.firstMaterial?.diffuse.contents = UIColor(white: 0.2, alpha: 1.0)
-        ground.reflectivity = 0.1
+        ground.firstMaterial?.diffuse.contents = UIColor(hex: 0x13273D, alpha: 0.92)
+        ground.firstMaterial?.specular.contents = UIColor.white.withAlphaComponent(0.08)
+        ground.reflectivity = 0.06
         let groundNode = SCNNode(geometry: ground)
         groundNode.position = SCNVector3(x: 0, y: 0, z: 0)
         scene.rootNode.addChildNode(groundNode)
@@ -101,24 +120,46 @@ class CheerCOMSceneManager {
             return
         }
 
+        // CRITICAL FIX: Remove all animations from the source scene root
+        stripAnimations(from: modelScene.rootNode)
+
         characterNode = SCNNode()
         for child in modelScene.rootNode.childNodes {
             characterNode.addChildNode(child)
         }
 
-        // CRITICAL FIX: Remove all animations that could interfere with manual joint control
-        // The DAE file contains baked animations that override euler angle modifications
-        characterNode.enumerateChildNodes { (node, _) in
-            node.removeAllAnimations()
-            node.removeAllActions()
-        }
-        print("✅ Removed all animations from character model")
+        // Remove animations from the character hierarchy
+        stripAnimations(from: characterNode)
+        print("Removed all animations from character model and source scene")
 
         scene.rootNode.addChildNode(characterNode)
-        print("✅ Character loaded successfully")
+        print("Character loaded successfully")
 
         applyBodyPartColors()
         cacheBoneNodes()
+    }
+
+    /// Recursively removes animations, actions, constraints, and physics bodies from a node and its hierarchy.
+    private func stripAnimations(from node: SCNNode) {
+        node.removeAllAnimations()
+        node.removeAllActions()
+        node.constraints = nil
+        node.physicsBody = nil
+
+        if let geometry = node.geometry {
+            geometry.removeAllAnimations()
+            for material in geometry.materials {
+                material.removeAllAnimations()
+            }
+        }
+
+        if let morpher = node.morpher {
+            morpher.removeAllAnimations()
+        }
+
+        for child in node.childNodes {
+            stripAnimations(from: child)
+        }
     }
 
     func applyBodyPartColors() {
@@ -129,36 +170,44 @@ class CheerCOMSceneManager {
             var color: UIColor?
 
             if name.contains("Arm") || name.contains("Hand") || name.contains("Shoulder") {
-                color = UIColor.systemBlue
+                color = UIColor(hex: 0x56C2FF)
             } else if name.contains("Leg") || name.contains("Foot") || name.contains("Toe") {
-                color = UIColor.systemGreen
+                color = UIColor(hex: 0x72E5A0)
             } else if name.contains("Spine") || name.contains("Hips") || name.contains("Head")
                 || name.contains("Neck")
             {
-                color = UIColor.systemOrange
+                color = UIColor(hex: 0xFFB65C)
             }
 
             if let color = color {
                 for material in geometry.materials {
                     material.diffuse.contents = color
+                    material.specular.contents = UIColor.white.withAlphaComponent(0.12)
                 }
             }
         }
-        print("🎨 Body part colors applied")
+        print("Body part colors applied")
     }
 
     func cacheBoneNodes() {
         // Cache all the joints we'll be accessing frequently
-        let allJoints =
-            controllableJoints + [
-                "mixamorig_LeftToeBase", "mixamorig_RightToeBase",
-                "mixamorig_LeftHandMiddle1", "mixamorig_RightHandMiddle1",
-            ]
+        // Performance Fix: Avoid multiple array allocations from map + concat
+        let manualJoints = [
+            Joint.leftToeBase.rawValue, Joint.rightToeBase.rawValue,
+            Joint.leftHandMiddle1.rawValue, Joint.rightHandMiddle1.rawValue,
+        ]
+        var allJointStrings: [String] = []
+        allJointStrings.reserveCapacity(controllableJoints.count + manualJoints.count)
+
+        for joint in controllableJoints {
+            allJointStrings.append(joint.rawValue)
+        }
+        allJointStrings.append(contentsOf: manualJoints)
 
         var foundJoints = 0
         var missingJoints: [String] = []
 
-        for jointName in allJoints {
+        for jointName in allJointStrings {
             if let node = characterNode.childNode(withName: jointName, recursively: true) {
                 cachedBoneNodes[jointName] = node
                 foundJoints += 1
@@ -168,12 +217,12 @@ class CheerCOMSceneManager {
         }
 
         if !missingJoints.isEmpty {
-            print("⚠️ Missing expected joints:")
+            print("Missing expected joints:")
             for missing in missingJoints {
-                print("   ❌ \(missing)")
+                print("   \(missing)")
             }
         }
-        print("✅ Found \(foundJoints)/\(allJoints.count) expected joints")
+        print("Found \(foundJoints)/\(allJointStrings.count) expected joints")
 
         // Cache all nodes for COM calculation
         characterNode.enumerateChildNodes { [weak self] (node, _) in
@@ -188,7 +237,7 @@ class CheerCOMSceneManager {
             }
         }
 
-        print("✅ Cached \(cachedBoneNodes.count) total bone nodes")
+        print("Cached \(cachedBoneNodes.count) total bone nodes")
     }
 
     func findBone(named name: String) -> SCNNode? {
@@ -204,6 +253,10 @@ class CheerCOMSceneManager {
         return nil
     }
 
+    func findBone(_ joint: Joint) -> SCNNode? {
+        return findBone(named: joint.rawValue)
+    }
+
     func frameCharacter() {
         guard let cameraNode = sceneView.pointOfView else { return }
 
@@ -214,6 +267,6 @@ class CheerCOMSceneManager {
         cameraNode.position = SCNVector3(
             center.x, center.y, center.z + Float(characterHeight) * 1.5)
         cameraNode.look(at: center)
-        print("✅ Character automatically framed.")
+        print("Character automatically framed.")
     }
 }

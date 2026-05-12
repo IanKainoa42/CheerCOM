@@ -38,9 +38,15 @@ class SCNNode:
     def worldPosition(self, value):
         self.position = value
 
+    @property
+    def presentation(self):
+        # Mock presentation node returning self so we can call presentation.worldPosition
+        return self
+
 class COMCalculatorMock:
-    def __init__(self, body_mass):
+    def __init__(self, body_mass, preset="averageNeutral"):
         self.body_mass = body_mass
+        self.preset = preset
 
         # 17 body segments with (name, proximal_joint, distal_joint, mass_%, com_%)
         # Based on COMCalculator.swift
@@ -51,8 +57,8 @@ class COMCalculatorMock:
             ("Abdomen Upper", "mixamorig_Spine1", "mixamorig_Spine2", 0.0855, 0.50),
             ("Thorax", "mixamorig_Spine2", "mixamorig_Neck", 0.180, 0.50),
 
-            # Head (Total 8.1%) - Modeled as Neck segment (approx)
-            ("Head", "mixamorig_Neck", "mixamorig_Head", 0.081, 0.50),
+            # Head (Total 8.1%)
+            ("Head", "mixamorig_Head", "mixamorig_HeadTop_End", 0.081, 0.50),
 
             # Upper Limbs (Total 10.0%)
             # RightArm = Humerus (Shoulder to Elbow)
@@ -74,6 +80,15 @@ class COMCalculatorMock:
         ]
 
         self.bound_segments = []
+
+    def get_multipliers(self):
+        if self.preset == "averageNeutral":
+            return {"trunk": 1.0, "upper": 1.0, "lower": 1.0}
+        elif self.preset == "athleticFemale":
+            return {"trunk": 0.95, "upper": 0.95, "lower": 1.08}
+        elif self.preset == "athleticMale":
+            return {"trunk": 1.05, "upper": 1.15, "lower": 0.95}
+        return {"trunk": 1.0, "upper": 1.0, "lower": 1.0}
 
     def bind(self, joint_nodes):
         self.bound_segments = []
@@ -101,9 +116,38 @@ class COMCalculatorMock:
                 "name": name,
                 "prox": prox_node,
                 "dist": dist_node,
-                "mass_ratio": mass_ratio,
-                "com_ratio": com_ratio
+                "base_mass_ratio": mass_ratio,
+                "com_ratio": com_ratio,
+                "current_mass_ratio": mass_ratio
             })
+
+        self.apply_preset()
+
+    def apply_preset(self):
+        if not self.bound_segments:
+            return
+
+        multipliers = self.get_multipliers()
+        total_mass_ratio = 0.0
+
+        for segment in self.bound_segments:
+            multiplier = 1.0
+            if "Arm" in segment["name"] or "Forearm" in segment["name"] or "Hand" in segment["name"]:
+                multiplier = multipliers["upper"]
+            elif "Thigh" in segment["name"] or "Shank" in segment["name"] or "Foot" in segment["name"]:
+                multiplier = multipliers["lower"]
+            else:
+                multiplier = multipliers["trunk"]
+
+            segment["current_mass_ratio"] = segment["base_mass_ratio"] * multiplier
+            total_mass_ratio += segment["current_mass_ratio"]
+
+        for segment in self.bound_segments:
+            segment["current_mass_ratio"] /= total_mass_ratio
+
+    def set_preset(self, preset):
+        self.preset = preset
+        self.apply_preset()
 
     def calculate_detailed_body_com(self):
         if not self.bound_segments:
@@ -115,12 +159,12 @@ class COMCalculatorMock:
         segment_results = []
 
         for segment in self.bound_segments:
-            prox_pos = segment["prox"].worldPosition
-            dist_pos = segment["dist"].worldPosition
+            prox_pos = segment["prox"].presentation.worldPosition
+            dist_pos = segment["dist"].presentation.worldPosition
 
             # COM = proximal + (distal - proximal) * %
             seg_com = prox_pos + ((dist_pos - prox_pos) * segment["com_ratio"])
-            seg_mass = self.body_mass * segment["mass_ratio"]
+            seg_mass = self.body_mass * segment["current_mass_ratio"]
 
             total_weighted = total_weighted + (seg_com * seg_mass)
             total_mass += seg_mass
@@ -144,6 +188,7 @@ def create_t_pose_nodes():
     nodes["mixamorig_Spine2"] = SCNNode("Spine2", SCNVector3(0, 130, 0))
     nodes["mixamorig_Neck"] = SCNNode("Neck", SCNVector3(0, 140, 0))
     nodes["mixamorig_Head"] = SCNNode("Head", SCNVector3(0, 150, 0))
+    nodes["mixamorig_HeadTop_End"] = SCNNode("HeadTop", SCNVector3(0, 160, 0))
 
     # Right Arm (X-axis lateral)
     nodes["mixamorig_RightArm"] = SCNNode("RArm", SCNVector3(20, 130, 0))
@@ -173,12 +218,59 @@ def create_t_pose_nodes():
 def test_mass_ratios():
     print("Test: Mass Ratios Sum to 1.0")
     calculator = COMCalculatorMock(body_mass=70.0)
+    # Total ratio on unbound baseline segments
     total_ratio = sum(s[3] for s in calculator.segments)
     if abs(total_ratio - 1.0) > 0.001:
         print(f"❌ FAIL: Mass ratios sum to {total_ratio:.4f}")
         return False
-    print(f"✅ PASS: Mass ratios sum to {total_ratio:.4f}")
+    print(f"✅ PASS: Base mass ratios sum to {total_ratio:.4f}")
     return True
+
+def test_body_presets():
+    print("\nTest: Body Presets Mass Normalization")
+    calculator = COMCalculatorMock(body_mass=70.0)
+    nodes = create_t_pose_nodes()
+
+    # Test averageNeutral
+    calculator.set_preset("averageNeutral")
+    calculator.bind(nodes)
+    total_ratio_neutral = sum(s["current_mass_ratio"] for s in calculator.bound_segments)
+    if abs(total_ratio_neutral - 1.0) > 0.001:
+        print(f"❌ FAIL: Neutral preset mass ratio sum is {total_ratio_neutral:.4f}")
+        return False
+
+    neutral_lower_mass = sum(s["current_mass_ratio"] for s in calculator.bound_segments if "Thigh" in s["name"])
+
+    # Test athleticFemale
+    calculator.set_preset("athleticFemale")
+    total_ratio_female = sum(s["current_mass_ratio"] for s in calculator.bound_segments)
+    if abs(total_ratio_female - 1.0) > 0.001:
+        print(f"❌ FAIL: Athletic Female preset mass ratio sum is {total_ratio_female:.4f}")
+        return False
+
+    female_lower_mass = sum(s["current_mass_ratio"] for s in calculator.bound_segments if "Thigh" in s["name"])
+    if female_lower_mass <= neutral_lower_mass:
+        print(f"❌ FAIL: Athletic Female lower body mass should be greater than neutral. ({female_lower_mass:.4f} <= {neutral_lower_mass:.4f})")
+        return False
+
+    # Test athleticMale
+    calculator.set_preset("athleticMale")
+    total_ratio_male = sum(s["current_mass_ratio"] for s in calculator.bound_segments)
+    if abs(total_ratio_male - 1.0) > 0.001:
+        print(f"❌ FAIL: Athletic Male preset mass ratio sum is {total_ratio_male:.4f}")
+        return False
+
+    male_lower_mass = sum(s["current_mass_ratio"] for s in calculator.bound_segments if "Thigh" in s["name"])
+    if male_lower_mass >= neutral_lower_mass:
+        print(f"❌ FAIL: Athletic Male lower body mass should be less than neutral. ({male_lower_mass:.4f} >= {neutral_lower_mass:.4f})")
+        return False
+
+    print("✅ PASS: All body presets apply multipliers correctly and normalize to 1.0")
+
+    # Reset back to neutral for the rest of tests
+    calculator.set_preset("averageNeutral")
+    return True
+
 
 def test_t_pose(calculator):
     print("\nTest: T-Pose Baseline")
@@ -187,6 +279,11 @@ def test_t_pose(calculator):
 
     total_com, segments = calculator.calculate_detailed_body_com()
     print(f"   T-Pose CoM: {total_com}")
+
+    print("\n   --- Segment Details ---")
+    for seg in segments:
+        print(f"   {seg['name']:<15} | Mass: {seg['mass']:>5.2f} kg | CoM: {seg['position']}")
+    print("   -----------------------")
 
     # Check Hand Fallback logic (Right Hand missing tip)
     r_hand = next((s for s in segments if s["name"] == "R Hand"), None)
@@ -236,6 +333,67 @@ def test_touchdown(calculator, t_pose_com):
         return True
     else:
         print("❌ FAIL: CoM did not rise significantly")
+        return False
+
+def test_layout(calculator, t_pose_com):
+    print("\nTest: Layout Pose (Straight Body, Arms Up)")
+    nodes = create_t_pose_nodes()
+
+    # Arms straight up
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 150, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(20, 180, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 200, 0)
+
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 150, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 180, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 200, 0)
+
+    calculator.bind(nodes)
+    layout_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Layout CoM: {layout_com}")
+
+    rise = layout_com.y - t_pose_com.y
+    print(f"   Rise from T-Pose: {rise:.2f}")
+
+    if rise > 2.0:
+        print("✅ PASS: CoM higher than T-Pose by expected amount")
+        return True
+    else:
+        print("❌ FAIL: CoM not higher than T-Pose")
+        return False
+
+def test_high_v(calculator, t_pose_com):
+    print("\nTest: High V Pose (Arms Diagonally Up)")
+    nodes = create_t_pose_nodes()
+
+    # Raise Arms in High V (diagonally up)
+    # Right Arm High V
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(35, 150, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(50, 170, 0)
+    # Right hand is missing the distal tip in create_t_pose_nodes to test the fallback,
+    # so we don't need to position mixamorig_RightHandMiddle1 here.
+
+    # Left Arm High V
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-35, 150, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-50, 170, 0)
+    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-55, 175, 0)
+
+    calculator.bind(nodes)
+    highv_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   High V CoM: {highv_com}")
+
+    diff = highv_com.y - t_pose_com.y
+    print(f"   Rise from T-Pose: {diff:.2f}")
+
+    if diff > 0.5:
+        print("✅ PASS: CoM rose")
+        return True
+    else:
+        print("❌ FAIL: CoM did not rise")
         return False
 
 def test_squat(calculator, t_pose_com):
@@ -315,22 +473,223 @@ def test_pike(calculator, t_pose_com):
         print("❌ FAIL: CoM did not shift forward significantly")
         return False
 
+def test_lunge(calculator, t_pose_com):
+    print("\nTest: Lunge Pose (Asymmetric Stance, Lower Hips)")
+    nodes = create_t_pose_nodes()
+
+    # Lower hips
+    drop = 15.0
+    for key in nodes:
+        nodes[key].position.y -= drop
+
+    # Keep feet on ground, but spread them
+    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 10, 20)
+    nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 0, 30)
+
+    nodes["mixamorig_LeftFoot"].position = SCNVector3(-10, 10, -20)
+    nodes["mixamorig_LeftToeBase"].position = SCNVector3(-10, 0, -10)
+
+    # Adjust knees
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 50, 20)
+    nodes["mixamorig_LeftLeg"].position = SCNVector3(-10, 50, -20)
+
+    calculator.bind(nodes)
+    lunge_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Lunge CoM: {lunge_com}")
+
+    diff = t_pose_com.y - lunge_com.y
+    print(f"   Drop from T-Pose: {diff:.2f}")
+
+    if diff > 5.0:
+        print("✅ PASS: CoM lowered significantly in lunge")
+        return True
+    else:
+        print("❌ FAIL: CoM did not lower significantly in lunge")
+        return False
+
+def test_liberty(calculator, t_pose_com):
+    print("\nTest: Liberty Pose (Single Leg, Arms High V)")
+    nodes = create_t_pose_nodes()
+
+    # Raise arms to High V (same as High V test)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(-30, 150, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(-50, 170, 0)
+    # RightHandMiddle1 omitted to test fallback
+
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(30, 150, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(50, 170, 0)
+    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(60, 180, 0)
+
+    # Raise Right Leg (flex hip and knee)
+    # Right thigh: UpLeg -> Leg
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 90, 30) # Knee goes up and forward
+    # Right Shank: Leg -> Foot
+    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 50, 30) # Ankle below knee
+    # Right Foot: Foot -> ToeBase
+    nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 40, 30)
+
+    calculator.bind(nodes)
+    liberty_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Liberty CoM: {liberty_com}")
+
+    rise = liberty_com.y - t_pose_com.y
+    x_shift = abs(liberty_com.x - t_pose_com.x)
+    print(f"   Rise from T-Pose: {rise:.2f}")
+    print(f"   Lateral Shift (X): {x_shift:.2f}")
+
+    if rise > 1.0:
+        print("✅ PASS: CoM rose significantly in Liberty")
+        return True
+    else:
+        print("❌ FAIL: CoM did not rise significantly in Liberty")
+        return False
+
+def test_arabesque(calculator, t_pose_com):
+    print("\nTest: Arabesque Pose (Right leg extended back, arms out)")
+    nodes = create_t_pose_nodes()
+
+    # Move right leg backwards (-Z) and up
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 80, -30)
+    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 60, -50)
+    nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 50, -60)
+
+    # Move arms to the side (simulating arabesque arm positions)
+    nodes["mixamorig_RightHand"].position = SCNVector3(60, 130, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-60, 130, 0)
+
+    calculator.bind(nodes)
+    arabesque_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Arabesque CoM: {arabesque_com}")
+
+    z_shift = abs(arabesque_com.z - t_pose_com.z)
+    print(f"   Z Shift from T-Pose: {z_shift:.2f}")
+
+    if z_shift > 1.0:
+        print("✅ PASS: CoM shifted significantly in Z for Arabesque")
+        return True
+    else:
+        print("❌ FAIL: CoM Z shift not significant for Arabesque")
+        return False
+
+def test_bridge(calculator, t_pose_com):
+    print("\nTest: Bridge Pose (Backbend)")
+    nodes = create_t_pose_nodes()
+
+    # Drop hips and spine significantly
+    nodes["mixamorig_Hips"].position = SCNVector3(0, 50, 0)
+    nodes["mixamorig_Spine"].position = SCNVector3(0, 55, -10)
+    nodes["mixamorig_Spine1"].position = SCNVector3(0, 60, -20)
+    nodes["mixamorig_Spine2"].position = SCNVector3(0, 55, -30)
+    nodes["mixamorig_Neck"].position = SCNVector3(0, 45, -40)
+    nodes["mixamorig_Head"].position = SCNVector3(0, 40, -45)
+    nodes["mixamorig_HeadTop_End"].position = SCNVector3(0, 30, -50)
+
+    # Move arms to the floor behind the head
+    nodes["mixamorig_RightArm"].position = SCNVector3(15, 30, -35)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(20, 15, -40)
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 0, -40)
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-15, 30, -35)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 15, -40)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 0, -40)
+
+    calculator.bind(nodes)
+    bridge_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Bridge CoM: {bridge_com}")
+    drop = t_pose_com.y - bridge_com.y
+    z_shift = bridge_com.z - t_pose_com.z
+
+    print(f"   Drop from T-Pose: {drop:.2f}")
+    print(f"   Z Shift from T-Pose: {z_shift:.2f}")
+
+    if drop > 10.0 and z_shift < -2.0:
+        print("✅ PASS: CoM dropped and shifted backward significantly for Bridge")
+        return True
+    else:
+        print("❌ FAIL: CoM shift not as expected for Bridge")
+        return False
+
+def test_scale(calculator, t_pose_com):
+    print("\nTest: Scale Pose (Leg extended to side/up)")
+    nodes = create_t_pose_nodes()
+
+    # Move left leg out and up
+    nodes["mixamorig_LeftLeg"].position = SCNVector3(-40, 80, 0)
+    nodes["mixamorig_LeftFoot"].position = SCNVector3(-60, 90, 0)
+    nodes["mixamorig_LeftToeBase"].position = SCNVector3(-70, 95, 0)
+
+    calculator.bind(nodes)
+    scale_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Scale CoM: {scale_com}")
+
+    lateral_shift = abs(scale_com.x - t_pose_com.x)
+    print(f"   Lateral Shift (X): {lateral_shift:.2f}")
+
+    if lateral_shift > 1.0:
+        print("✅ PASS: CoM shifted laterally for Scale")
+        return True
+    else:
+        print("❌ FAIL: CoM did not shift laterally for Scale")
+        return False
+
+def test_prep_position(calculator, t_pose_com):
+    print("\nTest: Prep Position (Slight Squat, Hands at Chest)")
+    nodes = create_t_pose_nodes()
+
+    # Slight drop in hips and knees
+    nodes["mixamorig_Hips"].position = SCNVector3(0, 95, 0)
+    nodes["mixamorig_Spine"].position = SCNVector3(0, 100, 0)
+    nodes["mixamorig_RightUpLeg"].position = SCNVector3(10, 95, 0)
+    nodes["mixamorig_LeftUpLeg"].position = SCNVector3(-10, 95, 0)
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 48, 10)
+    nodes["mixamorig_LeftLeg"].position = SCNVector3(-10, 48, 10)
+
+    # Hands near chest (Y ~ 110-120)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(15, 120, 10)
+    nodes["mixamorig_RightHand"].position = SCNVector3(5, 120, 15)
+    # RightHandMiddle1 is missing by design for fallback testing
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-15, 120, 10)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-5, 120, 15)
+    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-5, 120, 20)
+
+    calculator.bind(nodes)
+    prep_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Prep Position CoM: {prep_com}")
+
+    drop = t_pose_com.y - prep_com.y
+    print(f"   Drop from T-Pose: {drop:.2f}")
+
+    if drop > 1.0 and drop < 10.0:
+        print("✅ PASS: CoM dropped slightly in Prep Position")
+        return True
+    else:
+        print("❌ FAIL: CoM drop not in expected range for Prep Position")
+        return False
+
 class JointLimitsMock:
     limits = {
         "mixamorig_RightLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
         "mixamorig_LeftLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
         "mixamorig_RightForeArm": {"min": SCNVector3(-360, -360, 0), "max": SCNVector3(360, 360, 160)},
         "mixamorig_LeftForeArm": {"min": SCNVector3(-360, -360, -160), "max": SCNVector3(360, 360, 0)},
-        "mixamorig_RightArm": {"min": SCNVector3(-90, -90, -180), "max": SCNVector3(90, 90, 45)},
-        "mixamorig_LeftArm": {"min": SCNVector3(-90, -90, -45), "max": SCNVector3(90, 90, 180)},
-        "mixamorig_RightUpLeg": {"min": SCNVector3(-180, -90, -90), "max": SCNVector3(45, 90, 90)},
-        "mixamorig_LeftUpLeg": {"min": SCNVector3(-180, -90, -90), "max": SCNVector3(45, 90, 90)},
+        "mixamorig_RightArm": {"min": SCNVector3(-180, -90, -180), "max": SCNVector3(90, 90, 0)},
+        "mixamorig_LeftArm": {"min": SCNVector3(-180, -90, 0), "max": SCNVector3(90, 90, 180)},
         "mixamorig_Spine": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)},
         "mixamorig_Spine1": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)},
         "mixamorig_Spine2": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)},
-        "mixamorig_Neck": {"min": SCNVector3(-60, -60, -60), "max": SCNVector3(60, 60, 60)},
-        "mixamorig_RightFoot": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)},
-        "mixamorig_LeftFoot": {"min": SCNVector3(-45, -45, -45), "max": SCNVector3(45, 45, 45)}
+        "mixamorig_Neck": {"min": SCNVector3(-60, -80, -45), "max": SCNVector3(60, 80, 45)},
+        "mixamorig_Head": {"min": SCNVector3(-60, -80, -45), "max": SCNVector3(60, 80, 45)},
+        "mixamorig_RightUpLeg": {"min": SCNVector3(-180, -90, -180), "max": SCNVector3(90, 90, 180)},
+        "mixamorig_LeftUpLeg": {"min": SCNVector3(-180, -90, -180), "max": SCNVector3(90, 90, 180)},
+        "mixamorig_RightHand": {"min": SCNVector3(-90, -45, -45), "max": SCNVector3(90, 45, 45)},
+        "mixamorig_LeftHand": {"min": SCNVector3(-90, -45, -45), "max": SCNVector3(90, 45, 45)},
+        "mixamorig_RightFoot": {"min": SCNVector3(-45, -30, -30), "max": SCNVector3(45, 30, 30)},
+        "mixamorig_LeftFoot": {"min": SCNVector3(-45, -30, -30), "max": SCNVector3(45, 30, 30)}
     }
 
     @staticmethod
@@ -349,6 +708,15 @@ class JointLimitsMock:
         clamped_x = max(min_rad.x, min(max_rad.x, angles.x))
         clamped_y = max(min_rad.y, min(max_rad.y, angles.y))
         clamped_z = max(min_rad.z, min(max_rad.z, angles.z))
+
+        if clamped_x != angles.x or clamped_y != angles.y or clamped_z != angles.z:
+            deg_x = math.degrees(angles.x)
+            deg_y = math.degrees(angles.y)
+            deg_z = math.degrees(angles.z)
+            c_x = math.degrees(clamped_x)
+            c_y = math.degrees(clamped_y)
+            c_z = math.degrees(clamped_z)
+            print(f"⚠️ POSE VALIDATOR WARNING: Out-of-range angle clamped on {joint_name}. Attempted: ({deg_x:.1f}°, {deg_y:.1f}°, {deg_z:.1f}°) -> Clamped: ({c_x:.1f}°, {c_y:.1f}°, {c_z:.1f}°)")
 
         return SCNVector3(clamped_x, clamped_y, clamped_z)
 
@@ -390,29 +758,65 @@ def test_joint_limits():
         return False
 
     # Test Shoulder limits
-    r_shoulder = SCNVector3(0, 0, math.radians(-200))
+    r_shoulder = SCNVector3(math.radians(-200), 0, math.radians(10))
     clamped_r_shoulder = JointLimitsMock.clamp_angles("mixamorig_RightArm", r_shoulder)
-    if abs(clamped_r_shoulder.z - math.radians(-180)) < 0.001:
-        print("✅ PASS: Right Shoulder Z clamped to -180 degrees")
+    if abs(clamped_r_shoulder.x - math.radians(-180)) < 0.001 and abs(clamped_r_shoulder.z - 0) < 0.001:
+        print("✅ PASS: Right Shoulder clamped properly")
     else:
-        print(f"❌ FAIL: Right Shoulder Z not clamped. Got {math.degrees(clamped_r_shoulder.z)}")
+        print(f"❌ FAIL: Right Shoulder not clamped. Got X: {math.degrees(clamped_r_shoulder.x)}, Z: {math.degrees(clamped_r_shoulder.z)}")
         return False
 
-    l_shoulder = SCNVector3(0, 0, math.radians(200))
+    l_shoulder = SCNVector3(math.radians(-200), 0, math.radians(-10))
     clamped_l_shoulder = JointLimitsMock.clamp_angles("mixamorig_LeftArm", l_shoulder)
-    if abs(clamped_l_shoulder.z - math.radians(180)) < 0.001:
-        print("✅ PASS: Left Shoulder Z clamped to 180 degrees")
+    if abs(clamped_l_shoulder.x - math.radians(-180)) < 0.001 and abs(clamped_l_shoulder.z - 0) < 0.001:
+        print("✅ PASS: Left Shoulder clamped properly")
     else:
-        print(f"❌ FAIL: Left Shoulder Z not clamped. Got {math.degrees(clamped_l_shoulder.z)}")
+        print(f"❌ FAIL: Left Shoulder not clamped. Got X: {math.degrees(clamped_l_shoulder.x)}, Z: {math.degrees(clamped_l_shoulder.z)}")
         return False
 
     # Test Spine limits
-    spine = SCNVector3(math.radians(-90), 0, 0)
-    clamped_spine = JointLimitsMock.clamp_angles("mixamorig_Spine", spine)
-    if abs(clamped_spine.x - math.radians(-45)) < 0.001:
-        print("✅ PASS: Spine X clamped to -45 degrees")
+    spine_angle = SCNVector3(math.radians(-50), math.radians(60), 0)
+    clamped_spine = JointLimitsMock.clamp_angles("mixamorig_Spine", spine_angle)
+    if abs(clamped_spine.x - math.radians(-45)) < 0.001 and abs(clamped_spine.y - math.radians(45)) < 0.001:
+        print("✅ PASS: Spine clamped properly")
     else:
-        print(f"❌ FAIL: Spine X not clamped. Got {math.degrees(clamped_spine.x)}")
+        print(f"❌ FAIL: Spine not clamped. Got X: {math.degrees(clamped_spine.x)}, Y: {math.degrees(clamped_spine.y)}")
+        return False
+
+    # Test Neck limits
+    neck_angle = SCNVector3(math.radians(-70), math.radians(90), 0)
+    clamped_neck = JointLimitsMock.clamp_angles("mixamorig_Neck", neck_angle)
+    if abs(clamped_neck.x - math.radians(-60)) < 0.001 and abs(clamped_neck.y - math.radians(80)) < 0.001:
+        print("✅ PASS: Neck clamped properly")
+    else:
+        print(f"❌ FAIL: Neck not clamped. Got X: {math.degrees(clamped_neck.x)}, Y: {math.degrees(clamped_neck.y)}")
+        return False
+
+    # Test Hip limits
+    r_hip = SCNVector3(math.radians(-200), math.radians(100), 0)
+    clamped_r_hip = JointLimitsMock.clamp_angles("mixamorig_RightUpLeg", r_hip)
+    if abs(clamped_r_hip.x - math.radians(-180)) < 0.001 and abs(clamped_r_hip.y - math.radians(90)) < 0.001:
+        print("✅ PASS: Right Hip clamped properly")
+    else:
+        print(f"❌ FAIL: Right Hip not clamped. Got X: {math.degrees(clamped_r_hip.x)}, Y: {math.degrees(clamped_r_hip.y)}")
+        return False
+
+    # Test Hand (Wrist) limits
+    r_hand = SCNVector3(math.radians(120), math.radians(60), math.radians(-60))
+    clamped_r_hand = JointLimitsMock.clamp_angles("mixamorig_RightHand", r_hand)
+    if abs(clamped_r_hand.x - math.radians(90)) < 0.001 and abs(clamped_r_hand.y - math.radians(45)) < 0.001 and abs(clamped_r_hand.z - math.radians(-45)) < 0.001:
+        print("✅ PASS: Right Hand (Wrist) clamped properly")
+    else:
+        print(f"❌ FAIL: Right Hand not clamped. Got X: {math.degrees(clamped_r_hand.x)}, Y: {math.degrees(clamped_r_hand.y)}, Z: {math.degrees(clamped_r_hand.z)}")
+        return False
+
+    # Test Foot (Ankle) limits
+    r_foot = SCNVector3(math.radians(-60), math.radians(-50), math.radians(40))
+    clamped_r_foot = JointLimitsMock.clamp_angles("mixamorig_RightFoot", r_foot)
+    if abs(clamped_r_foot.x - math.radians(-45)) < 0.001 and abs(clamped_r_foot.y - math.radians(-30)) < 0.001 and abs(clamped_r_foot.z - math.radians(30)) < 0.001:
+        print("✅ PASS: Right Foot (Ankle) clamped properly")
+    else:
+        print(f"❌ FAIL: Right Foot not clamped. Got X: {math.degrees(clamped_r_foot.x)}, Y: {math.degrees(clamped_r_foot.y)}, Z: {math.degrees(clamped_r_foot.z)}")
         return False
 
     return True
@@ -425,15 +829,42 @@ def run_verification():
     if not test_mass_ratios():
         sys.exit(1)
 
+    if not test_body_presets():
+        sys.exit(1)
+
     t_pose_com = test_t_pose(calculator)
 
+    if not test_high_v(calculator, t_pose_com):
+        sys.exit(1)
+
     if not test_touchdown(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_layout(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_squat(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_pike(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_lunge(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_liberty(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_prep_position(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_arabesque(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_scale(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_bridge(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():
@@ -443,3 +874,4 @@ def run_verification():
 
 if __name__ == "__main__":
     run_verification()
+# Verified for baseline audit

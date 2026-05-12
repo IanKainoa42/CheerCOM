@@ -3,144 +3,150 @@ import UIKit
 protocol TransformControlPanelDelegate: AnyObject {
     func didChangeTransformMode(_ mode: TransformMode)
     func didTapTransform(direction: TransformDirection)
+    func didBeginContinuousTransform(direction: TransformDirection)
+    func didEndContinuousTransform()
     func didTapResetTransform()
     func didChangeTransformStepMultiplier(_ multiplier: Float)
+    func didTapPoseLibraryFromTransformPanel()
+    func didTapResetPoseFromTransformPanel()
+    func didTapFitViewFromTransformPanel()
+    func didTapToggleVisualizationsFromTransformPanel()
 }
 
-class TransformControlPanel: UIView {
+class TransformControlPanel: CheerGlassPanel {
 
     weak var delegate: TransformControlPanelDelegate?
 
-    private var transformModeLabel: UILabel!
-    private var panel: UIVisualEffectView!
+    private var modeSummaryLabel: UILabel!
     private var stepSegmentedControl: UISegmentedControl!
+    private var modeSegmentedControl: UISegmentedControl!
+    private var centerBadge: PaddingLabel!
     private let stepMultipliers: [Float] = [0.5, 1.0, 2.0, 5.0]
+    private var pressedDirection: TransformDirection?
+    private var holdStartWorkItem: DispatchWorkItem?
+    private var isContinuousTransformActive = false
 
     init(width: CGFloat) {
-        super.init(frame: .zero)  // Frame will be set by parent or constraints
-        setupUI(width: width)
+        super.init(padding: .init(top: 14, leading: 14, bottom: 14, trailing: 14))
+        setupUI()
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupUI(width: CGFloat) {
-        // Add transform mode label at top right
-        transformModeLabel = UILabel(
-            frame: CGRect(x: 0, y: 0, width: 220, height: 30))
-        transformModeLabel.text = "Transform: Position"
-        transformModeLabel.textColor = .white
-        transformModeLabel.font = .boldSystemFont(ofSize: 16)
-        transformModeLabel.textAlignment = .center
-        transformModeLabel.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.7)
-        transformModeLabel.layer.cornerRadius = 8
-        transformModeLabel.layer.masksToBounds = true
-        addSubview(transformModeLabel)
+    private func setupUI() {
+        contentStack.spacing = 12
 
-        // Add transform control panel
-        panel = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
-        panel.frame = CGRect(x: 0, y: 40, width: 220, height: 240)
-        panel.layer.cornerRadius = 15
-        panel.layer.masksToBounds = true
-        addSubview(panel)
+        let eyebrowLabel = UILabel()
+        eyebrowLabel.text = "POSE CONTROL"
+        eyebrowLabel.textColor = CheerPalette.accentMint
+        eyebrowLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
 
-        self.frame = CGRect(x: width - 240, y: 110, width: 220, height: 280)
-        self.autoresizingMask = [.flexibleLeftMargin]
+        let titleLabel = UILabel()
+        titleLabel.text = "MODEL TRANSFORM"
+        titleLabel.textColor = CheerPalette.textPrimary
+        titleLabel.font = cheerRoundedFont(.headline, weight: .bold)
 
-        // Transform mode buttons
-        let posTransformBtn = createButton(
-            title: "Position", x: 10, y: 10, width: 65, height: 35,
-            action: #selector(positionModeTapped))
-        posTransformBtn.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.9)
-        panel.contentView.addSubview(posTransformBtn)
+        modeSummaryLabel = UILabel()
+        modeSummaryLabel.text = "POSITION // STEP 5.0"
+        modeSummaryLabel.textColor = CheerPalette.textSecondary
+        modeSummaryLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
 
-        let rotTransformBtn = createButton(
-            title: "Rotate", x: 78, y: 10, width: 65, height: 35,
-            action: #selector(rotationModeTapped)
-        )
-        rotTransformBtn.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.6)
-        panel.contentView.addSubview(rotTransformBtn)
+        let titleStack = UIStackView(arrangedSubviews: [eyebrowLabel, titleLabel, modeSummaryLabel])
+        titleStack.axis = .vertical
+        titleStack.spacing = 4
+        contentStack.addArrangedSubview(titleStack)
 
-        let scaleTransformBtn = createButton(
-            title: "Scale", x: 145, y: 10, width: 65, height: 35, action: #selector(scaleModeTapped)
-        )
-        scaleTransformBtn.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.6)
-        panel.contentView.addSubview(scaleTransformBtn)
+        let helperLabel = UILabel()
+        helperLabel.text = "Use the pad to move the rig around the pose. ↗ and ↙ adjust depth on the Z axis."
+        helperLabel.textColor = CheerPalette.textSecondary
+        helperLabel.font = cheerMonospacedFont(size: 10, weight: .regular)
+        helperLabel.numberOfLines = 0
+        contentStack.addArrangedSubview(helperLabel)
 
-        // Arrow key-style controls
-        let arrowSize: CGFloat = 45
-        let centerX: CGFloat = 110
-        let centerY: CGFloat = 100
+        modeSegmentedControl = makeCheerSegmentedControl(items: ["Move", "Rotate", "Scale"])
+        modeSegmentedControl.addTarget(self, action: #selector(modeChanged), for: .valueChanged)
+        contentStack.addArrangedSubview(modeSegmentedControl)
 
-        // Up arrow
-        let upBtn = createButton(
-            title: "↑", x: centerX - arrowSize / 2, y: centerY - arrowSize - 5, width: arrowSize,
-            height: arrowSize, action: #selector(upTapped))
-        upBtn.titleLabel?.font = .systemFont(ofSize: 24)
-        panel.contentView.addSubview(upBtn)
+        let dPadStack = UIStackView()
+        dPadStack.axis = .vertical
+        dPadStack.spacing = 8
 
-        // Down arrow
-        let downBtn = createButton(
-            title: "↓", x: centerX - arrowSize / 2, y: centerY + 5, width: arrowSize,
-            height: arrowSize, action: #selector(downTapped))
-        downBtn.titleLabel?.font = .systemFont(ofSize: 24)
-        panel.contentView.addSubview(downBtn)
+        centerBadge = PaddingLabel()
+        centerBadge.text = "Step 5.0"
+        centerBadge.textAlignment = .center
+        centerBadge.textColor = CheerPalette.textPrimary
+        centerBadge.font = cheerMonospacedFont(size: 12, weight: .bold)
+        centerBadge.backgroundColor = CheerPalette.storm
+        centerBadge.layer.cornerRadius = 10
+        centerBadge.layer.borderWidth = 1
+        centerBadge.layer.borderColor = CheerPalette.panelBorder.cgColor
+        centerBadge.layer.masksToBounds = true
 
-        // Left arrow
-        let leftBtn = createButton(
-            title: "←", x: centerX - arrowSize - arrowSize / 2 - 5, y: centerY - arrowSize / 2,
-            width: arrowSize, height: arrowSize, action: #selector(leftTapped))
-        leftBtn.titleLabel?.font = .systemFont(ofSize: 24)
-        panel.contentView.addSubview(leftBtn)
+        let upButton = directionButton(title: "↑", direction: .up)
+        let leftButton = directionButton(title: "←", direction: .left)
+        let rightButton = directionButton(title: "→", direction: .right)
+        let downButton = directionButton(title: "↓", direction: .down)
+        let forwardButton = directionButton(title: "↗", direction: .forward)
+        let backwardButton = directionButton(title: "↙", direction: .backward)
 
-        // Right arrow
-        let rightBtn = createButton(
-            title: "→", x: centerX + arrowSize / 2 + 5, y: centerY - arrowSize / 2,
-            width: arrowSize, height: arrowSize, action: #selector(rightTapped))
-        rightBtn.titleLabel?.font = .systemFont(ofSize: 24)
-        panel.contentView.addSubview(rightBtn)
+        let topRow = dPadRow(left: UIView(), center: upButton, right: forwardButton)
+        let middleRow = dPadRow(left: leftButton, center: centerBadge, right: rightButton)
+        let bottomRow = dPadRow(left: backwardButton, center: downButton, right: UIView())
 
-        let stepLabel = UILabel(frame: CGRect(x: 10, y: 152, width: 200, height: 16))
-        stepLabel.text = "Step Size"
-        stepLabel.textColor = UIColor.white.withAlphaComponent(0.9)
-        stepLabel.font = .systemFont(ofSize: 12, weight: .semibold)
-        stepLabel.textAlignment = .center
-        panel.contentView.addSubview(stepLabel)
+        dPadStack.addArrangedSubview(topRow)
+        dPadStack.addArrangedSubview(middleRow)
+        dPadStack.addArrangedSubview(bottomRow)
+        contentStack.addArrangedSubview(dPadStack)
 
-        stepSegmentedControl = UISegmentedControl(items: ["0.5x", "1x", "2x", "5x"])
-        stepSegmentedControl.frame = CGRect(x: 10, y: 170, width: 200, height: 28)
+        let stepLabel = UILabel()
+        stepLabel.text = "STEP MULTIPLIER"
+        stepLabel.textColor = CheerPalette.textSecondary
+        stepLabel.font = cheerMonospacedFont(size: 10, weight: .bold)
+        contentStack.addArrangedSubview(stepLabel)
+
+        stepSegmentedControl = makeCheerSegmentedControl(items: ["0.5x", "1x", "2x", "5x"])
         stepSegmentedControl.selectedSegmentIndex = 1
-        stepSegmentedControl.backgroundColor = UIColor.white.withAlphaComponent(0.2)
-        stepSegmentedControl.selectedSegmentTintColor = UIColor.systemTeal.withAlphaComponent(0.9)
-        stepSegmentedControl.setTitleTextAttributes(
-            [.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 11, weight: .bold)],
-            for: .normal
-        )
-        stepSegmentedControl.setTitleTextAttributes(
-            [.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 11, weight: .bold)],
-            for: .selected
-        )
         stepSegmentedControl.addTarget(self, action: #selector(stepSizeChanged), for: .valueChanged)
-        panel.contentView.addSubview(stepSegmentedControl)
+        contentStack.addArrangedSubview(stepSegmentedControl)
 
-        // Reset transform button
-        let resetTransformBtn = createButton(
-            title: "Reset Position", x: 10, y: 205, width: 200, height: 30,
-            action: #selector(resetTapped))
-        resetTransformBtn.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.8)
-        panel.contentView.addSubview(resetTransformBtn)
+        let resetButton = CheerButton(title: "Reset Transform", symbol: "arrow.counterclockwise.circle", style: .secondary)
+        resetButton.addTarget(self, action: #selector(resetTapped), for: .touchUpInside)
+        contentStack.addArrangedSubview(resetButton)
+
+        let topActionRow = UIStackView(arrangedSubviews: [
+            makeActionButton(title: "Pose Library", symbol: "square.grid.2x2", style: .accent, action: #selector(poseLibraryTapped)),
+            makeActionButton(title: "Reset Pose", symbol: "figure.stand.line.dotted.figure.stand", style: .danger, action: #selector(resetPoseTapped))
+        ])
+        topActionRow.axis = .horizontal
+        topActionRow.spacing = 8
+        topActionRow.distribution = .fillEqually
+        contentStack.addArrangedSubview(topActionRow)
+
+        let bottomActionRow = UIStackView(arrangedSubviews: [
+            makeActionButton(title: "Fit View", symbol: "viewfinder", style: .neutral, action: #selector(fitViewTapped)),
+            makeActionButton(title: "Visuals", symbol: "sparkles", style: .positive, action: #selector(toggleVisualsTapped))
+        ])
+        bottomActionRow.axis = .horizontal
+        bottomActionRow.spacing = 8
+        bottomActionRow.distribution = .fillEqually
+        contentStack.addArrangedSubview(bottomActionRow)
     }
 
     func updateModeDisplay(mode: TransformMode, step: Float) {
         switch mode {
         case .position:
-            transformModeLabel.text = "Transform: Position (\(formattedStep(step)))"
+            modeSegmentedControl.selectedSegmentIndex = 0
+            modeSummaryLabel.text = "POSITION // STEP \(formattedStep(step))"
         case .rotation:
-            transformModeLabel.text = "Transform: Rotation (\(formattedStep(step)))"
+            modeSegmentedControl.selectedSegmentIndex = 1
+            modeSummaryLabel.text = "ROTATION // STEP \(formattedStep(step))"
         case .scale:
-            transformModeLabel.text = "Transform: Scale (\(formattedStep(step)))"
+            modeSegmentedControl.selectedSegmentIndex = 2
+            modeSummaryLabel.text = "SCALE // STEP \(formattedStep(step))"
         }
+        centerBadge.text = "Step \(formattedStep(step))"
     }
 
     func updateStepMultiplierSelection(_ multiplier: Float) {
@@ -151,53 +157,96 @@ class TransformControlPanel: UIView {
 
     // MARK: - Actions
 
+    @objc private func modeChanged() {
+        switch modeSegmentedControl.selectedSegmentIndex {
+        case 0: delegate?.didChangeTransformMode(.position)
+        case 1: delegate?.didChangeTransformMode(.rotation)
+        default: delegate?.didChangeTransformMode(.scale)
+        }
+    }
+
     @objc private func positionModeTapped() { delegate?.didChangeTransformMode(.position) }
     @objc private func rotationModeTapped() { delegate?.didChangeTransformMode(.rotation) }
     @objc private func scaleModeTapped() { delegate?.didChangeTransformMode(.scale) }
-
-    @objc private func upTapped() { delegate?.didTapTransform(direction: .up) }
-    @objc private func downTapped() { delegate?.didTapTransform(direction: .down) }
-    @objc private func leftTapped() { delegate?.didTapTransform(direction: .left) }
-    @objc private func rightTapped() { delegate?.didTapTransform(direction: .right) }
 
     @objc private func resetTapped() { delegate?.didTapResetTransform() }
     @objc private func stepSizeChanged() {
         let multiplier = stepMultipliers[stepSegmentedControl.selectedSegmentIndex]
         delegate?.didChangeTransformStepMultiplier(multiplier)
     }
+    @objc private func poseLibraryTapped() { delegate?.didTapPoseLibraryFromTransformPanel() }
+    @objc private func resetPoseTapped() { delegate?.didTapResetPoseFromTransformPanel() }
+    @objc private func fitViewTapped() { delegate?.didTapFitViewFromTransformPanel() }
+    @objc private func toggleVisualsTapped() { delegate?.didTapToggleVisualizationsFromTransformPanel() }
 
     // MARK: - Helper
 
-    private func createButton(
-        title: String, x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat, action: Selector
-    ) -> UIButton {
-        let button = UIButton(frame: CGRect(x: x, y: y, width: width, height: height))
-        button.setTitle(title, for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = .boldSystemFont(ofSize: 14)
-        button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.8)
-        button.layer.cornerRadius = 8
+    private func dPadRow(left: UIView, center: UIView, right: UIView) -> UIStackView {
+        let row = UIStackView(arrangedSubviews: [left, center, right])
+        row.axis = .horizontal
+        row.spacing = 8
+        row.alignment = .center
+        row.distribution = .fillEqually
+        return row
+    }
+
+    private func makeActionButton(title: String, symbol: String, style: CheerButtonStyle, action: Selector) -> UIButton {
+        let button = CheerButton(title: title, symbol: symbol, style: style, compact: true)
         button.addTarget(self, action: action, for: .touchUpInside)
-
-        // Add visual feedback on touch
-        button.addTarget(self, action: #selector(buttonTouchDown(_:)), for: .touchDown)
-        button.addTarget(
-            self, action: #selector(buttonTouchUp(_:)),
-            for: [.touchUpInside, .touchUpOutside, .touchCancel])
-
         return button
     }
 
-    @objc private func buttonTouchDown(_ sender: UIButton) {
-        UIView.animate(withDuration: 0.05) {
-            sender.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-            sender.alpha = 1.0
-        }
+    private func directionButton(title: String, direction: TransformDirection) -> UIButton {
+        let button = CheerButton(title: title, style: .neutral)
+        button.accessibilityIdentifier = direction.rawValue
+        button.addTarget(self, action: #selector(directionPressed(_:)), for: .touchDown)
+        button.addTarget(self, action: #selector(directionReleasedInside(_:)), for: .touchUpInside)
+        button.addTarget(self, action: #selector(directionReleasedOutside(_:)), for: [.touchUpOutside, .touchCancel])
+        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        return button
     }
 
-    @objc private func buttonTouchUp(_ sender: UIButton) {
-        UIView.animate(withDuration: 0.1) {
-            sender.transform = .identity
+    private func direction(for button: UIButton) -> TransformDirection? {
+        guard let rawValue = button.accessibilityIdentifier else { return nil }
+        return TransformDirection(rawValue: rawValue)
+    }
+
+    @objc private func directionPressed(_ sender: UIButton) {
+        guard let direction = direction(for: sender) else { return }
+        pressedDirection = direction
+        isContinuousTransformActive = false
+
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self, self.pressedDirection == direction else { return }
+            self.isContinuousTransformActive = true
+            self.delegate?.didBeginContinuousTransform(direction: direction)
+        }
+        holdStartWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
+    }
+
+    @objc private func directionReleasedInside(_ sender: UIButton) {
+        guard let direction = direction(for: sender) else { return }
+        finishDirectionInteraction(direction: direction, treatAsTap: !isContinuousTransformActive)
+    }
+
+    @objc private func directionReleasedOutside(_ sender: UIButton) {
+        guard let direction = direction(for: sender) else { return }
+        finishDirectionInteraction(direction: direction, treatAsTap: false)
+    }
+
+    private func finishDirectionInteraction(direction: TransformDirection, treatAsTap: Bool) {
+        holdStartWorkItem?.cancel()
+        holdStartWorkItem = nil
+
+        let wasContinuous = isContinuousTransformActive && pressedDirection == direction
+        pressedDirection = nil
+        isContinuousTransformActive = false
+
+        if wasContinuous {
+            delegate?.didEndContinuousTransform()
+        } else if treatAsTap {
+            delegate?.didTapTransform(direction: direction)
         }
     }
 

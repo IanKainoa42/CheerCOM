@@ -36,8 +36,8 @@ The trunk is subdivided into 4 segments to better approximate spinal curvature:
 *Note: The Clavicle/Scapula mass is considered integrated into the Thorax segment.*
 
 ### Head & Neck (8.1%)
-5.  **Head** (8.1%): Neck → Head
-    *   *Assumption*: The CoM is located at 50% along the Neck bone. This is an approximation; realistically, the CoM is higher (inside the cranium), but this segment definition captures the general mass location relative to the spine.
+5.  **Head** (8.1%): Head → HeadTop_End
+    *   *Assumption*: The CoM is located at 50% along the line from the head base to the crown.
 
 ### Upper Limbs (10.0%)
 Left and Right sides are symmetric.
@@ -64,23 +64,20 @@ To verify the CoM calculation in the app:
 2.  Tap the **"Run Diagnostics"** button in the top-right corner.
 3.  The app will cycle through standard poses:
     *   **T-Pose**: Baseline. CoM should be symmetric (X ≈ 0, Z ≈ 0) and above hips.
-    *   **Touchdown**: Arms up. CoM should rise significantly (~5-10 units).
+    *   **High V**: Arms raised in V shape. CoM should rise compared to T-Pose, but less than Touchdown.
+    *   **Touchdown**: Arms straight up. CoM should rise significantly (~5-10 units).
     *   **Squat**: Hips lower. CoM should lower significantly (~10-20 units).
     *   **Pike**: Legs forward. CoM should shift forward (Z+).
     *   **Layout**: Straight body. CoM similar to Touchdown/T-Pose but higher than T-Pose.
     *   **Side Lean**: Trunk lateral flexion. CoM should shift laterally (X-axis).
     *   **Bow and Arrow**: Asymmetric arm extension. CoM should shift laterally (X-axis) away from the baseline.
-    *   **Handstand**: Inverted position. CoM Y should be elevated similar to Touchdown due to arms supporting the body.
-4.  A detailed report is printed to the console and the on-screen overlay, including a readout of the active Joint Limits.
+    *   **Lunge**: Asymmetric leg stance (one forward, one back). CoM should lower compared to T-Pose.
+    *   **Liberty**: One leg raised and arms up. CoM should rise compared to T-Pose and shift slightly laterally.
+    *   **Prep Position**: Knees slightly bent, hands near chest. CoM should drop slightly but less than a full squat.
+    *   **Bridge**: Backbend pose with hands and feet on the ground. CoM should drop significantly and shift backwards (Z-).
 
-## Joint Constraints (Realism Goals)
-To ensure poses remain biologically plausible, the system enforces realistic range-of-motion constraints via `JointLimits.swift`.
-These limits clamp the Euler angles (X, Y, Z) of specific `mixamorig_` joints during manual posing and validation:
-*   **Knees**: Clamped to prevent forward bending.
-*   **Elbows**: Clamped to prevent backwards bending.
-*   **Shoulders**: Constrained to prevent impossible overhead rotation.
-*   **Spine**: Constrained to prevent excessive backbends.
-*   **Neck & Ankles**: Constrained within realistic human flexibility bounds.
+    These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, and asymmetry).
+4.  A detailed report is printed to the console and the on-screen overlay, verifying segment masses, individual segment COM points, and the final CoM.
 
 ### Verification Script (Python)
 
@@ -88,13 +85,34 @@ For independent verification of the mathematical model (segment mass ratios, fal
 1.  Run `python3 tests/verify_com_math.py`
 2.  This script mocks the SceneKit vector math and verifies that:
     *   **Mass Ratios**: Total mass ratio sums to exactly 1.0.
+    *   **Segment Mass and COM Points**: The script outputs the segment mass and segment COM points for the baseline T-Pose.
     *   **Hand Fallback**: Correctly defaults to proximal joint if distal tip is missing.
     *   **T-Pose**: Baseline CoM calculation is reasonable.
+    *   **High V**: CoM rises when arms are raised diagonally.
     *   **Touchdown**: CoM rises significantly when arms are raised.
+    *   **Layout**: CoM rises similarly to Touchdown when arms are raised and body is straight.
     *   **Squat**: CoM lowers significantly when hips are lowered.
+    *   **Lunge**: CoM lowers significantly when stance is widened and hips are lowered.
+    *   **Liberty**: CoM rises when one leg is raised and arms are in high V.
+    *   **Prep Position**: CoM drops slightly when knees are bent.
+
+## Visible CoM Marker
+Within the SceneKit view, a prominent bright green sphere (radius 10) dynamically tracks the total body Center of Mass. Auxiliary cyan spheres represent individual segment COMs, showing exactly where each segment's mass is centered.
+
+## Joint Constraints
+
+Realistic joint limits are enforced within the application to prevent impossible poses that would otherwise invalidate the CoM calculation. The following primary limits are currently implemented:
+-   **Knees (`mixamorig_RightLeg`, `mixamorig_LeftLeg`)**: Hinge joint. X-axis limited to [-160°, 0°].
+-   **Elbows (`mixamorig_RightForeArm`, `mixamorig_LeftForeArm`)**: Hinge joint. Z-axis limited (Right: [0°, 160°], Left: [-160°, 0°]).
+-   **Shoulders (`mixamorig_RightArm`, `mixamorig_LeftArm`)**: Ball-and-socket. Bounded ranges across X, Y, and Z to prevent hyper-extension.
+-   **Spine (`mixamorig_Spine`, `mixamorig_Spine1`, `mixamorig_Spine2`)**: Segmented limits. Each bounded to [-45°, 45°] across all axes.
+-   **Neck/Head (`mixamorig_Neck`, `mixamorig_Head`)**: Limited range of motion to simulate physiological boundaries.
+-   **Hips (`mixamorig_RightUpLeg`, `mixamorig_LeftUpLeg`)**: Broad ball-and-socket constraints bounding extreme internal/external rotation and hyper-extension.
 
 ## Known Limitations
 
 1.  **Clavicle Segment**: The shoulder girdle (clavicle) is not modeled as a separate moving segment. Its mass is effectively lumped into the Thorax.
-2.  **Head CoM**: The Head segment uses `Neck` → `Head` joints. This places the CoM lower than anatomical reality (mid-neck vs cranium).
-3.  **Rig Dependency**: The calculation relies on specific `mixamorig_` bone names. If a custom character uses different naming, the calculator must be updated.
+2.  **Rig Dependency**: The calculation relies on specific `mixamorig_` bone names. If a custom character uses different naming, the calculator must be updated.
+
+* Note: Added a ground plane visualization for baseline sanity checking.
+* Verified for baseline audit

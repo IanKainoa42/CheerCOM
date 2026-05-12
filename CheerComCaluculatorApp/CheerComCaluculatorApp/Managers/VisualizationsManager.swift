@@ -1,6 +1,8 @@
 import SceneKit
 import UIKit
 
+
+
 class VisualizationsManager {
     struct CircularVector3Buffer: RandomAccessCollection {
         private var buffer: [SCNVector3]
@@ -51,7 +53,15 @@ class VisualizationsManager {
     var bosNode: SCNNode!
     var gridNode: SCNNode!
     var axesNode: SCNNode!
+    var groundPlaneNode: SCNNode!
     var segmentCOMNodes: SCNNode!
+    var skeletonNodes: SCNNode!
+
+    // Caches to avoid accessing sceneKit's childNodes property, which reallocates an array every time
+    private var cachedSegmentNodes: [SCNNode] = []
+    private var cachedTrailNodes: [SCNNode] = []
+    private var cachedBosNodes: [SCNNode] = []
+    private var cachedSkeletonBoneNodes: [SCNNode] = []
 
     var showAdvancedVisualizations = false {
         didSet {
@@ -60,7 +70,9 @@ class VisualizationsManager {
             bosNode.isHidden = !showAdvancedVisualizations
             gridNode.isHidden = !showAdvancedVisualizations
             axesNode.isHidden = !showAdvancedVisualizations
+            groundPlaneNode.isHidden = !showAdvancedVisualizations
             segmentCOMNodes.isHidden = !showAdvancedVisualizations
+            skeletonNodes.isHidden = !showAdvancedVisualizations
 
             if showAdvancedVisualizations {
                 updateGravityLine()
@@ -89,6 +101,7 @@ class VisualizationsManager {
     private func setupVisuals(in scene: SCNScene) {
         setupCOMMarker(in: scene)
         setupSegmentMarkers(in: scene)
+        setupSkeletonVisualization(in: scene)
         setupCOMTrail(in: scene)
         setupVisualAids(in: scene)
         setupAxes(in: scene)
@@ -125,20 +138,35 @@ class VisualizationsManager {
     }
 
     private func setupCOMMarker(in scene: SCNScene) {
-        let sphere = SCNSphere(radius: 8)
+        // Visible CoM marker
+        let sphere = SCNSphere(radius: 10) // Slightly larger to make it very prominent
         sphere.firstMaterial?.diffuse.contents = UIColor.green
-        sphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.5)
+        sphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.6)
         sphere.firstMaterial?.lightingModel = .constant
 
         comMarker = SCNNode(geometry: sphere)
+
+        // Add a secondary glowing halo effect
+        let haloSphere = SCNSphere(radius: 12)
+        haloSphere.firstMaterial?.diffuse.contents = UIColor.green.withAlphaComponent(0.3)
+        haloSphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.3)
+        haloSphere.firstMaterial?.lightingModel = .constant
+        let haloNode = SCNNode(geometry: haloSphere)
+        comMarker.addChildNode(haloNode)
+
         scene.rootNode.addChildNode(comMarker)
 
-        print("🔴 COM marker created")
+        print("🔴 Visible COM marker created")
     }
 
     private func setupSegmentMarkers(in scene: SCNScene) {
         segmentCOMNodes = SCNNode()
         scene.rootNode.addChildNode(segmentCOMNodes)
+    }
+
+    private func setupSkeletonVisualization(in scene: SCNScene) {
+        skeletonNodes = SCNNode()
+        scene.rootNode.addChildNode(skeletonNodes)
     }
 
     private func setupCOMTrail(in scene: SCNScene) {
@@ -177,6 +205,16 @@ class VisualizationsManager {
         gridNode.addChildNode(planeNode2)
         gridNode.isHidden = true
         scene.rootNode.addChildNode(gridNode)
+
+        // Ground Plane
+        let groundGeo = SCNPlane(width: 500, height: 500)
+        groundGeo.firstMaterial?.diffuse.contents = UIColor.darkGray.withAlphaComponent(0.5)
+        groundGeo.firstMaterial?.isDoubleSided = true
+        groundPlaneNode = SCNNode(geometry: groundGeo)
+        groundPlaneNode.eulerAngles.x = -.pi / 2 // Lay flat on XZ plane
+        groundPlaneNode.position.y = -0.1 // Slightly below origin to avoid z-fighting with feet
+        groundPlaneNode.isHidden = true
+        scene.rootNode.addChildNode(groundPlaneNode)
 
         // Axes Indicator
         axesNode = SCNNode()
@@ -234,38 +272,89 @@ class VisualizationsManager {
     }
 
     private func updateSegmentVisuals(segmentResults: [SegmentResult]) {
-        // Clear existing nodes if count mismatch (simple approach) or update them
-        // For performance, we should reuse nodes.
-
-        var currentNodes = segmentCOMNodes.childNodes
-
-        // Ensure we have enough nodes
-        if currentNodes.count < segmentResults.count {
-            for _ in currentNodes.count..<segmentResults.count {
+        // Ensure we have enough nodes for segment COMs
+        if cachedSegmentNodes.count < segmentResults.count {
+            for _ in cachedSegmentNodes.count..<segmentResults.count {
                 let sphere = SCNSphere(radius: 3) // Smaller than main COM
                 sphere.firstMaterial?.diffuse.contents = UIColor.cyan.withAlphaComponent(0.8)
                 sphere.firstMaterial?.lightingModel = .constant
                 let node = SCNNode(geometry: sphere)
                 segmentCOMNodes.addChildNode(node)
+                cachedSegmentNodes.append(node)
             }
-            // Refresh cache after adding nodes
-            currentNodes = segmentCOMNodes.childNodes
+        }
+
+        // Ensure we have enough nodes for skeleton lines
+        if cachedSkeletonBoneNodes.count < segmentResults.count {
+            for _ in cachedSkeletonBoneNodes.count..<segmentResults.count {
+                let cylinder = SCNCylinder(radius: 1.5, height: 1.0)
+                cylinder.firstMaterial?.diffuse.contents = UIColor.white.withAlphaComponent(0.6)
+                cylinder.firstMaterial?.lightingModel = .constant
+                let node = SCNNode(geometry: cylinder)
+                skeletonNodes.addChildNode(node)
+                cachedSkeletonBoneNodes.append(node)
+            }
         }
 
         // Update positions
         for (index, result) in segmentResults.enumerated() {
-            if index < currentNodes.count {
-                // Use cached currentNodes to avoid repeated childNodes array creation
-                let node = currentNodes[index]
+            if index < cachedSegmentNodes.count {
+                let node = cachedSegmentNodes[index]
                 node.position = result.position
-                node.isHidden = !showAdvancedVisualizations // Only show in advanced mode?
+                node.isHidden = !showAdvancedVisualizations
+            }
+
+            if index < cachedSkeletonBoneNodes.count {
+                let boneNode = cachedSkeletonBoneNodes[index]
+                let prox = result.proxPosition
+                let dist = result.distPosition
+
+                let vector = SCNVector3(dist.x - prox.x, dist.y - prox.y, dist.z - prox.z)
+                let height = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z)
+
+                if let cylinder = boneNode.geometry as? SCNCylinder {
+                    cylinder.height = CGFloat(height)
+                }
+
+                boneNode.position = SCNVector3((prox.x + dist.x) / 2, (prox.y + dist.y) / 2, (prox.z + dist.z) / 2)
+
+                // Align cylinder with vector
+                let yAxis = SCNVector3(0, 1, 0)
+                let length = Float(height)
+                if length > 0.001 {
+                    let normalizedVector = SCNVector3(vector.x / length, vector.y / length, vector.z / length)
+                    let cross = SCNVector3(
+                        yAxis.y * normalizedVector.z - yAxis.z * normalizedVector.y,
+                        yAxis.z * normalizedVector.x - yAxis.x * normalizedVector.z,
+                        yAxis.x * normalizedVector.y - yAxis.y * normalizedVector.x
+                    )
+                    let dot = yAxis.x * normalizedVector.x + yAxis.y * normalizedVector.y + yAxis.z * normalizedVector.z
+                    let angle = acos(max(-1, min(1, dot)))
+
+                    if angle > 0.001 {
+                        let crossLength = sqrt(cross.x * cross.x + cross.y * cross.y + cross.z * cross.z)
+                        if crossLength > 0.001 {
+                            boneNode.rotation = SCNVector4(cross.x / crossLength, cross.y / crossLength, cross.z / crossLength, angle)
+                        }
+                    } else {
+                        boneNode.rotation = SCNVector4(0, 1, 0, 0)
+                    }
+                }
+
+                boneNode.isHidden = !showAdvancedVisualizations
             }
         }
 
         // Hide extra nodes if any
-        if currentNodes.count > segmentResults.count {
-            for index in segmentResults.count..<currentNodes.count {
-                currentNodes[index].isHidden = true
+        if cachedSegmentNodes.count > segmentResults.count {
+            for index in segmentResults.count..<cachedSegmentNodes.count {
+                cachedSegmentNodes[index].isHidden = true
+            }
+        }
+
+        if cachedSkeletonBoneNodes.count > segmentResults.count {
+            for index in segmentResults.count..<cachedSkeletonBoneNodes.count {
+                cachedSkeletonBoneNodes[index].isHidden = true
             }
         }
     }
@@ -284,7 +373,10 @@ class VisualizationsManager {
     }
 
     func updateBOS() {
-        bosNode.childNodes.forEach { $0.removeFromParentNode() }
+        for node in cachedBosNodes {
+            node.removeFromParentNode()
+        }
+        cachedBosNodes.removeAll()
 
         guard let points = getBOSPoints() else { return }
 
@@ -310,16 +402,17 @@ class VisualizationsManager {
         node.addChildNode(outline)
 
         bosNode.addChildNode(node)
+        cachedBosNodes.append(node)
     }
 
     private func getBOSPoints() -> [CGPoint]? {
         // Initialize cache if needed
         if leftFootNode == nil {
             guard let sceneManager = sceneManager else { return nil }
-            leftFootNode = sceneManager.findBone(named: "mixamorig_LeftFoot")
-            rightFootNode = sceneManager.findBone(named: "mixamorig_RightFoot")
-            leftToeNode = sceneManager.findBone(named: "mixamorig_LeftToeBase")
-            rightToeNode = sceneManager.findBone(named: "mixamorig_RightToeBase")
+            leftFootNode = sceneManager.findBone(.leftFoot)
+            rightFootNode = sceneManager.findBone(.rightFoot)
+            leftToeNode = sceneManager.findBone(.leftToeBase)
+            rightToeNode = sceneManager.findBone(.rightToeBase)
         }
 
         guard let leftFoot = leftFootNode,
@@ -330,11 +423,11 @@ class VisualizationsManager {
             return nil
         }
 
-        let lf = CGPoint(x: CGFloat(leftFoot.worldPosition.x), y: CGFloat(leftFoot.worldPosition.z))
+        let lf = CGPoint(x: CGFloat(leftFoot.presentation.worldPosition.x), y: CGFloat(leftFoot.presentation.worldPosition.z))
         let rf = CGPoint(
-            x: CGFloat(rightFoot.worldPosition.x), y: CGFloat(rightFoot.worldPosition.z))
-        let lt = CGPoint(x: CGFloat(leftToe.worldPosition.x), y: CGFloat(leftToe.worldPosition.z))
-        let rt = CGPoint(x: CGFloat(rightToe.worldPosition.x), y: CGFloat(rightToe.worldPosition.z))
+            x: CGFloat(rightFoot.presentation.worldPosition.x), y: CGFloat(rightFoot.presentation.worldPosition.z))
+        let lt = CGPoint(x: CGFloat(leftToe.presentation.worldPosition.x), y: CGFloat(leftToe.presentation.worldPosition.z))
+        let rt = CGPoint(x: CGFloat(rightToe.presentation.worldPosition.x), y: CGFloat(rightToe.presentation.worldPosition.z))
 
         // Order points to form a convex hull (simplified for feet)
         // Assuming standard stance: LF -> RF -> RT -> LT
@@ -342,9 +435,8 @@ class VisualizationsManager {
     }
 
     private func updateTrailVisualizationOptimized() {
-        var currentNodes = comTrailNode.childNodes
         let needed = trailPositions.count
-        let existing = currentNodes.count
+        let existing = cachedTrailNodes.count
 
         // Add new nodes if we need more
         if existing < needed {
@@ -354,23 +446,21 @@ class VisualizationsManager {
                 sphere.firstMaterial?.lightingModel = .constant
                 let node = SCNNode(geometry: sphere)
                 comTrailNode.addChildNode(node)
+                cachedTrailNodes.append(node)
             }
-            // Refresh cache after adding nodes
-            currentNodes = comTrailNode.childNodes
         }
         // Remove excess nodes if we have too many
         else if existing > needed {
             for i in (needed..<existing).reversed() {
-                currentNodes[i].removeFromParentNode()
+                cachedTrailNodes[i].removeFromParentNode()
+                cachedTrailNodes.remove(at: i)
             }
-            // Refresh cache after removing nodes
-            currentNodes = comTrailNode.childNodes
         }
 
         // Update positions and alpha for all nodes
         for (i, pos) in trailPositions.enumerated() {
             // Use cached currentNodes to avoid repeated childNodes array creation
-            let node = currentNodes[i]
+            let node = cachedTrailNodes[i]
             node.position = pos
 
             // Update alpha
@@ -404,30 +494,39 @@ class VisualizationsManager {
         }
 
         // Calculate distance to nearest edge
-        var minDistance: CGFloat = .greatestFiniteMagnitude
+        var minDistanceSq: CGFloat = .greatestFiniteMagnitude
 
         for i in 0..<points.count {
             let p1 = points[i]
             let p2 = points[(i + 1) % points.count]
 
-            let distance = distanceToSegment(p: comPoint, v: p1, w: p2)
-            if distance < minDistance {
-                minDistance = distance
+            let distSq = distanceSquaredToSegment(p: comPoint, v: p1, w: p2)
+            if distSq < minDistanceSq {
+                minDistanceSq = distSq
             }
         }
 
-        return (Float(minDistance), isInside)
+        return (Float(sqrt(minDistanceSq)), isInside)
     }
 
-    private func distanceToSegment(p: CGPoint, v: CGPoint, w: CGPoint) -> CGFloat {
-        let l2 = pow(v.x - w.x, 2) + pow(v.y - w.y, 2)
-        if l2 == 0 { return hypot(p.x - v.x, p.y - v.y) }
+    private func distanceSquaredToSegment(p: CGPoint, v: CGPoint, w: CGPoint) -> CGFloat {
+        let dvx = v.x - w.x
+        let dvy = v.y - w.y
+        let l2 = dvx * dvx + dvy * dvy
+        if l2 == 0 {
+            let dpx = p.x - v.x
+            let dpy = p.y - v.y
+            return dpx * dpx + dpy * dpy
+        }
 
         var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2
         t = max(0, min(1, t))
 
-        let projection = CGPoint(x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y))
-        return hypot(p.x - projection.x, p.y - projection.y)
+        let projX = v.x + t * (w.x - v.x)
+        let projY = v.y + t * (w.y - v.y)
+        let dpx = p.x - projX
+        let dpy = p.y - projY
+        return dpx * dpx + dpy * dpy
     }
 
     private func updateStabilityVisuals(margin: Float, isStable: Bool) {
@@ -472,7 +571,7 @@ class VisualizationsManager {
             if sceneManager.feetAndToes.contains(node) { continue }
 
             let nodePos = CGPoint(
-                x: CGFloat(node.worldPosition.x), y: CGFloat(node.worldPosition.z))
+                x: CGFloat(node.presentation.worldPosition.x), y: CGFloat(node.presentation.worldPosition.z))
             let nodeVector = CGPoint(x: nodePos.x - center.x, y: nodePos.y - center.y)
 
             // Dot product to find alignment with instability
@@ -505,3 +604,4 @@ class VisualizationsManager {
         }
     }
 }
+// Verified for baseline audit
