@@ -1,6 +1,6 @@
 import SceneKit
 import UIKit
-import ModelRigKit
+
 
 
 class VisualizationsManager {

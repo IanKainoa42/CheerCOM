@@ -1,5 +1,5 @@
 import UIKit
-import ModelRigKit
+
 
 final class JointPickerViewController: UIViewController {
     struct Section {

@@ -1,6 +1,6 @@
 import SceneKit
 import UIKit
-import ModelRigKit
+
 
 class SceneViewController: UIViewController {
 
@@ -813,9 +813,9 @@ extension SceneViewController: JointControlPanelDelegate {
 
         var newAngles = joint.eulerAngles
         switch axis {
-        case .x: newAngles.x += delta
-        case .y: newAngles.y += delta
-        case .z: newAngles.z += delta
+        case .xAxis: newAngles.x += delta
+        case .yAxis: newAngles.y += delta
+        case .zAxis: newAngles.z += delta
         }
 
         if let jointName = joint.name {
@@ -856,9 +856,9 @@ extension SceneViewController: JointControlPanelDelegate {
 
         var newAngles = joint.eulerAngles
         switch axis {
-        case .x: newAngles.x = angle
-        case .y: newAngles.y = angle
-        case .z: newAngles.z = angle
+        case .xAxis: newAngles.x = angle
+        case .yAxis: newAngles.y = angle
+        case .zAxis: newAngles.z = angle
         }
 
         if let jointName = joint.name {
@@ -913,9 +913,9 @@ extension SceneViewController: JointControlPanelDelegate {
     // Helpers
     private func getAngleForCurrentAxis(joint: SCNNode) -> Float {
         switch jointControlMode {
-        case .x: return joint.eulerAngles.x * 180 / .pi
-        case .y: return joint.eulerAngles.y * 180 / .pi
-        case .z: return joint.eulerAngles.z * 180 / .pi
+        case .xAxis: return joint.eulerAngles.x * 180 / .pi
+        case .yAxis: return joint.eulerAngles.y * 180 / .pi
+        case .zAxis: return joint.eulerAngles.z * 180 / .pi
         }
     }
 
