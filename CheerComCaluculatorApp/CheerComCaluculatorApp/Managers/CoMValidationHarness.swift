@@ -23,7 +23,11 @@ class CoMValidationHarness {
         .prepPosition,
         .arabesque,
         .scale,
-        .bridge
+        .bridge,
+        .testPose1,
+        .testPose2,
+        .testPose3,
+        .testPose4
     ]
 
     private struct ValidationOutcome {
@@ -414,6 +418,38 @@ class CoMValidationHarness {
                 return (true, "CoM lowered by \(String(format: "%.1f", drop)) units and shifted backward by \(String(format: "%.1f", zShift)) units (Expected Drop > 10.0, Z-Shift < -2.0)")
             }
             return (false, "CoM did not correctly reflect bridge pose (Drop: \(String(format: "%.1f", drop)), Z-Shift: \(String(format: "%.1f", zShift)))")
+
+        case .testPose1:
+            // Test Pose 1: Arms slightly lowered. Similar to T-Pose, CoM Y should drop slightly or remain similar.
+            let drop = baseline.y - com.y
+            if drop >= 0.0 && drop < 5.0 {
+                return (true, "CoM dropped slightly or remained similar to T-Pose (Drop: \(String(format: "%.1f", drop)))")
+            }
+            return (false, "CoM did not drop as expected for Test Pose 1 (Drop: \(String(format: "%.1f", drop)))")
+
+        case .testPose2:
+            // Test Pose 2: Arms raised high. Similar to Touchdown. CoM should rise significantly.
+            let rise = com.y - baseline.y
+            if rise > 2.0 {
+                return (true, "CoM rose by \(String(format: "%.1f", rise)) units (Expected > 2.0)")
+            }
+            return (false, "CoM failed to rise significantly for Test Pose 2 (Rise: \(String(format: "%.1f", rise)))")
+
+        case .testPose3:
+            // Test Pose 3: Legs bent forward. Hips remain, legs raise forward. CoM should shift forward (+Z direction) and slightly up.
+            let zShift = com.z - baseline.z
+            if zShift > 2.0 {
+                return (true, "CoM shifted forward in Z by \(String(format: "%.1f", zShift)) units (Expected > 2.0)")
+            }
+            return (false, "CoM failed to shift forward for Test Pose 3 (Z-Shift: \(String(format: "%.1f", zShift)))")
+
+        case .testPose4:
+            // Test Pose 4: Legs extended backward. CoM should shift backward (-Z direction) and slightly up.
+            let zShift = com.z - baseline.z
+            if zShift < -2.0 {
+                return (true, "CoM shifted backward in Z by \(String(format: "%.1f", zShift)) units (Expected < -2.0)")
+            }
+            return (false, "CoM failed to shift backward for Test Pose 4 (Z-Shift: \(String(format: "%.1f", zShift)))")
 
         default:
             return (true, "No specific criteria")
