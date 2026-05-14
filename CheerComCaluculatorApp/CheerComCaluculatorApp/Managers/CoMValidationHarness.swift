@@ -143,7 +143,7 @@ class CoMValidationHarness {
         log("Number of Segments Defined: \(segments.count)")
 
         // 1. Verify Mass Ratios & Total Mass
-        let totalMassRatio = segments.reduce(0.0) { $0 + $1.mass }
+        let totalMassRatio = segments.reduce(0.0) { $0 + $1.massRatio }
         log("Total Mass Ratio Sum: \(String(format: "%.4f", totalMassRatio))")
 
         if abs(totalMassRatio - 1.0) > 0.001 {
