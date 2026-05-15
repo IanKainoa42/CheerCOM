@@ -13,6 +13,8 @@ class SceneViewController: UIViewController {
     // Views
     var comInfoPanel: COMInfoPanel!
     var jointControlPanel: JointControlPanel!
+    private var clampWarningLabel: UILabel!
+    private var clampWarningTimer: Timer?
     var transformControlPanel: TransformControlPanel!
     var poseLibraryPanel: PoseLibraryPanel!
     private var backdropView: CheerGradientBackdropView!
@@ -126,10 +128,79 @@ class SceneViewController: UIViewController {
         super.viewWillDisappear(animated)
         resignFirstResponder()
         stopUpdateTimer()
+        NotificationCenter.default.removeObserver(self, name: .jointAngleClamped, object: nil)
     }
 
     deinit {
         stopUpdateTimer()
+        NotificationCenter.default.removeObserver(self, name: .jointAngleClamped, object: nil)
+    }
+
+    private func setupClampWarningToast() {
+        clampWarningLabel = UILabel()
+        clampWarningLabel.translatesAutoresizingMaskIntoConstraints = false
+        clampWarningLabel.backgroundColor = CheerPalette.danger.withAlphaComponent(0.85)
+        clampWarningLabel.textColor = .white
+        clampWarningLabel.font = cheerRoundedFont(.subheadline, weight: .bold)
+        clampWarningLabel.textAlignment = .center
+        clampWarningLabel.layer.cornerRadius = 12
+        clampWarningLabel.layer.masksToBounds = true
+        clampWarningLabel.numberOfLines = 0
+        clampWarningLabel.alpha = 0
+
+        // Add padding
+        let paddingView = UIView()
+        paddingView.translatesAutoresizingMaskIntoConstraints = false
+        paddingView.backgroundColor = .clear
+        paddingView.addSubview(clampWarningLabel)
+
+        view.addSubview(clampWarningLabel)
+
+        NSLayoutConstraint.activate([
+            clampWarningLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            clampWarningLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            clampWarningLabel.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -40),
+            clampWarningLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+        ])
+
+        // Add some internal padding
+        // UILabel doesn't have intrinsic padding, so we just use the constraints above
+        // but we'll add spaces or a custom view if we want real padding.
+        // For a simple toast, this is okay, but let's make it look nicer by adjusting bounds.
+        // Actually, let's just make sure it's wide enough for text.
+
+        NotificationCenter.default.addObserver(self, selector: #selector(handleJointClamped(_:)), name: .jointAngleClamped, object: nil)
+    }
+
+    @objc private func handleJointClamped(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let jointName = userInfo["jointName"] as? String else { return }
+
+        // Format the joint name to be more readable
+        let readableName = jointName.replacingOccurrences(of: "mixamorig_", with: "").replacingOccurrences(of: "Right", with: "R ").replacingOccurrences(of: "Left", with: "L ")
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            self.clampWarningLabel.text = " ⚠️ Limit Reached: \(readableName) "
+
+            self.clampWarningTimer?.invalidate()
+
+            UIView.animate(withDuration: 0.2) {
+                self.clampWarningLabel.alpha = 1.0
+                self.clampWarningLabel.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+            } completion: { _ in
+                UIView.animate(withDuration: 0.1) {
+                    self.clampWarningLabel.transform = .identity
+                }
+            }
+
+            self.clampWarningTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+                UIView.animate(withDuration: 0.3) {
+                    self?.clampWarningLabel.alpha = 0.0
+                }
+            }
+        }
     }
 
     private func setupBackdrop() {
@@ -165,6 +236,8 @@ class SceneViewController: UIViewController {
     }
 
     private func setupUI() {
+        setupClampWarningToast()
+
         chromeScrollView = UIScrollView()
         chromeScrollView.translatesAutoresizingMaskIntoConstraints = false
         chromeScrollView.alwaysBounceVertical = true
