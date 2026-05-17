@@ -169,7 +169,7 @@ class CoMValidationHarness {
 
         log("\nSegment Mapping Verification:")
         for segment in segments {
-            log(" - \(segment.name): \(segment.prox) -> \(segment.dist)")
+            log(" - \(segment.name): \(segment.proximalJoint.rawValue) -> \(segment.distalJoint.rawValue)")
         }
         log("")
 
@@ -179,7 +179,7 @@ class CoMValidationHarness {
             let boundNames = Set(result.segmentCOMs.map { $0.name })
             for segment in segments {
                 if !boundNames.contains(segment.name) {
-                    log("   Missing: \(segment.name) (Joints: \(segment.prox) -> \(segment.dist))")
+                    log("   Missing: \(segment.name) (Joints: \(segment.proximalJoint.rawValue) -> \(segment.distalJoint.rawValue))")
                 }
             }
         } else {
