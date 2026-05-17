@@ -2,6 +2,10 @@ import Foundation
 import SceneKit
 
 
+extension Notification.Name {
+    static let jointAngleClamped = Notification.Name("jointAngleClamped")
+}
+
 struct JointLimit {
     let minAngle: SCNVector3
     let maxAngle: SCNVector3
@@ -55,6 +59,12 @@ class JointLimits {
             let cY = clampedY * 180 / .pi
             let cZ = clampedZ * 180 / .pi
             print(String(format: "⚠️ POSE VALIDATOR WARNING: Out-of-range angle clamped on %@. Attempted: (%.1f°, %.1f°, %.1f°) -> Clamped: (%.1f°, %.1f°, %.1f°)", jointName, degX, degY, degZ, cX, cY, cZ))
+
+            NotificationCenter.default.post(
+                name: .jointAngleClamped,
+                object: nil,
+                userInfo: ["jointName": jointName]
+            )
         }
 
         return SCNVector3(clampedX, clampedY, clampedZ)
