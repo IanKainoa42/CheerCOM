@@ -689,7 +689,9 @@ class JointLimitsMock:
         "mixamorig_RightHand": {"min": SCNVector3(-90, -45, -45), "max": SCNVector3(90, 45, 45)},
         "mixamorig_LeftHand": {"min": SCNVector3(-90, -45, -45), "max": SCNVector3(90, 45, 45)},
         "mixamorig_RightFoot": {"min": SCNVector3(-45, -30, -30), "max": SCNVector3(45, 30, 30)},
-        "mixamorig_LeftFoot": {"min": SCNVector3(-45, -30, -30), "max": SCNVector3(45, 30, 30)}
+        "mixamorig_LeftFoot": {"min": SCNVector3(-45, -30, -30), "max": SCNVector3(45, 30, 30)},
+        "mixamorig_RightToeBase": {"min": SCNVector3(-45, -10, -10), "max": SCNVector3(90, 10, 10)},
+        "mixamorig_LeftToeBase": {"min": SCNVector3(-45, -10, -10), "max": SCNVector3(90, 10, 10)}
     }
 
     @staticmethod
@@ -817,6 +819,15 @@ def test_joint_limits():
         print("✅ PASS: Right Foot (Ankle) clamped properly")
     else:
         print(f"❌ FAIL: Right Foot not clamped. Got X: {math.degrees(clamped_r_foot.x)}, Y: {math.degrees(clamped_r_foot.y)}, Z: {math.degrees(clamped_r_foot.z)}")
+        return False
+
+    # Test Toe limits
+    r_toe = SCNVector3(math.radians(120), math.radians(-20), math.radians(20))
+    clamped_r_toe = JointLimitsMock.clamp_angles("mixamorig_RightToeBase", r_toe)
+    if abs(clamped_r_toe.x - math.radians(90)) < 0.001 and abs(clamped_r_toe.y - math.radians(-10)) < 0.001 and abs(clamped_r_toe.z - math.radians(10)) < 0.001:
+        print("✅ PASS: Right Toe (Base) clamped properly")
+    else:
+        print(f"❌ FAIL: Right Toe not clamped. Got X: {math.degrees(clamped_r_toe.x)}, Y: {math.degrees(clamped_r_toe.y)}, Z: {math.degrees(clamped_r_toe.z)}")
         return False
 
     return True
