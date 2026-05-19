@@ -722,6 +722,41 @@ class JointLimitsMock:
 
         return SCNVector3(clamped_x, clamped_y, clamped_z)
 
+
+def test_test_pose_5(calculator, baseline_com):
+    print("\nTest: Test Pose 5 (Arms Forward)")
+    nodes = create_t_pose_nodes()
+
+    # R Arm extended forward (+Z) instead of +X
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(20, 130, 30) # +30 Z
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 130, 60) # +30 Z
+    if "mixamorig_RightHandMiddle1" in nodes:
+        nodes["mixamorig_RightHandMiddle1"].position = SCNVector3(20, 130, 70) # +10 Z
+
+    # L Arm extended forward (+Z) instead of -X
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 130, 30) # +30 Z
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 130, 60) # +30 Z
+    if "mixamorig_LeftHandMiddle1" in nodes:
+        nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-20, 130, 70) # +10 Z
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    print(f"   Test Pose 5 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+
+    z_shift = com.z - baseline_com.z
+    print(f"   Forward Shift (Z) from T-Pose: {z_shift:.2f}")
+
+    if z_shift > 1.0:
+        print("✅ PASS: CoM shifted forward for Test Pose 5")
+        return True
+    else:
+        print("❌ FAIL: CoM failed to shift forward for Test Pose 5")
+        return False
+
 def test_joint_limits():
     print("\nTest: Joint Limits")
 
@@ -876,6 +911,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_bridge(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_test_pose_5(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():
