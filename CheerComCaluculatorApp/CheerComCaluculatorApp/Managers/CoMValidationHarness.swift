@@ -460,6 +460,17 @@ class CoMValidationHarness {
             }
             return (false, "CoM failed to shift forward for Test Pose 5 (Z-Shift: \(String(format: "%.1f", zShift)))")
 
+        case .testPose6:
+            // Test Pose 6: Full squat with arms straight up.
+            // Satisfies requirement for testing combined extreme poses.
+            let dropY = baseline.y - com.y
+            let riseY = com.y - baseline.y // This is tricky, arms raise it but squat lowers it.
+            // Since the body mass is heavier, squat should dominate but drop less than normal squat.
+            if dropY > 5.0 && dropY < 15.0 {
+                return (true, "CoM dropped by \(String(format: "%.1f", dropY)) units due to combined squat/arms up logic")
+            }
+            return (false, "CoM did not drop expected amount for Test Pose 6 (Drop: \(String(format: "%.1f", dropY)))")
+
         default:
             return (true, "No specific criteria")
         }
