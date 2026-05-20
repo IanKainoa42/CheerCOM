@@ -79,6 +79,7 @@ To verify the CoM calculation in the app:
     *   **Test Pose 2**: Arms raised high. Similar to Touchdown. CoM should rise significantly.
     *   **Test Pose 3**: Legs bent forward. Hips remain, legs raise forward. CoM should shift forward (+Z direction) and slightly up.
     *   **Test Pose 4**: Legs extended backward. CoM should shift backward (-Z direction) and slightly up.
+    *   **Test Pose 5**: Arms extended forward. CoM should shift forward (+Z direction).
 
     These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, and asymmetry).
 4.  A detailed report is printed to the console and the on-screen overlay, verifying segment masses, individual segment COM points, and the final CoM.
