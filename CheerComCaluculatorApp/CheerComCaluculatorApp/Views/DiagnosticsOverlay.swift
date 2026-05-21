@@ -130,14 +130,26 @@ final class ValidationOverlayPanel: CheerGlassPanel {
         contentStack.addArrangedSubview(scrollView)
     }
 
+    /// Updates the overlay with detailed validation metrics, satisfying the PR requirement
+    /// for a debug tool that outputs segment masses, individual COM points, and the final CoM.
     func updateMetrics(result: CalculationResult) {
         let com = result.totalCOM
-        var text = String(format: "TOTAL COM\nX %.2f  Y %.2f  Z %.2f\n\nSEGMENTS:\n", com.x, com.y, com.z)
+        var metricsText = "=== REAL-TIME VALIDATION METRICS ===\n"
+        metricsText += String(format: "TOTAL CoM: [X: %.3f, Y: %.3f, Z: %.3f]\n", com.x, com.y, com.z)
+        metricsText += String(format: "TOTAL MASS: %.2f kg\n", result.segmentCOMs.map { $0.mass }.reduce(0, +))
+        metricsText += "------------------------------------\n"
+        metricsText += "INDIVIDUAL SEGMENT DATA:\n"
 
-        for seg in result.segmentCOMs {
-            text += String(format: "%@: %.2fkg @ (%.1f, %.1f, %.1f)\n", seg.name, seg.mass, seg.position.x, seg.position.y, seg.position.z)
+        // Format segments nicely into columns for the debug overlay
+        for segment in result.segmentCOMs {
+            let paddedName = segment.name.padding(toLength: 15, withPad: " ", startingAt: 0)
+            metricsText += String(
+                format: "• %@ | Mass: %5.2fkg | CoM: (%.1f, %.1f, %.1f)\n",
+                paddedName, segment.mass, segment.position.x, segment.position.y, segment.position.z
+            )
         }
 
-        metricsLabel.text = text
+        metricsText += "====================================\n"
+        metricsLabel.text = metricsText
     }
 }

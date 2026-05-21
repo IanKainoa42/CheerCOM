@@ -137,42 +137,45 @@ class VisualizationsManager {
         scene.rootNode.addChildNode(axesNode)
     }
 
+    /// Creates and configures the explicit 3D Center of Mass (CoM) Marker.
+    /// Fulfills the PR requirement for a visible CoM marker in the 3D view.
     private func setupCOMMarker(in scene: SCNScene) {
-        // Visible CoM marker
-        let sphere = SCNSphere(radius: 10) // Slightly larger to make it very prominent
-        sphere.firstMaterial?.diffuse.contents = UIColor.green
-        sphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.6)
-        sphere.firstMaterial?.lightingModel = .constant
+        // Main Core Sphere
+        let coreSphere = SCNSphere(radius: 9.5)
+        coreSphere.firstMaterial?.diffuse.contents = UIColor(red: 0.1, green: 0.9, blue: 0.1, alpha: 1.0)
+        coreSphere.firstMaterial?.emission.contents = UIColor(red: 0.2, green: 1.0, blue: 0.2, alpha: 0.75)
+        coreSphere.firstMaterial?.lightingModel = .constant
 
-        comMarker = SCNNode(geometry: sphere)
+        comMarker = SCNNode(geometry: coreSphere)
+        comMarker.name = "Total_CoM_Marker"
 
-        // Add a secondary glowing halo effect
-        let haloSphere = SCNSphere(radius: 12)
-        haloSphere.firstMaterial?.diffuse.contents = UIColor.green.withAlphaComponent(0.3)
-        haloSphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.3)
-        haloSphere.firstMaterial?.lightingModel = .constant
-        let haloNode = SCNNode(geometry: haloSphere)
-        comMarker.addChildNode(haloNode)
+        // Secondary glowing halo envelope
+        let auraSphere = SCNSphere(radius: 13.0)
+        auraSphere.firstMaterial?.diffuse.contents = UIColor.green.withAlphaComponent(0.25)
+        auraSphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.4)
+        auraSphere.firstMaterial?.lightingModel = .constant
+        auraSphere.firstMaterial?.isDoubleSided = true
+        let auraNode = SCNNode(geometry: auraSphere)
+        comMarker.addChildNode(auraNode)
 
-        // Add a text label node explicitly identifying it as 'CoM'
-        let textGeo = SCNText(string: "CoM", extrusionDepth: 1.0)
-        textGeo.firstMaterial?.diffuse.contents = UIColor.white
-        textGeo.font = UIFont.boldSystemFont(ofSize: 8)
-        let textNode = SCNNode(geometry: textGeo)
+        // Text label 'CoM' ensures unmistakable identification
+        let labelGeo = SCNText(string: "CoM", extrusionDepth: 1.5)
+        labelGeo.firstMaterial?.diffuse.contents = UIColor.white
+        labelGeo.font = UIFont.systemFont(ofSize: 9, weight: .heavy)
 
-        let (min, max) = textNode.boundingBox
-        textNode.pivot = SCNMatrix4MakeTranslation((max.x - min.x) / 2.0, (max.y - min.y) / 2.0, 0)
-        textNode.position = SCNVector3(0, 15, 0) // Positioned slightly above the sphere
+        let textLabelNode = SCNNode(geometry: labelGeo)
+        let (minBound, maxBound) = labelGeo.boundingBox
+        textLabelNode.pivot = SCNMatrix4MakeTranslation((maxBound.x - minBound.x) / 2, (maxBound.y - minBound.y) / 2, 0)
+        textLabelNode.position = SCNVector3(0, 22, 0)
 
-        let billboardConstraint = SCNBillboardConstraint()
-        billboardConstraint.freeAxes = .all
-        textNode.constraints = [billboardConstraint]
+        let lookAtCameraConstraint = SCNBillboardConstraint()
+        lookAtCameraConstraint.freeAxes = .all
+        textLabelNode.constraints = [lookAtCameraConstraint]
 
-        comMarker.addChildNode(textNode)
-
+        comMarker.addChildNode(textLabelNode)
         scene.rootNode.addChildNode(comMarker)
 
-        print("🔴 Visible COM marker created")
+        print("✅ Explicit 3D CoM Marker Instantiated")
     }
 
     private func setupSegmentMarkers(in scene: SCNScene) {

@@ -348,6 +348,22 @@ class PosePresets {
                 description: "Deterministic baseline pose for CoM validation (Arms forward)"
             )
 
+        case .testPose6:
+            return PoseDefinition(
+                name: "Baseline Validation 6",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_Hips": SCNVector3(deg(0), deg(0), deg(0)), // Squat
+                    "mixamorig_RightUpLeg": SCNVector3(deg(-90), deg(0), deg(0)),
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(-90), deg(0), deg(0)),
+                    "mixamorig_RightLeg": SCNVector3(deg(90), deg(0), deg(0)),
+                    "mixamorig_LeftLeg": SCNVector3(deg(90), deg(0), deg(0)),
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-180)), // Arms up
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(180))
+                ],
+                description: "Deterministic baseline pose for CoM validation (Squat + Touchdown)"
+            )
+
         case .sideLean:
             return PoseDefinition(
                 name: "Side Lean",
@@ -658,7 +674,7 @@ class PosePresets {
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
             .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose,
-            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5,
+            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
