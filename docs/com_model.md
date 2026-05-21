@@ -121,4 +121,4 @@ Realistic joint limits are enforced within the application to prevent impossible
 2.  **Rig Dependency**: The calculation relies on specific `mixamorig_` bone names. If a custom character uses different naming, the calculator must be updated.
 
 * Note: Added a ground plane visualization for baseline sanity checking.
-* Verified for baseline audit
+* Verified for baseline audit.
