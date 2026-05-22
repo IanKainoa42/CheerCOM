@@ -24,6 +24,7 @@ class CoMValidationHarness {
         .arabesque,
         .scale,
         .bridge,
+        .handstand,
         .testPose1,
         .testPose2,
         .testPose3,
@@ -419,6 +420,16 @@ class CoMValidationHarness {
                 return (true, "CoM lowered by \(String(format: "%.1f", drop)) units and shifted backward by \(String(format: "%.1f", zShift)) units (Expected Drop > 10.0, Z-Shift < -2.0)")
             }
             return (false, "CoM did not correctly reflect bridge pose (Drop: \(String(format: "%.1f", drop)), Z-Shift: \(String(format: "%.1f", zShift)))")
+
+        case .handstand:
+            // Handstand: inverted body. Arms act as base, legs point up.
+            // CoM should be much higher than T-pose relative to hands, or just different depending on coordinate roots.
+            // Here we just test it has moved significantly up due to the full 180 flip.
+            let rise = com.y - baseline.y
+            if rise > 20.0 {
+                return (true, "CoM elevated significantly by \(String(format: "%.1f", rise)) units for Handstand (Expected Rise > 20.0)")
+            }
+            return (false, "CoM did not elevate sufficiently for Handstand (Rise: \(String(format: "%.1f", rise)))")
 
         case .testPose1:
             // Test Pose 1: Arms slightly lowered. Similar to T-Pose, CoM Y should drop slightly or remain similar.

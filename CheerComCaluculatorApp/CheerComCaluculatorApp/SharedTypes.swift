@@ -53,6 +53,7 @@ enum PoseType {
     case layout
     case sideLean
     case lungePose
+    case handstand
 
     case testPose1
     case testPose2
@@ -85,7 +86,7 @@ enum PoseType {
     var category: PoseCategory {
         switch self {
         case .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque, .bridge,
-            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose:
+            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand:
             return .fullBody
         case .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow, .armsDaggers,
             .armsBrokenT, .armsHalfHighVHalfT:
@@ -116,6 +117,7 @@ enum PoseType {
         case .layout: return "Layout"
         case .sideLean: return "Side Lean"
         case .lungePose: return "Lunge"
+        case .handstand: return "Handstand"
 
         case .testPose1: return "Test Pose 1"
         case .testPose2: return "Test Pose 2"
@@ -167,6 +169,7 @@ enum PoseType {
         case .layout: return "🧍"
         case .sideLean: return "📐"
         case .lungePose: return "🤺"
+        case .handstand: return "🤸‍♂️"
 
         case .testPose1: return "🧪"
         case .testPose2: return "🧪"
