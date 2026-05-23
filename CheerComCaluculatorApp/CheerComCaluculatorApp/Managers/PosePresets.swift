@@ -637,6 +637,21 @@ class PosePresets {
                 affectedJoints: Set(["mixamorig_RightUpLeg", "mixamorig_LeftUpLeg"])
             )
 
+        case .handstand:
+            return PoseDefinition(
+                name: "Handstand",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_Hips": SCNVector3(deg(180), deg(0), deg(0)),
+                    "mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-180)),
+                    "mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(180))
+                ],
+                description: "Inverted handstand position",
+                affectedJoints: Set([
+                    "mixamorig_Hips", "mixamorig_RightArm", "mixamorig_LeftArm"
+                ])
+            )
+
         case .legsPike:
             return PoseDefinition(
                 name: "Pike",
@@ -673,7 +688,7 @@ class PosePresets {
         let allPoses: [PoseType] = [
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
-            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose,
+            .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand,
             .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,

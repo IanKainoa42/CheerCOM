@@ -75,6 +75,7 @@ To verify the CoM calculation in the app:
     *   **Liberty**: One leg raised and arms up. CoM should rise compared to T-Pose and shift slightly laterally.
     *   **Prep Position**: Knees slightly bent, hands near chest. CoM should drop slightly but less than a full squat.
     *   **Bridge**: Backbend pose with hands and feet on the ground. CoM should drop significantly and shift backwards (Z-).
+    *   **Handstand**: Inverted body with hands as the base. CoM should elevate significantly due to legs raising above hips.
     *   **Test Pose 1**: Arms slightly lowered. Similar to T-Pose, CoM Y should drop slightly or remain similar.
     *   **Test Pose 2**: Arms raised high. Similar to Touchdown. CoM should rise significantly.
     *   **Test Pose 3**: Legs bent forward. Hips remain, legs raise forward. CoM should shift forward (+Z direction) and slightly up.
@@ -103,7 +104,7 @@ For independent verification of the mathematical model (segment mass ratios, fal
     *   **Prep Position**: CoM drops slightly when knees are bent.
 
 ## Visible CoM Marker
-Within the SceneKit view, a prominent bright green sphere (radius 10) dynamically tracks the total body Center of Mass. Auxiliary cyan spheres represent individual segment COMs, showing exactly where each segment's mass is centered.
+Within the SceneKit view, a prominent bright green sphere (radius 10) dynamically tracks the total body Center of Mass. Auxiliary cyan spheres represent individual segment COMs, showing exactly where each segment's mass is centered. A pulsing green ground projection circle also directly maps the CoM onto the XZ ground plane to help assess stability over the base of support.
 
 ## Joint Constraints
 

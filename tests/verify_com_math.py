@@ -757,6 +757,35 @@ def test_test_pose_5(calculator, baseline_com):
         print("❌ FAIL: CoM failed to shift forward for Test Pose 5")
         return False
 
+def test_handstand(calculator, baseline_com):
+    print("\nTest: Handstand Pose")
+    nodes = create_t_pose_nodes()
+
+    # Invert the body mathematically by flipping the Y positions around the hands (treating hands as base)
+    hands_y_tpose = nodes["mixamorig_RightHand"].position.y
+
+    for key, node in nodes.items():
+        # Flip vertically around the hands' original Y position to simulate a handstand
+        diff_y = node.position.y - hands_y_tpose
+        node.position.y = hands_y_tpose - diff_y
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    print(f"   Handstand CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+
+    # The CoM relative to the world origin (or base) is higher than in T-Pose because the heavy legs are at the top.
+    rise = com.y - baseline_com.y
+    print(f"   Rise from T-Pose: {rise:.2f}")
+
+    if rise > 20.0:
+        print("✅ PASS: CoM elevated significantly for Handstand")
+        return True
+    else:
+        print("❌ FAIL: CoM did not elevate sufficiently for Handstand")
+        return False
+
 def test_test_pose_6(calculator, baseline_com):
     print("\nTest: Test Pose 6 (Squat + Touchdown)")
     nodes = create_t_pose_nodes()
@@ -943,6 +972,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_bridge(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_handstand(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_test_pose_5(calculator, t_pose_com):

@@ -56,6 +56,7 @@ class VisualizationsManager {
     var groundPlaneNode: SCNNode!
     var segmentCOMNodes: SCNNode!
     var skeletonNodes: SCNNode!
+    var comGroundProjectionNode: SCNNode!
 
     // Caches to avoid accessing sceneKit's childNodes property, which reallocates an array every time
     private var cachedSegmentNodes: [SCNNode] = []
@@ -77,6 +78,7 @@ class VisualizationsManager {
             if showAdvancedVisualizations {
                 updateGravityLine()
                 updateBOS()
+                comGroundProjectionNode.isHidden = false
             } else {
                 resetSegmentHighlights()
             }
@@ -105,6 +107,7 @@ class VisualizationsManager {
         setupCOMTrail(in: scene)
         setupVisualAids(in: scene)
         setupAxes(in: scene)
+        setupCOMGroundProjection(in: scene)
     }
 
     private func setupAxes(in scene: SCNScene) {
@@ -176,6 +179,26 @@ class VisualizationsManager {
         scene.rootNode.addChildNode(comMarker)
 
         print("✅ Explicit 3D CoM Marker Instantiated")
+    }
+
+    private func setupCOMGroundProjection(in scene: SCNScene) {
+        let projectionCircle = SCNPlane(width: 15, height: 15)
+        projectionCircle.firstMaterial?.diffuse.contents = UIColor.green.withAlphaComponent(0.8)
+        projectionCircle.firstMaterial?.isDoubleSided = true
+        projectionCircle.cornerRadius = 7.5 // Make it a circle
+
+        comGroundProjectionNode = SCNNode(geometry: projectionCircle)
+        comGroundProjectionNode.eulerAngles.x = -.pi / 2
+        comGroundProjectionNode.position.y = 0.5 // Just slightly above the ground plane to avoid z-fighting
+        comGroundProjectionNode.isHidden = true
+
+        // Add a pulsing animation to the projection
+        let pulseIn = SCNAction.fadeOpacity(to: 0.3, duration: 0.5)
+        let pulseOut = SCNAction.fadeOpacity(to: 0.8, duration: 0.5)
+        let pulseSequence = SCNAction.sequence([pulseIn, pulseOut])
+        comGroundProjectionNode.runAction(SCNAction.repeatForever(pulseSequence))
+
+        scene.rootNode.addChildNode(comGroundProjectionNode)
     }
 
     private func setupSegmentMarkers(in scene: SCNScene) {
@@ -272,6 +295,12 @@ class VisualizationsManager {
         // Update trail
         trailPositions.append(position)
         updateTrailVisualizationOptimized()
+
+        // Update ground projection
+        if comGroundProjectionNode != nil {
+            comGroundProjectionNode.position.x = position.x
+            comGroundProjectionNode.position.z = position.z
+        }
 
         // Update advanced visualizations if needed
         if showAdvancedVisualizations {
