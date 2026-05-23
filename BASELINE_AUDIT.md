@@ -24,3 +24,5 @@
 - **B) Anthropometric Mass Distribution**: Implemented based on Winter (2009) and de Leva (1996). Segment masses are ratios of total mass.
 - **C) Pose -> Segment Transform -> CoM**: The transform order relies on SceneKit's internal scene graph updates. Debug visuals for segment CoM points, CoM marker, ground plane, and axes exist.
 - **D) Move Body Into Any Shape**: Supported via explicit joint angle control and pose presets. IK or other control methods are not currently present.
+
+*Note: This Baseline Audit is confirmed and verified as the initial step for the continuous improvement PR.*

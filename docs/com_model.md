@@ -1,6 +1,6 @@
 # Center of Mass (CoM) Model
 
-This document describes the Center of Mass model used in the CheerCOM app.
+This document describes the Center of Mass model used in the CheerCOM app, detailing the segment list, coordinate space, assumptions, and how to verify correctness as required by the initial baseline audit.
 
 ## Overview
 

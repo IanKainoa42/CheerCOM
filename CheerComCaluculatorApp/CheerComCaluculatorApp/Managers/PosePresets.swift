@@ -291,6 +291,8 @@ class PosePresets {
                 description: "Fully extended straight body position"
             )
 
+        // MARK: - Validation Harness Deterministic Poses
+        // These poses are specifically designed to test Center of Mass shifts deterministically.
         case .testPose1:
             return PoseDefinition(
                 name: "Baseline Validation 1",
