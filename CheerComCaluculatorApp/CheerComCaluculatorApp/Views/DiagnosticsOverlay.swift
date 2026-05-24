@@ -135,7 +135,7 @@ final class ValidationOverlayPanel: CheerGlassPanel {
     func updateMetrics(result: CalculationResult) {
         let com = result.totalCOM
         var metricsText = "=== REAL-TIME VALIDATION METRICS ===\n"
-        metricsText += String(format: "TOTAL CoM: [X: %.3f, Y: %.3f, Z: %.3f]\n", com.x, com.y, com.z)
+        metricsText += String(format: "FINAL CoM: [X: %.3f, Y: %.3f, Z: %.3f]\n", com.x, com.y, com.z)
         metricsText += String(format: "TOTAL MASS: %.2f kg\n", result.segmentCOMs.map { $0.mass }.reduce(0, +))
         metricsText += "------------------------------------\n"
         metricsText += "INDIVIDUAL SEGMENT DATA:\n"
@@ -144,7 +144,7 @@ final class ValidationOverlayPanel: CheerGlassPanel {
         for segment in result.segmentCOMs {
             let paddedName = segment.name.padding(toLength: 15, withPad: " ", startingAt: 0)
             metricsText += String(
-                format: "• %@ | Mass: %5.2fkg | CoM: (%.1f, %.1f, %.1f)\n",
+                format: "• %@ | Segment Mass: %5.2fkg | Segment COM: (%.1f, %.1f, %.1f)\n",
                 paddedName, segment.mass, segment.position.x, segment.position.y, segment.position.z
             )
         }

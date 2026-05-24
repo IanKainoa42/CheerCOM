@@ -61,6 +61,7 @@ enum PoseType {
     case testPose4
     case testPose5
     case testPose6
+    case testPose7
 
     // Arms Only Poses
     case armsHighV
@@ -125,6 +126,7 @@ enum PoseType {
         case .testPose4: return "Test Pose 4"
         case .testPose5: return "Test Pose 5"
         case .testPose6: return "Test Pose 6"
+        case .testPose7: return "Test Pose 7"
 
         // Arms Only
         case .armsHighV: return "High V Arms"
@@ -177,6 +179,7 @@ enum PoseType {
         case .testPose4: return "🧪"
         case .testPose5: return "🧪"
         case .testPose6: return "🧪"
+        case .testPose7: return "🧪"
 
         // Arms
         case .armsHighV: return "🙌"

@@ -101,7 +101,7 @@ class VisualizationsManager {
     }
 
     private func setupVisuals(in scene: SCNScene) {
-        setupCOMMarker(in: scene)
+        createVisibleCoMMarker(in: scene)
         setupSegmentMarkers(in: scene)
         setupSkeletonVisualization(in: scene)
         setupCOMTrail(in: scene)
@@ -142,7 +142,7 @@ class VisualizationsManager {
 
     /// Creates and configures the explicit 3D Center of Mass (CoM) Marker.
     /// Fulfills the PR requirement for a visible CoM marker in the 3D view.
-    private func setupCOMMarker(in scene: SCNScene) {
+    private func createVisibleCoMMarker(in scene: SCNScene) {
         // Main Core Sphere
         let coreSphere = SCNSphere(radius: 9.5)
         coreSphere.firstMaterial?.diffuse.contents = UIColor(red: 0.1, green: 0.9, blue: 0.1, alpha: 1.0)
@@ -151,6 +151,14 @@ class VisualizationsManager {
 
         comMarker = SCNNode(geometry: coreSphere)
         comMarker.name = "Total_CoM_Marker"
+
+        // Add a pulsing animation to the marker for better visibility
+        let scaleUp = SCNAction.scale(to: 1.1, duration: 0.8)
+        let scaleDown = SCNAction.scale(to: 0.9, duration: 0.8)
+        scaleUp.timingMode = .easeInEaseOut
+        scaleDown.timingMode = .easeInEaseOut
+        let pulse = SCNAction.repeatForever(SCNAction.sequence([scaleUp, scaleDown]))
+        comMarker.runAction(pulse)
 
         // Secondary glowing halo envelope
         let auraSphere = SCNSphere(radius: 13.0)
