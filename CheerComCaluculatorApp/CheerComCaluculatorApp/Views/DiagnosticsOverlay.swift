@@ -141,10 +141,11 @@ final class ValidationOverlayPanel: CheerGlassPanel {
         metricsText += "INDIVIDUAL SEGMENT DATA:\n"
 
         // Format segments nicely into columns for the debug overlay
+        // PR Deliverable: Explicit output formatting for segment COM points and masses
         for segment in result.segmentCOMs {
             let paddedName = segment.name.padding(toLength: 15, withPad: " ", startingAt: 0)
             metricsText += String(
-                format: "• %@ | Segment Mass: %5.2fkg | Segment COM: (%.1f, %.1f, %.1f)\n",
+                format: "• %@ | Segment Mass: %5.2fkg | Segment COM: [%.2f, %.2f, %.2f]\n",
                 paddedName, segment.mass, segment.position.x, segment.position.y, segment.position.z
             )
         }
