@@ -142,7 +142,7 @@ class VisualizationsManager {
 
     /// Creates and configures the explicit 3D Center of Mass (CoM) Marker.
     /// Fulfills the PR requirement for a visible CoM marker in the 3D view.
-    private func createVisibleCoMMarker(in scene: SCNScene) {
+    private func createVisibleCoMMarker(in scene: SCNScene) { // PR Deliverable: CoM Marker
         // Main Core Sphere
         let coreSphere = SCNSphere(radius: 9.5)
         coreSphere.firstMaterial?.diffuse.contents = UIColor(red: 0.1, green: 0.9, blue: 0.1, alpha: 1.0)

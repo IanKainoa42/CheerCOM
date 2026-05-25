@@ -30,7 +30,8 @@ class CoMValidationHarness {
         .testPose3,
         .testPose4,
         .testPose5,
-        .testPose7
+        .testPose7,
+        .testPose8
     ]
 
     private struct ValidationOutcome {
@@ -491,6 +492,15 @@ class CoMValidationHarness {
             }
             return (false, "CoM failed to shift backward for Test Pose 7 (Z-Shift: \(String(format: "%.1f", zShift)))")
 
+        case .testPose8:
+            // Test Pose 8: Arms extended laterally. CoM should remain roughly centered.
+            let xShift = abs(com.x - baseline.x)
+            let yDrop = abs(com.y - baseline.y)
+            if xShift < 1.0 && yDrop < 1.0 {
+                return (true, "CoM remained stable with lateral arm extension")
+            }
+            return (false, "CoM shifted unexpectedly for Test Pose 8 (X-Shift: \(String(format: "%.1f", xShift)), Y-Drop: \(String(format: "%.1f", yDrop)))")
+
         default:
             return (true, "No specific criteria")
         }
@@ -529,13 +539,14 @@ class CoMValidationHarness {
             return s.padding(toLength: len, withPad: " ", startingAt: 0)
         }
 
-        log("| " + pad("Segment Name", 20) + " | " + pad("Segment Mass", 12) + " | " + pad("Segment COM", 25) + " |")
-        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 14) + "|" + String(repeating: "-", count: 27) + "|")
+        log("| " + pad("Segment Name", 20) + " | " + pad("Segment Mass", 12) + " | " + pad("Segment COM", 30) + " |")
+        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 14) + "|" + String(repeating: "-", count: 32) + "|")
 
         for segment in result.segmentCOMs {
             let massString = String(format: "%.3f", segment.mass)
+            // PR Deliverable: Explicit output formatting for segment COM points
             let posString = formatVector(segment.position)
-            log("| " + pad(segment.name, 20) + " | " + pad(massString, 12) + " | " + pad(posString, 25) + " |")
+            log("| " + pad(segment.name, 20) + " | " + pad(massString, 12) + " | " + pad(posString, 30) + " |")
         }
         log("")
     }

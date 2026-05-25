@@ -24,3 +24,9 @@
 - **B) Anthropometric Mass Distribution**: Implemented based on Winter (2009) and de Leva (1996). Segment masses are ratios of total mass.
 - **C) Pose -> Segment Transform -> CoM**: The transform order relies on SceneKit's internal scene graph updates. Debug visuals for segment CoM points, CoM marker, ground plane, and axes exist.
 - **D) Move Body Into Any Shape**: Supported via explicit joint angle control and pose presets. IK or other control methods are not currently present.
+
+## 4. CoM Validation Harness (Deliverables)
+- A small set of deterministic pose presets (at least 4): `.tPose`, `.highV`, `.touchdown`, `.squat`, etc., in `PosePresets.swift` and tested in `CoMValidationHarness.swift`.
+- A test/debug tool that outputs segment masses, segment COM points, and final CoM: `DiagnosticsOverlay.swift` and `CoMValidationHarness.swift`.
+- A visible CoM marker in the 3D view: implemented in `VisualizationsManager.swift`.
+- Documentation: `docs/com_model.md` describes the segment list, coordinate space, assumptions, and how to verify correctness.

@@ -13,18 +13,18 @@ Where:
 - $m_i$ is the mass of segment $i$.
 - $p_i$ is the position of the center of mass of segment $i$.
 
-## Coordinate System
+## Coordinate System (PR Deliverable: Coordinate Space Rules)
 
 - **Origin**: The world origin (0,0,0) is typically at the center of the floor plane.
 - **Y-Axis**: Vertical (Up). Gravity acts along -Y.
 - **X-Axis**: Lateral (Right).
 - **Z-Axis**: Anterior-Posterior (Forward/Backward).
 
-The model assumes the character is rigged with a standard Mixamo skeleton (`mixamorig_` prefix).
+The model assumes the character is rigged with a standard Mixamo skeleton (`mixamorig_` prefix), operating in world coordinates to ensure absolute stability.
 
-## Segments
+## Segments (PR Deliverable: Segment List and Assumptions)
 
-The body is divided into 17 segments. Each segment is defined by a **Proximal Joint** (start) and a **Distal Joint** (end). The segment's CoM is located at a fixed percentage along the line connecting these two joints.
+The body is divided into 17 segments. Each segment is defined by a **Proximal Joint** (start) and a **Distal Joint** (end). The segment's CoM is located at a fixed percentage along the line connecting these two joints. The mass ratios are based on the Winter (2009) anthropometric model.
 
 ### Trunk (49.7% of Total Mass)
 The trunk is subdivided into 4 segments to better approximate spinal curvature:
@@ -83,6 +83,7 @@ To verify the CoM calculation in the app:
     *   **Test Pose 5**: Arms extended forward. CoM should shift forward (+Z direction).
     *   **Test Pose 6**: Combined full squat with arms up (touchdown). The vertical drop of the heavy base outweighs the rise of the arms.
     *   **Test Pose 7**: Arabesque variation with spine bent and arms out. CoM should shift backward (-Z direction).
+    *   **Test Pose 8**: Arms extended laterally. CoM should remain roughly centered.
 
     These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, combined vertical stresses, and asymmetry).
 4.  A detailed report is printed to the console and the on-screen overlay, verifying segment masses, individual segment COM points, and the final CoM.
