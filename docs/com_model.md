@@ -125,3 +125,10 @@ Realistic joint limits are enforced within the application to prevent impossible
 
 * Note: Added a ground plane visualization for baseline sanity checking.
 * Verified for baseline audit.
+
+## First PR Deliverables
+
+*   **Segment list**: 17 segments based on Winter (2009) and de Leva (1996) as listed above.
+*   **Coordinate space**: The world origin (0,0,0) is typically at the center of the floor plane. Y-Axis: Vertical (Up). Gravity acts along -Y. X-Axis: Lateral (Right). Z-Axis: Anterior-Posterior (Forward/Backward).
+*   **Assumptions**: The model assumes the character is rigged with a standard Mixamo skeleton (`mixamorig_` prefix), operating in world coordinates to ensure absolute stability.
+*   **How to verify correctness**: Run the app and tap "Run Diagnostics" to see the console and on-screen overlay output, or run `python3 tests/verify_com_math.py`.

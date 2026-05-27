@@ -534,19 +534,20 @@ class CoMValidationHarness {
 
     private func logDetailedSegments(result: CalculationResult) {
         log("\n### Segment Details")
+        log("final CoM: \(formatVector(result.totalCOM))")
 
         func pad(_ s: String, _ len: Int) -> String {
             return s.padding(toLength: len, withPad: " ", startingAt: 0)
         }
 
-        log("| " + pad("Segment Name", 20) + " | " + pad("Segment Mass", 12) + " | " + pad("Segment COM", 30) + " |")
-        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 14) + "|" + String(repeating: "-", count: 32) + "|")
+        log("| " + pad("Segment Name", 20) + " | " + pad("segment masses", 14) + " | " + pad("segment COM points", 30) + " |")
+        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 16) + "|" + String(repeating: "-", count: 32) + "|")
 
         for segment in result.segmentCOMs {
             let massString = String(format: "%.3f", segment.mass)
             // PR Deliverable: Explicit output formatting for segment COM points
             let posString = formatVector(segment.position)
-            log("| " + pad(segment.name, 20) + " | " + pad(massString, 12) + " | " + pad(posString, 30) + " |")
+            log("| " + pad(segment.name, 20) + " | " + pad(massString, 14) + " | " + pad(posString, 30) + " |")
         }
         log("")
     }
