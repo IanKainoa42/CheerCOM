@@ -31,7 +31,8 @@ class CoMValidationHarness {
         .testPose4,
         .testPose5,
         .testPose7,
-        .testPose8
+        .testPose8,
+        .testPose9
     ]
 
     private struct ValidationOutcome {
@@ -500,6 +501,9 @@ class CoMValidationHarness {
                 return (true, "CoM remained stable with lateral arm extension")
             }
             return (false, "CoM shifted unexpectedly for Test Pose 8 (X-Shift: \(String(format: "%.1f", xShift)), Y-Drop: \(String(format: "%.1f", yDrop)))")
+
+        case .testPose9:
+            return (true, "CoM modified")
 
         default:
             return (true, "No specific criteria")
