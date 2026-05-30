@@ -457,6 +457,17 @@ class PosePresets {
                 description: "Lunge with front knee bent 90°, T-arms"
             )
 
+        case .testPose10:
+            return PoseDefinition(
+                name: "Test Pose 10",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_Spine": SCNVector3(deg(-45), deg(0), deg(0))
+                ],
+                description: "Baseline validation - backward lean",
+                affectedJoints: nil
+            )
+
         // MARK: - Arms Only Poses
 
         case .armsHighV:
@@ -724,7 +735,7 @@ class PosePresets {
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
             .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand,
-            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9,
+            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,

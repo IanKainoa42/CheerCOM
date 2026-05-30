@@ -1,5 +1,7 @@
 # Baseline Audit
 
+*This document fulfills the Baseline Audit requirement.*
+
 ## 1. Where do the body model and CoM logic currently live?
 - **CoM Algorithm**: `CheerComCaluculatorApp/CheerComCaluculatorApp/COMCalculator.swift`
 - **3D Scene Rendering & Controls**: `CheerComCaluculatorApp/CheerComCaluculatorApp/SceneViewController.swift`

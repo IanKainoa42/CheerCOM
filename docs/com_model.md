@@ -85,6 +85,7 @@ To verify the CoM calculation in the app:
     *   **Test Pose 7**: Arabesque variation with spine bent and arms out. CoM should shift backward (-Z direction).
     *   **Test Pose 8**: Arms extended laterally. CoM should remain roughly centered.
     *   **Test Pose 9**: Added for baseline validation testing (forward lean).
+    *   **Test Pose 10**: Added for baseline validation testing (backward lean).
 
     These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, combined vertical stresses, and asymmetry).
 4.  A detailed report is printed to the console and the on-screen overlay, verifying segment masses, individual segment COM points, and the final CoM.
