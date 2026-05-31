@@ -33,7 +33,8 @@ class CoMValidationHarness {
         .testPose7,
         .testPose8,
         .testPose9,
-        .testPose10
+        .testPose10,
+        .testPose11
     ]
 
     private struct ValidationOutcome {

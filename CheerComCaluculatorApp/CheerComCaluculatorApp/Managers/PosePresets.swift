@@ -468,6 +468,18 @@ class PosePresets {
                 affectedJoints: nil
             )
 
+        case .testPose11:
+            return PoseDefinition(
+                name: "Test Pose 11",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(90), deg(0), deg(0)),
+                    "mixamorig_LeftArm": SCNVector3(deg(90), deg(0), deg(0)),
+                    "mixamorig_RightUpLeg": SCNVector3(deg(-45), deg(0), deg(0))
+                ],
+                description: "Deterministic pose for CoM mathematical baseline validation (arms forward, leg back)."
+            )
+
         // MARK: - Arms Only Poses
 
         case .armsHighV:
@@ -735,7 +747,7 @@ class PosePresets {
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
             .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand,
-            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10,
+            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,

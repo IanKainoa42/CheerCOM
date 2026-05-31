@@ -33,4 +33,4 @@ This document answers the specific questions outlined for the first step of our 
 The initial baseline audit is complete. The application successfully implements a 17-segment model, and a validation harness has been confirmed operational across all required deterministic test poses, logging segment masses and COM points.
 
 * Note: Added a ground plane visualization for baseline sanity checking.
-*Audit updated on May 14, 2026. The codebase currently meets all "First Step: Baseline Audit" requirements, with the CoM test harness and documentation successfully integrated.*
+*Audit updated on May 31, 2026. The codebase currently meets all "First Step: Baseline Audit" requirements, with the CoM test harness and documentation successfully integrated. Verified that segments, joints, visualizations, and tests are actively running.*
