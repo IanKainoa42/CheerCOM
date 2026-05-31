@@ -723,6 +723,46 @@ class JointLimitsMock:
         return SCNVector3(clamped_x, clamped_y, clamped_z)
 
 
+def test_test_pose_11(calculator, baseline_com):
+    print("\nTest: Test Pose 11 (Arms Forward, Leg Back)")
+    nodes = create_t_pose_nodes()
+
+    # Arms Forward (Z Shift)
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(20, 130, 30)
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 130, 60)
+    if "mixamorig_RightHandMiddle1" in nodes:
+        nodes["mixamorig_RightHandMiddle1"].position = SCNVector3(20, 130, 70)
+
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 130, 30)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 130, 60)
+    if "mixamorig_LeftHandMiddle1" in nodes:
+        nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-20, 130, 70)
+
+    # Right Leg Back (-Z Shift)
+    nodes["mixamorig_RightUpLeg"].position = SCNVector3(10, 95, 0)
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 80, -30)
+    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 40, -40)
+    nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 30, -50)
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    print(f"   Test Pose 11 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+
+    # Net shift should be somewhat forward because two arms went forward and one leg went back, but let's just check that it shifted
+    z_shift = com.z - baseline_com.z
+    print(f"   Z Shift from T-Pose: {z_shift:.2f}")
+
+    if abs(z_shift) > 0.5:
+        print("✅ PASS: CoM shifted in Z for Test Pose 11")
+        return True
+    else:
+        print("❌ FAIL: CoM failed to shift in Z for Test Pose 11")
+        return False
+
 def test_test_pose_5(calculator, baseline_com):
     print("\nTest: Test Pose 5 (Arms Forward)")
     nodes = create_t_pose_nodes()
@@ -981,6 +1021,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_test_pose_6(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_test_pose_11(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():

@@ -39,3 +39,5 @@
 *   **Coordinate space**: The world origin (0,0,0) is typically at the center of the floor plane. Y-Axis: Vertical (Up). Gravity acts along -Y. X-Axis: Lateral (Right). Z-Axis: Anterior-Posterior (Forward/Backward).
 *   **Assumptions**: The model assumes the character is rigged with a standard Mixamo skeleton (`mixamorig_` prefix), operating in world coordinates to ensure absolute stability.
 *   **How to verify correctness**: Run the app and tap "Run Diagnostics" to see the console and on-screen overlay output, or run `python3 tests/verify_com_math.py`.
+
+*Audit updated on May 31, 2026. The codebase currently meets all "First Step: Baseline Audit" requirements, with the CoM test harness and documentation successfully integrated. Verified that segments, joints, visualizations, and tests are actively running.*
