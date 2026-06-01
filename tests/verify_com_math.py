@@ -858,6 +858,28 @@ def test_test_pose_6(calculator, baseline_com):
         print("❌ FAIL: CoM did not drop expected amount for Test Pose 6")
         return False
 
+def test_test_pose_12(calculator, baseline_com):
+    print("\nTest: Test Pose 12 (Arms Crossed)")
+    nodes = create_t_pose_nodes()
+
+    # Simple mockup of arms crossed
+    nodes["mixamorig_RightHand"].position.x -= 20
+    nodes["mixamorig_LeftHand"].position.x += 20
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    print(f"   Test Pose 12 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+
+    # CoM should remain mostly centered
+    if abs(com.x - baseline_com.x) < 2.0:
+        print("✅ PASS: CoM remained stable for Test Pose 12")
+        return True
+    else:
+        print("❌ FAIL: CoM shifted too much for Test Pose 12")
+        return False
+
 def test_joint_limits():
     print("\nTest: Joint Limits")
 
@@ -1024,6 +1046,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_test_pose_11(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_test_pose_12(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():

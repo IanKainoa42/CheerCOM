@@ -164,6 +164,22 @@ class VisualizationsManager {
         let pulse = SCNAction.repeatForever(SCNAction.sequence([scaleUp, scaleDown]))
         comMarker.runAction(pulse)
 
+        // Add 3D Text Label to clearly identify CoM
+        let text = SCNText(string: "CoM", extrusionDepth: 1.0)
+        text.font = UIFont.systemFont(ofSize: 10)
+        text.firstMaterial?.diffuse.contents = UIColor.white
+        text.firstMaterial?.emission.contents = UIColor.white
+        let textNode = SCNNode(geometry: text)
+        // Center the text horizontally and position it above the marker
+        let (minVec, maxVec) = text.boundingBox
+        textNode.pivot = SCNMatrix4MakeTranslation((maxVec.x - minVec.x) / 2 + minVec.x, (maxVec.y - minVec.y) / 2 + minVec.y, 0)
+        textNode.position = SCNVector3(0, 15, 0)
+        // Make text always face the camera by removing pitch/roll constraints if needed, but a billboard constraint is best
+        let billboardConstraint = SCNBillboardConstraint()
+        billboardConstraint.freeAxes = .Y
+        textNode.constraints = [billboardConstraint]
+        comMarker.addChildNode(textNode)
+
         // Secondary glowing halo envelope
         let auraSphere = SCNSphere(radius: 13.0)
         auraSphere.firstMaterial?.diffuse.contents = UIColor.green.withAlphaComponent(0.25)

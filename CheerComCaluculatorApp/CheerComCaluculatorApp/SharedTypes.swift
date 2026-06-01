@@ -66,6 +66,7 @@ enum PoseType {
     case testPose9
     case testPose10
     case testPose11
+    case testPose12
 
     // Arms Only Poses
     case armsHighV
@@ -91,7 +92,7 @@ enum PoseType {
     var category: PoseCategory {
         switch self {
         case .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque, .bridge,
-            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand, .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11:
+            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand, .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12:
             return .fullBody
         case .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow, .armsDaggers,
             .armsBrokenT, .armsHalfHighVHalfT:
@@ -135,6 +136,7 @@ enum PoseType {
         case .testPose9: return "Test Pose 9"
         case .testPose10: return "Test Pose 10"
         case .testPose11: return "Test Pose 11"
+        case .testPose12: return "Test Pose 12"
 
         // Arms Only
         case .armsHighV: return "High V Arms"
@@ -192,6 +194,7 @@ enum PoseType {
         case .testPose9: return "🧪"
         case .testPose10: return "🧪"
         case .testPose11: return "🧪"
+        case .testPose12: return "🧪"
 
         // Arms
         case .armsHighV: return "🙌"
