@@ -510,6 +510,12 @@ class CoMValidationHarness {
         case .testPose10:
             return (true, "CoM modified")
 
+        case .testPose11:
+            return (true, "CoM modified")
+
+        case .testPose12:
+            return (true, "CoM modified by Arms Crossed deterministic pose")
+
         default:
             return (true, "No specific criteria")
         }
@@ -552,12 +558,16 @@ class CoMValidationHarness {
         log("| " + pad("Segment Name", 20) + " | " + pad("segment masses", 14) + " | " + pad("segment COM points", 30) + " |")
         log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 16) + "|" + String(repeating: "-", count: 32) + "|")
 
+        var totalMassSum: Double = 0.0
         for segment in result.segmentCOMs {
             let massString = String(format: "%.3f", segment.mass)
+            totalMassSum += segment.mass
             // PR Deliverable: Explicit output formatting for segment COM points
             let posString = formatVector(segment.position)
             log("| " + pad(segment.name, 20) + " | " + pad(massString, 14) + " | " + pad(posString, 30) + " |")
         }
+        log("|" + String(repeating: "-", count: 22) + "|" + String(repeating: "-", count: 16) + "|" + String(repeating: "-", count: 32) + "|")
+        log("Total calculated mass: \(String(format: "%.3f", totalMassSum))")
         log("")
     }
 

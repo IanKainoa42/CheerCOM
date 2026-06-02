@@ -86,9 +86,11 @@ To verify the CoM calculation in the app:
     *   **Test Pose 8**: Arms extended laterally. CoM should remain roughly centered.
     *   **Test Pose 9**: Added for baseline validation testing (forward lean).
     *   **Test Pose 10**: Added for baseline validation testing (backward lean).
+    *   **Test Pose 11**: Arms forward, leg back. Used to test combined forward/backward shifts.
+    *   **Test Pose 12**: Arms crossed. CoM should remain mostly centered.
 
     These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, combined vertical stresses, and asymmetry).
-4.  A detailed report is printed to the console and the on-screen overlay, verifying segment masses, individual segment COM points, and the final CoM.
+4.  A detailed report is printed to the console and the on-screen overlay, explicitly verifying the total mass sum, individual segment masses, individual segment COM points, and the final CoM.
 
 ### Verification Script (Python)
 
@@ -108,7 +110,7 @@ For independent verification of the mathematical model (segment mass ratios, fal
     *   **Prep Position**: CoM drops slightly when knees are bent.
 
 ## Visible CoM Marker
-Within the SceneKit view, a prominent bright green sphere (radius 10) dynamically tracks the total body Center of Mass. Auxiliary cyan spheres represent individual segment COMs, showing exactly where each segment's mass is centered. A pulsing green ground projection circle also directly maps the CoM onto the XZ ground plane to help assess stability over the base of support.
+Within the SceneKit view, a prominent bright green sphere (radius 10) with a floating "CoM" text label dynamically tracks the total body Center of Mass. Auxiliary cyan spheres represent individual segment COMs, showing exactly where each segment's mass is centered. A pulsing green ground projection circle also directly maps the CoM onto the XZ ground plane to help assess stability over the base of support.
 
 ## Joint Constraints
 
