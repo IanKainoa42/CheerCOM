@@ -9,6 +9,7 @@ class CoMValidationHarness {
     // MARK: - Validation Config
 
     // Poses to validate
+    // PR Deliverable: A small set of deterministic pose presets (at least 4)
     private let posesToValidate: [PoseType] = [
         .tPose,
         .highV,

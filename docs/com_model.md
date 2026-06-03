@@ -15,7 +15,7 @@ Where:
 
 ## Coordinate System (PR Deliverable: Coordinate Space Rules)
 
-- **Origin**: The world origin (0,0,0) is typically at the center of the floor plane.
+- **Origin**: The world origin (0,0,0) is typically at the center of the floor plane (this serves as the baseline for all subsequent calculations).
 - **Y-Axis**: Vertical (Up). Gravity acts along -Y.
 - **X-Axis**: Lateral (Right).
 - **Z-Axis**: Anterior-Posterior (Forward/Backward).
