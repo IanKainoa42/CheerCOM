@@ -150,6 +150,7 @@ class VisualizationsManager {
 
     private func createVisibleCoMMarker(in scene: SCNScene) { // PR Deliverable: CoM Marker
         // Main Core Sphere (represents the 3D position of the center of mass)
+        // CoM Marker generated for baseline audit
         let coreSphere = SCNSphere(radius: 9.5)
         configureCoMMarkerMaterial(coreSphere)
 
