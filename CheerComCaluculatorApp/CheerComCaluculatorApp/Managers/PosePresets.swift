@@ -35,6 +35,7 @@ class PosePresets {
         switch type {
         // MARK: - Full Body Poses
 
+        // Verified baseline pose
         case .tPose:
             return PoseDefinition(
                 name: "T-Pose",
