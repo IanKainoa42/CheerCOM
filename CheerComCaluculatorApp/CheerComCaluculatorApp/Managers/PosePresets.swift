@@ -494,6 +494,17 @@ class PosePresets {
                 description: "Deterministic pose for CoM mathematical baseline validation (arms crossed)."
             )
 
+        case .armsForward:
+            return PoseDefinition(
+                name: "Arms Forward",
+                category: .fullBody,
+                jointAngles: [
+                    "mixamorig_RightArm": SCNVector3(deg(90), deg(0), deg(0)),
+                    "mixamorig_LeftArm": SCNVector3(deg(90), deg(0), deg(0))
+                ],
+                description: "Arms extended directly forward to shift CoM along the Z axis."
+            )
+
         // MARK: - Arms Only Poses
 
         case .armsHighV:
@@ -761,7 +772,7 @@ class PosePresets {
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
             .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand,
-            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12,
+            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12, .armsForward,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
