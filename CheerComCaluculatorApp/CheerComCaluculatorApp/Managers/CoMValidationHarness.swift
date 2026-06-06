@@ -35,7 +35,8 @@ class CoMValidationHarness {
         .testPose8,
         .testPose9,
         .testPose10,
-        .testPose11
+        .testPose11,
+        .armsForward
     ]
 
     private struct ValidationOutcome {
@@ -516,6 +517,13 @@ class CoMValidationHarness {
 
         case .testPose12:
             return (true, "CoM modified by Arms Crossed deterministic pose")
+
+        case .armsForward:
+            let zShift = com.z - baseline.z
+            if zShift > 1.0 {
+                return (true, "CoM shifted forward in Z by \(String(format: "%.1f", zShift)) units (Expected > 1.0)")
+            }
+            return (false, "CoM failed to shift forward for Arms Forward pose (Z-Shift: \(String(format: "%.1f", zShift)))")
 
         default:
             return (true, "No specific criteria")
