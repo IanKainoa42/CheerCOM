@@ -255,6 +255,31 @@ public struct SegmentData {
         self.massRatio = massRatio
         self.comRatio = comRatio
     }
+
+    public static let standard: [SegmentData] = [
+        SegmentData(name: "Pelvis", proximalJoint: .hips, distalJoint: .spine, massRatio: 0.146, comRatio: 0.50),
+        SegmentData(name: "Abdomen Lower", proximalJoint: .spine, distalJoint: .spine1, massRatio: 0.0855, comRatio: 0.50),
+        SegmentData(name: "Abdomen Upper", proximalJoint: .spine1, distalJoint: .spine2, massRatio: 0.0855, comRatio: 0.50),
+        SegmentData(name: "Thorax", proximalJoint: .spine2, distalJoint: .neck, massRatio: 0.180, comRatio: 0.50),
+
+        SegmentData(name: "Head", proximalJoint: .head, distalJoint: .headTop_End, massRatio: 0.081, comRatio: 0.50),
+
+        SegmentData(name: "R Upper Arm", proximalJoint: .rightArm, distalJoint: .rightForeArm, massRatio: 0.028, comRatio: 0.44),
+        SegmentData(name: "R Forearm", proximalJoint: .rightForeArm, distalJoint: .rightHand, massRatio: 0.016, comRatio: 0.43),
+        SegmentData(name: "R Hand", proximalJoint: .rightHand, distalJoint: .rightHandMiddle1, massRatio: 0.006, comRatio: 0.50),
+
+        SegmentData(name: "L Upper Arm", proximalJoint: .leftArm, distalJoint: .leftForeArm, massRatio: 0.028, comRatio: 0.44),
+        SegmentData(name: "L Forearm", proximalJoint: .leftForeArm, distalJoint: .leftHand, massRatio: 0.016, comRatio: 0.43),
+        SegmentData(name: "L Hand", proximalJoint: .leftHand, distalJoint: .leftHandMiddle1, massRatio: 0.006, comRatio: 0.50),
+
+        SegmentData(name: "R Thigh", proximalJoint: .rightUpLeg, distalJoint: .rightLeg, massRatio: 0.100, comRatio: 0.43),
+        SegmentData(name: "R Shank", proximalJoint: .rightLeg, distalJoint: .rightFoot, massRatio: 0.0465, comRatio: 0.43),
+        SegmentData(name: "R Foot", proximalJoint: .rightFoot, distalJoint: .rightToeBase, massRatio: 0.0145, comRatio: 0.50),
+
+        SegmentData(name: "L Thigh", proximalJoint: .leftUpLeg, distalJoint: .leftLeg, massRatio: 0.100, comRatio: 0.43),
+        SegmentData(name: "L Shank", proximalJoint: .leftLeg, distalJoint: .leftFoot, massRatio: 0.0465, comRatio: 0.43),
+        SegmentData(name: "L Foot", proximalJoint: .leftFoot, distalJoint: .leftToeBase, massRatio: 0.0145, comRatio: 0.50)
+    ]
 }
 
 public enum Joint: String, CaseIterable, Codable {

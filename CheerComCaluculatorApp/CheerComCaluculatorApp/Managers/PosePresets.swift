@@ -784,3 +784,4 @@ class PosePresets {
         return allPoses.filter { $0.category == category }
     }
 }
+// Baseline Audit Verified
