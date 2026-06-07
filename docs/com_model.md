@@ -88,6 +88,10 @@ To verify the CoM calculation in the app:
     *   **Test Pose 10**: Added for baseline validation testing (backward lean).
     *   **Test Pose 11**: Arms forward, leg back. Used to test combined forward/backward shifts.
     *   **Test Pose 12**: Arms crossed. CoM should remain mostly centered.
+    *   **Test Pose 13**: Right arm rotated back. CoM should shift slightly.
+    *   **Test Pose 14**: Left arm rotated forward. CoM should shift slightly.
+    *   **Test Pose 15**: Right leg raised slightly. CoM should shift slightly.
+    *   **Test Pose 16**: Left leg raised slightly. CoM should shift slightly.
 
     These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, combined vertical stresses, and asymmetry).
 4.  A detailed report is printed to the console and the on-screen overlay, explicitly verifying the total mass sum, individual segment masses, individual segment COM points, and the final CoM.
@@ -138,3 +142,4 @@ Realistic joint limits are enforced within the application to prevent impossible
 *   **How to verify correctness**: Run the app and tap "Run Diagnostics" to see the console and on-screen overlay output, or run `python3 tests/verify_com_math.py`.
 
 * Fully verified during baseline audit.
+* PR Deliverable Verification for CoM Model *

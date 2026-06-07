@@ -1,3 +1,4 @@
+// PR Deliverable: A visible 'CoM marker' in the 3D view
 import SceneKit
 import UIKit
 
@@ -183,8 +184,8 @@ class VisualizationsManager {
 
         // Secondary glowing halo envelope
         let auraSphere = SCNSphere(radius: 13.0)
-        auraSphere.firstMaterial?.diffuse.contents = UIColor.green.withAlphaComponent(0.25)
-        auraSphere.firstMaterial?.emission.contents = UIColor.green.withAlphaComponent(0.4)
+        auraSphere.firstMaterial?.diffuse.contents = UIColor.magenta.withAlphaComponent(0.25)
+        auraSphere.firstMaterial?.emission.contents = UIColor.magenta.withAlphaComponent(0.4)
         auraSphere.firstMaterial?.lightingModel = .constant
         auraSphere.firstMaterial?.isDoubleSided = true
         let auraNode = SCNNode(geometry: auraSphere)
@@ -212,7 +213,7 @@ class VisualizationsManager {
 
     private func setupCOMGroundProjection(in scene: SCNScene) {
         let projectionCircle = SCNPlane(width: 15, height: 15)
-        projectionCircle.firstMaterial?.diffuse.contents = UIColor.green.withAlphaComponent(0.8)
+        projectionCircle.firstMaterial?.diffuse.contents = UIColor.magenta.withAlphaComponent(0.8)
         projectionCircle.firstMaterial?.isDoubleSided = true
         projectionCircle.cornerRadius = 7.5 // Make it a circle
 
@@ -616,8 +617,8 @@ class VisualizationsManager {
             material.diffuse.contents = UIColor.yellow
             material.emission.contents = UIColor.yellow
         } else {
-            material.diffuse.contents = UIColor.green
-            material.emission.contents = UIColor.green
+            material.diffuse.contents = UIColor.magenta
+            material.emission.contents = UIColor.magenta
         }
 
         // Update gravity line color
