@@ -41,3 +41,4 @@
 *   **How to verify correctness**: Run the app and tap "Run Diagnostics" to see the console and on-screen overlay output, or run `python3 tests/verify_com_math.py`.
 
 *Audit updated on May 31, 2026. The codebase currently meets all "First Step: Baseline Audit" requirements, with the CoM test harness and documentation successfully integrated. Verified that segments, joints, visualizations, and tests are actively running.*
+* Baseline Audit Verified for PR *

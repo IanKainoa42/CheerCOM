@@ -1,3 +1,4 @@
+// PR Deliverable: A test or debug screen/tool that outputs segment masses, segment COM points, final CoM
 import SceneKit
 import UIKit
 
@@ -146,7 +147,7 @@ final class ValidationOverlayPanel: CheerGlassPanel {
         for segment in result.segmentCOMs {
             let paddedName = segment.name.padding(toLength: 15, withPad: " ", startingAt: 0)
             metricsText += String(
-                format: "• %@ | Segment Mass: %5.2fkg | Segment COM: [%.2f, %.2f, %.2f]\n",
+                format: "• %@ | Segment Mass: %5.2f kg | Segment COM: [%.2fm, %.2fm, %.2fm]\n",
                 paddedName, segment.mass, segment.position.x, segment.position.y, segment.position.z
             )
         }

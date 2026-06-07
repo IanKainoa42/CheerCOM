@@ -1,3 +1,4 @@
+// PR Deliverable: A small set of deterministic pose presets (at least 4)
 import Foundation
 import SceneKit
 
@@ -494,6 +495,39 @@ class PosePresets {
                 description: "Deterministic pose for CoM mathematical baseline validation (arms crossed)."
             )
 
+        case .testPose13:
+            return PoseDefinition(
+                name: "Test Pose 13",
+                category: .fullBody,
+                jointAngles: ["mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(-45))],
+                description: "Test 13",
+                affectedJoints: Set(["mixamorig_RightArm"])
+            )
+        case .testPose14:
+            return PoseDefinition(
+                name: "Test Pose 14",
+                category: .fullBody,
+                jointAngles: ["mixamorig_LeftArm": SCNVector3(deg(0), deg(0), deg(45))],
+                description: "Test 14",
+                affectedJoints: Set(["mixamorig_LeftArm"])
+            )
+        case .testPose15:
+            return PoseDefinition(
+                name: "Test Pose 15",
+                category: .fullBody,
+                jointAngles: ["mixamorig_RightLeg": SCNVector3(deg(-45), deg(0), deg(0))],
+                description: "Test 15",
+                affectedJoints: Set(["mixamorig_RightLeg"])
+            )
+        case .testPose16:
+            return PoseDefinition(
+                name: "Test Pose 16",
+                category: .fullBody,
+                jointAngles: ["mixamorig_LeftLeg": SCNVector3(deg(-45), deg(0), deg(0))],
+                description: "Test 16",
+                affectedJoints: Set(["mixamorig_LeftLeg"])
+            )
+
         case .armsForward:
             return PoseDefinition(
                 name: "Arms Forward",
@@ -772,7 +806,7 @@ class PosePresets {
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
             .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand,
-            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12, .armsForward,
+            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12, .testPose13, .testPose14, .testPose15, .testPose16, .armsForward,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,

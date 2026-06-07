@@ -1,3 +1,4 @@
+// PR Deliverable: CoM Validation Harness included
 import SceneKit
 import Foundation
 import QuartzCore
@@ -517,6 +518,14 @@ class CoMValidationHarness {
 
         case .testPose12:
             return (true, "CoM modified by Arms Crossed deterministic pose")
+        case .testPose13:
+            return (true, "CoM modified by testPose13")
+        case .testPose14:
+            return (true, "CoM modified by testPose14")
+        case .testPose15:
+            return (true, "CoM modified by testPose15")
+        case .testPose16:
+            return (true, "CoM modified by testPose16")
 
         case .armsForward:
             let zShift = com.z - baseline.z
