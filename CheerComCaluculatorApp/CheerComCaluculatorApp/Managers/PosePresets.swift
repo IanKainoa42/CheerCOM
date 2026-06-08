@@ -36,6 +36,7 @@ class PosePresets {
         switch type {
         // MARK: - Full Body Poses
 
+        // The following 4 poses (T-Pose, High V, Touchdown, Squat) form the baseline for the CoM Validation Harness.
         // Verified baseline pose
         case .tPose:
             return PoseDefinition(
