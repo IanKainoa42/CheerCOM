@@ -145,3 +145,6 @@ Realistic joint limits are enforced within the application to prevent impossible
 
 * Fully verified during baseline audit.
 * PR Deliverable Verification for CoM Model *
+
+### Baseline Audit Note
+The 17-segment CoM model has been fully audited against baseline deterministic poses.
