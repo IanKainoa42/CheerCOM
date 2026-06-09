@@ -135,7 +135,7 @@ final class ValidationOverlayPanel: CheerGlassPanel {
     /// for a debug tool that outputs segment masses, individual COM points, and the final CoM.
     func updateMetrics(result: CalculationResult) {
         let com = result.totalCOM
-        var metricsText = "=== REAL-TIME VALIDATION METRICS ===\n"
+        var metricsText = "=== CoM VALIDATION METRICS ===\n"
         // Formats the output for total CoM, mass, and segment details
         metricsText += String(format: "FINAL CoM: [X: %.3f, Y: %.3f, Z: %.3f]\n", com.x, com.y, com.z)
         metricsText += String(format: "TOTAL MASS: %.2f kg\n", result.segmentCOMs.map { $0.mass }.reduce(0, +))

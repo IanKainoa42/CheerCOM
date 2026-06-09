@@ -59,6 +59,8 @@ Left and Right sides are symmetric.
 
 ## How to verify correctness (Verification)
 
+The CoM Validation Harness provides a deterministic set of at least 4 test poses.
+
 To verify the CoM calculation in the app:
 1.  Launch the app.
 2.  Tap the **"Run Diagnostics"** button in the top-right corner.
