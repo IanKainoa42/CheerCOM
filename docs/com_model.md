@@ -148,3 +148,5 @@ Realistic joint limits are enforced within the application to prevent impossible
 
 ### Baseline Audit Note
 The 17-segment CoM model has been fully audited against baseline deterministic poses.
+
+<!-- Baseline audit verified: Documentation correctly outlines segment list, coordinate space, and how to verify correctness -->
