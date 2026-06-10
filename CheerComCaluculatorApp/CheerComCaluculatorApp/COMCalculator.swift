@@ -182,6 +182,7 @@ class COMCalculator {
             }
         }
 
+        // CoM Calculation: Sum(segMass * segCOM) / TotalMass
         let totalCOM = totalMass > 0 ? (totalWeighted * Float(1.0 / totalMass)) : SCNVector3Zero
         return CalculationResult(totalCOM: totalCOM, segmentCOMs: segmentResults)
     }

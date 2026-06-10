@@ -282,6 +282,7 @@ class CoMValidationHarness {
         log("") // New line
     }
 
+    // Verifies a specific baseline pose against deterministic coordinate space rules
     private func verifyPoseCriteria(_ poseType: PoseType, com: SCNVector3, hipsPos: SCNVector3?) -> (Bool, String) {
         // T-Pose is baseline
         if poseType == .tPose {

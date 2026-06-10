@@ -133,6 +133,7 @@ final class ValidationOverlayPanel: CheerGlassPanel {
 
     /// Updates the overlay with detailed validation metrics, satisfying the PR requirement
     /// for a debug tool that outputs segment masses, individual COM points, and the final CoM.
+    // Updates the diagnostics debug panel with explicit CoM metrics
     func updateMetrics(result: CalculationResult) {
         let com = result.totalCOM
         var metricsText = "=== CoM VALIDATION METRICS ===\n"

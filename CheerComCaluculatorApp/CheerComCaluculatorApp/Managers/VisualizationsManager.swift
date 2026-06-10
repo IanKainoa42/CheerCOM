@@ -437,6 +437,7 @@ class VisualizationsManager {
         }
     }
 
+    // Toggles advanced visuals like CoM segment markers
     func toggleVisualizations() {
         showAdvancedVisualizations.toggle()
     }
