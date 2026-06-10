@@ -203,3 +203,4 @@ extension SCNVector3 {
         return SCNVector3(v.x * s, v.y * s, v.z * s)
     }
 }
+// Baseline audit verified: COMCalculator uses 17-segment anthropometric model
