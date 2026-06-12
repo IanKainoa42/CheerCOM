@@ -837,7 +837,7 @@ extension SceneViewController: JointControlPanelDelegate {
             print(
                 "   Current euler angles: x=\(joint.eulerAngles.x * 180 / .pi)°, y=\(joint.eulerAngles.y * 180 / .pi)°, z=\(joint.eulerAngles.z * 180 / .pi)°"
             )
-            print("   World position: \(joint.worldPosition)")
+            print("   World position: \(joint.presentation.worldPosition)")
         } else {
             print("❌ Failed to find joint: \(name)")
         }
