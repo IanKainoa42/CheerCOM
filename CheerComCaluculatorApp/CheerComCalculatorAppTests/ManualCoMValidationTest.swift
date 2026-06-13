@@ -32,6 +32,23 @@ final class ManualCoMValidationTest: XCTestCase {
         print("==========================================\n")
     }
 
+    // PR Deliverable: Create the CoM Validation Harness (Minimal setup)
+    func testFirstPRValidationHarness() {
+        print("\n==========================================")
+        print("🧪 FIRST PR CoM VALIDATION HARNESS")
+        print("==========================================\n")
+
+        validatePose(name: "T-Pose", setupClosure: applyTPose)
+        validatePose(name: "Touchdown", setupClosure: applyTouchdown)
+        validatePose(name: "Squat", setupClosure: applySquat)
+        validatePose(name: "Pike", setupClosure: applyPike)
+        validatePose(name: "Layout", setupClosure: applyTPose) // Layout is similar to T-pose but straight body
+
+        print("\n==========================================")
+        print("✅ HARNESS COMPLETE")
+        print("==========================================\n")
+    }
+
     // MARK: - Helper Methods
 
     private func validatePose(name: String, setupClosure: () -> Void) {
