@@ -154,4 +154,72 @@ final class COMCalculatorTests: XCTestCase {
 
         XCTAssertGreaterThan(endY, startY, "Touchdown (arms up) should raise CoM")
     }
+
+    func testDetailedCalculationOutputsSegments() {
+        setupTPose()
+
+        // Act
+        let result = calculator.calculateDetailedBodyCOM(detailed: true)
+
+        // Assert
+        XCTAssertEqual(result.segmentCOMs.count, 17, "There should be exactly 17 segments in the standard model")
+
+        let totalComputedMass = result.segmentCOMs.map { $0.mass }.reduce(0, +)
+        XCTAssertEqual(totalComputedMass, 50.0, accuracy: 0.001, "The sum of segment masses should equal the total body mass")
+
+        // Verify that position properties exist and are valid vectors
+        for segment in result.segmentCOMs {
+            XCTAssertFalse(segment.position.x.isNaN, "Segment position X should not be NaN")
+            XCTAssertFalse(segment.position.y.isNaN, "Segment position Y should not be NaN")
+            XCTAssertFalse(segment.position.z.isNaN, "Segment position Z should not be NaN")
+        }
+    }
+
+    func testBodyPresetsAdjustMassDistribution() {
+        setupTPose()
+
+        // 1. Calculate neutral baseline
+        calculator.setPreset(.averageNeutral)
+        let neutralResult = calculator.calculateDetailedBodyCOM(detailed: true)
+
+        // Use XCTUnwrap to safely check values
+        guard let neutralArmMass = neutralResult.segmentCOMs.first(where: { $0.name.contains("Arm") })?.mass,
+              let neutralThighMass = neutralResult.segmentCOMs.first(where: { $0.name.contains("Thigh") })?.mass else {
+            XCTFail("Failed to unwrap neutral masses")
+            return
+        }
+
+        // 2. Change to athletic male (heavier upper body, lighter lower body)
+        calculator.setPreset(.athleticMale)
+        let athleticMaleResult = calculator.calculateDetailedBodyCOM(detailed: true)
+
+        guard let maleArmMass = athleticMaleResult.segmentCOMs.first(where: { $0.name.contains("Arm") })?.mass,
+              let maleThighMass = athleticMaleResult.segmentCOMs.first(where: { $0.name.contains("Thigh") })?.mass else {
+            XCTFail("Failed to unwrap male masses")
+            return
+        }
+
+        XCTAssertGreaterThan(maleArmMass, neutralArmMass, "Athletic male preset should have heavier arms than neutral")
+        XCTAssertLessThan(maleThighMass, neutralThighMass, "Athletic male preset should have lighter thighs than neutral")
+
+        // 3. Change to athletic female (lighter upper body, heavier lower body)
+        calculator.setPreset(.athleticFemale)
+        let athleticFemaleResult = calculator.calculateDetailedBodyCOM(detailed: true)
+
+        guard let femaleArmMass = athleticFemaleResult.segmentCOMs.first(where: { $0.name.contains("Arm") })?.mass,
+              let femaleThighMass = athleticFemaleResult.segmentCOMs.first(where: { $0.name.contains("Thigh") })?.mass else {
+            XCTFail("Failed to unwrap female masses")
+            return
+        }
+
+        XCTAssertLessThan(femaleArmMass, neutralArmMass, "Athletic female preset should have lighter arms than neutral")
+        XCTAssertGreaterThan(femaleThighMass, neutralThighMass, "Athletic female preset should have heavier thighs than neutral")
+
+        // Verify that total mass is preserved across all presets
+        let maleTotalMass = athleticMaleResult.segmentCOMs.map { $0.mass }.reduce(0, +)
+        let femaleTotalMass = athleticFemaleResult.segmentCOMs.map { $0.mass }.reduce(0, +)
+
+        XCTAssertEqual(maleTotalMass, 50.0, accuracy: 0.001, "Total mass should be preserved with .athleticMale preset")
+        XCTAssertEqual(femaleTotalMass, 50.0, accuracy: 0.001, "Total mass should be preserved with .athleticFemale preset")
+    }
 }
