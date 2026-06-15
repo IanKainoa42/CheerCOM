@@ -47,7 +47,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Touchdown", setupClosure: applyTouchdown)
         validatePose(name: "Squat", setupClosure: applySquat)
         validatePose(name: "Pike", setupClosure: applyPike)
-        validatePose(name: "Layout", setupClosure: applyTPose) // Layout is similar to T-pose but straight body
+        validatePose(name: "Layout", setupClosure: applyLayout)
 
         print("\n==========================================")
         print("✅ HARNESS COMPLETE")
@@ -214,5 +214,13 @@ final class ManualCoMValidationTest: XCTestCase {
         // Knees straight (0)
         nodes["mixamorig_RightLeg"]?.eulerAngles.x = 0
         nodes["mixamorig_LeftLeg"]?.eulerAngles.x = 0
+    }
+
+    func applyLayout() {
+        // Layout: Straight body, arms typically up or out.
+        // We will do straight body with arms up (similar to Touchdown, but making sure body is straight).
+        // Since T-pose is straight body, we just move arms up.
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(90)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-90)
     }
 }
