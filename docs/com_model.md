@@ -22,6 +22,9 @@ Where:
 
 The model assumes the character is rigged with a standard Mixamo skeleton (`mixamorig_` prefix), operating in world coordinates to ensure absolute stability.
 
+## Units
+All mass values are in kilograms (kg) and spatial coordinates are measured in standard SceneKit units (typically interpreted as meters or centimeters depending on model scaling, but kept consistent internally).
+
 ## Segments (PR Deliverable: Segment List and Assumptions)
 
 The body is divided into 17 segments. Each segment is defined by a **Proximal Joint** (start) and a **Distal Joint** (end). The segment's CoM is located at a fixed percentage along the line connecting these two joints. The mass ratios are based on the Winter (2009) anthropometric model.

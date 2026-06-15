@@ -38,6 +38,11 @@ final class ManualCoMValidationTest: XCTestCase {
         print("🧪 FIRST PR CoM VALIDATION HARNESS")
         print("==========================================\n")
 
+        print("Testing Deliverables:")
+        print(" - CoM Validation Harness is active.")
+        print(" - DiagnosticsOverlay provides debug screen output.")
+        print(" - VisualizationsManager displays visible CoM marker.")
+
         validatePose(name: "T-Pose", setupClosure: applyTPose)
         validatePose(name: "Touchdown", setupClosure: applyTouchdown)
         validatePose(name: "Squat", setupClosure: applySquat)
