@@ -64,6 +64,8 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Squat", setupClosure: applySquat)
         validatePose(name: "Pike", setupClosure: applyPike)
         validatePose(name: "Layout", setupClosure: applyLayout)
+        validatePose(name: "Liberty", setupClosure: applyLiberty)
+        validatePose(name: "Bridge", setupClosure: applyBridge)
 
         print("\n==========================================")
         print("✅ HARNESS COMPLETE")
@@ -258,5 +260,41 @@ final class ManualCoMValidationTest: XCTestCase {
         // Since T-pose is straight body, we just move arms up.
         nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(90)
         nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-90)
+    }
+
+    func applyLiberty() {
+        // Liberty: One leg bent up (knee level), arms in High V.
+        // Let's bend right leg up.
+        nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(-90) // Thigh forward
+        nodes["mixamorig_RightLeg"]?.eulerAngles.x = deg(90)   // Knee bent down
+
+        // Arms in High V (diagonally up and out)
+        // Right arm: rotate +135 around Z
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(135)
+        // Left arm: rotate -135 around Z
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-135)
+    }
+
+    func applyBridge() {
+        // Bridge: Backbend, hands and feet on the ground.
+        // Drop hips significantly
+        nodes["mixamorig_Hips"]?.position.y = 30 // From 100 to 30
+
+        // Spine bend backwards (rotation around X axis)
+        nodes["mixamorig_Spine"]?.eulerAngles.x = deg(45)
+        nodes["mixamorig_Spine1"]?.eulerAngles.x = deg(45)
+        nodes["mixamorig_Spine2"]?.eulerAngles.x = deg(45)
+        nodes["mixamorig_Neck"]?.eulerAngles.x = deg(45)
+
+        // Thighs bent back, knees bent
+        nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(45)
+        nodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(45)
+
+        nodes["mixamorig_RightLeg"]?.eulerAngles.x = deg(-90)
+        nodes["mixamorig_LeftLeg"]?.eulerAngles.x = deg(-90)
+
+        // Arms reach back and down
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(180)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-180)
     }
 }
