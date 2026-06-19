@@ -119,7 +119,14 @@ For independent verification of the mathematical model (segment mass ratios, fal
     *   **Prep Position**: CoM drops slightly when knees are bent.
 
 ## Visible CoM Marker
-Within the SceneKit view, a prominent bright green sphere (radius 10) with a floating "CoM" text label dynamically tracks the total body Center of Mass. Auxiliary cyan spheres represent individual segment COMs, showing exactly where each segment's mass is centered. A pulsing green ground projection circle also directly maps the CoM onto the XZ ground plane to help assess stability over the base of support.
+Within the SceneKit view, a prominent bright green sphere (radius 9.5) dynamically tracks the total body Center of Mass. For enhanced visibility, a secondary semi-transparent green halo sphere (radius 12.0) surrounds the core marker, and a pulsing animation scales the marker up and down continuously. A floating "Center of Mass" 3D text label explicitly identifies the marker. Auxiliary cyan spheres represent individual segment COMs, showing exactly where each segment's mass is centered. A pulsing green ground projection circle also directly maps the CoM onto the XZ ground plane to help assess stability over the base of support.
+
+## Debug Screen Output
+The `DiagnosticsOverlay` provides a real-time debug screen showing validation metrics. It explicitly formats and outputs:
+- The final CoM position (X, Y, Z).
+- The total computed mass.
+- Each segment's individual mass in kilograms (formatted to 3 decimal places).
+- Each segment's individual COM point in meters (formatted to 3 decimal places).
 
 ## Joint Constraints
 

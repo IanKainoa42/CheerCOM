@@ -148,7 +148,7 @@ final class ValidationOverlayPanel: CheerGlassPanel {
         for segment in result.segmentCOMs {
             let paddedName = segment.name.padding(toLength: 15, withPad: " ", startingAt: 0)
             metricsText += String(
-                format: "• %@ | Segment Mass: %5.2f kg | Segment COM: [%.2fm, %.2fm, %.2fm]\n",
+                format: "• %@ | Segment Mass: %6.3f kg | Segment COM: [%.3fm, %.3fm, %.3fm]\n",
                 paddedName, segment.mass, segment.position.x, segment.position.y, segment.position.z
             )
         }

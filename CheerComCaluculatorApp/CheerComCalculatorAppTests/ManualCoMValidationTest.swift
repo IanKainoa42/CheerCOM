@@ -27,6 +27,8 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Squat", setupClosure: applySquat)
         validatePose(name: "Pike", setupClosure: applyPike)
         validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
+        validatePose(name: "Handstand", setupClosure: applyHandstand)
+        validatePose(name: "Lunge", setupClosure: applyLunge)
 
         print("\n==========================================")
         print("✅ AUDIT COMPLETE")
@@ -305,5 +307,30 @@ final class ManualCoMValidationTest: XCTestCase {
         // Arms reach back and down
         nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(180)
         nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-180)
+    }
+
+    func applyHandstand() {
+        // Handstand: inverted body
+        nodes["mixamorig_Hips"]?.eulerAngles.x = deg(180)
+
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(180)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-180)
+
+        // Vertically shift the root up so hands would be on the floor.
+        nodes["mixamorig_Hips"]?.position.y = 150
+    }
+
+    func applyLunge() {
+        // Lunge: Asymmetric leg stance (one forward, one back).
+        // Lower hips slightly
+        nodes["mixamorig_Hips"]?.position.y = 80 // Drop from 100
+
+        // Right leg forward, knee bent
+        nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(-60) // Thigh forward
+        nodes["mixamorig_RightLeg"]?.eulerAngles.x = deg(90)   // Knee bent down
+
+        // Left leg backward, mostly straight
+        nodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(30) // Thigh backward
+        nodes["mixamorig_LeftLeg"]?.eulerAngles.x = deg(0)    // Knee straight
     }
 }
