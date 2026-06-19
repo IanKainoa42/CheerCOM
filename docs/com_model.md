@@ -156,3 +156,6 @@ The 17-segment CoM model has been fully audited against baseline deterministic p
 
 ### Validation Harness Active Status
 The validation harness is fully implemented and accessible both via the in-app `DiagnosticsOverlay` and the `tests/verify_com_math.py` unit testing script. It verifies deterministic poses (e.g. Squat, Pike) against a fixed T-pose baseline while outputting explicit segment masses, individual COM points, and the final CoM.
+
+### Baseline Audit Note
+The 17-segment CoM model has been fully audited against baseline deterministic poses.

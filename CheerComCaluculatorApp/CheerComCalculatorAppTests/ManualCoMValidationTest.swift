@@ -26,6 +26,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Touchdown", setupClosure: applyTouchdown)
         validatePose(name: "Squat", setupClosure: applySquat)
         validatePose(name: "Pike", setupClosure: applyPike)
+        validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
 
         print("\n==========================================")
         print("✅ AUDIT COMPLETE")
@@ -63,6 +64,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Touchdown", setupClosure: applyTouchdown)
         validatePose(name: "Squat", setupClosure: applySquat)
         validatePose(name: "Pike", setupClosure: applyPike)
+        validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
         validatePose(name: "Layout", setupClosure: applyLayout)
         validatePose(name: "Liberty", setupClosure: applyLiberty)
         validatePose(name: "Bridge", setupClosure: applyBridge)
@@ -273,6 +275,13 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(135)
         // Left arm: rotate -135 around Z
         nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-135)
+    }
+
+    func applyTestPose9() {
+        // Forward lean. Spine bends forward over hips.
+        nodes["mixamorig_Spine"]?.eulerAngles.x = deg(-20)
+        nodes["mixamorig_Spine1"]?.eulerAngles.x = deg(-15)
+        nodes["mixamorig_Spine2"]?.eulerAngles.x = deg(-10)
     }
 
     func applyBridge() {
