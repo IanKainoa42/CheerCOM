@@ -158,6 +158,15 @@ class VisualizationsManager {
         comMarker = SCNNode(geometry: coreSphere)
         comMarker.name = "Total_CoM_Marker"
 
+        // Add a secondary semi-transparent green halo sphere
+        let haloSphere = SCNSphere(radius: 12.0)
+        haloSphere.firstMaterial?.diffuse.contents = UIColor(red: 0.2, green: 1.0, blue: 0.2, alpha: 0.3)
+        haloSphere.firstMaterial?.emission.contents = UIColor(red: 0.2, green: 1.0, blue: 0.2, alpha: 0.3)
+        haloSphere.firstMaterial?.isDoubleSided = true
+        haloSphere.firstMaterial?.blendMode = .add
+        let haloNode = SCNNode(geometry: haloSphere)
+        comMarker.addChildNode(haloNode)
+
         // Add a pulsing animation to the marker for better visibility
         let scaleUp = SCNAction.scale(to: 1.1, duration: 0.8)
         let scaleDown = SCNAction.scale(to: 0.9, duration: 0.8)
