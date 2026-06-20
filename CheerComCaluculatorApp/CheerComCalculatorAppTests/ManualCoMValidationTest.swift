@@ -23,6 +23,7 @@ final class ManualCoMValidationTest: XCTestCase {
         print("==========================================\n")
 
         validatePose(name: "T-Pose", setupClosure: applyTPose)
+        validatePose(name: "High V", setupClosure: applyHighV)
         validatePose(name: "Touchdown", setupClosure: applyTouchdown)
         validatePose(name: "Squat", setupClosure: applySquat)
         validatePose(name: "Pike", setupClosure: applyPike)
@@ -214,6 +215,14 @@ final class ManualCoMValidationTest: XCTestCase {
         // In our manual skeleton, T-Pose is the bind pose (zero rotations).
         // Arms are built extending sideways.
         // Legs are built extending down.
+    }
+
+    func applyHighV() {
+        // Arms in High V (diagonally up and out)
+        // Right arm: rotate +45 around Z
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(45)
+        // Left arm: rotate -45 around Z
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-45)
     }
 
     func applyTouchdown() {
