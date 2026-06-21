@@ -826,6 +826,36 @@ def test_handstand(calculator, baseline_com):
         print("❌ FAIL: CoM did not elevate sufficiently for Handstand")
         return False
 
+def test_test_pose_9(calculator, baseline_com):
+    print("\nTest: Test Pose 9 (Forward Lean)")
+    nodes = create_t_pose_nodes()
+
+    # Forward lean (spine bends forward over hips, +Z translation approximately or rotate in radians)
+    # Simple mockup: Move spine and above nodes forward (Z+)
+    upper_joints = ["mixamorig_Spine", "mixamorig_Spine1", "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head",
+                    "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand",
+                    "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand"]
+    shift_amount = 15.0
+    for j in upper_joints:
+        if j in nodes:
+            nodes[j].position.z += shift_amount
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    print(f"   Test Pose 9 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+
+    z_shift = com.z - baseline_com.z
+    print(f"   Forward Shift (Z) from T-Pose: {z_shift:.2f}")
+
+    if z_shift > 2.0:
+        print("✅ PASS: CoM shifted forward for Test Pose 9")
+        return True
+    else:
+        print("❌ FAIL: CoM did not shift forward expected amount for Test Pose 9")
+        return False
+
 def test_test_pose_6(calculator, baseline_com):
     print("\nTest: Test Pose 6 (Squat + Touchdown)")
     nodes = create_t_pose_nodes()
@@ -1043,6 +1073,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_test_pose_6(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_test_pose_9(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_test_pose_11(calculator, t_pose_com):
