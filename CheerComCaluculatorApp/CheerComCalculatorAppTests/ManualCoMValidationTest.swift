@@ -31,6 +31,11 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Layout", setupClosure: applyLayout)
         validatePose(name: "Handstand", setupClosure: applyHandstand)
         validatePose(name: "Lunge", setupClosure: applyLunge)
+        validatePose(name: "Liberty", setupClosure: applyLiberty)
+        validatePose(name: "Prep Position", setupClosure: applyPrepPosition)
+        validatePose(name: "Arabesque", setupClosure: applyArabesque)
+        validatePose(name: "Bridge", setupClosure: applyBridge)
+        validatePose(name: "Scale", setupClosure: applyScale)
 
         print("\n==========================================")
         print("✅ AUDIT COMPLETE")
@@ -70,8 +75,6 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Pike", setupClosure: applyPike)
         validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
         validatePose(name: "Layout", setupClosure: applyLayout)
-        validatePose(name: "Liberty", setupClosure: applyLiberty)
-        validatePose(name: "Bridge", setupClosure: applyBridge)
 
         print("\n==========================================")
         print("✅ HARNESS COMPLETE")
@@ -342,5 +345,34 @@ final class ManualCoMValidationTest: XCTestCase {
         // Left leg backward, mostly straight
         nodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(30) // Thigh backward
         nodes["mixamorig_LeftLeg"]?.eulerAngles.x = deg(0)    // Knee straight
+    }
+
+    func applyPrepPosition() {
+        // Prep position: slightly bent knees, hands at chest
+        nodes["mixamorig_Hips"]?.position.y = 95
+        nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(-20)
+        nodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(-20)
+        nodes["mixamorig_RightLeg"]?.eulerAngles.x = deg(20)
+        nodes["mixamorig_LeftLeg"]?.eulerAngles.x = deg(20)
+
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(45)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-45)
+        nodes["mixamorig_RightForeArm"]?.eulerAngles.y = deg(-90)
+        nodes["mixamorig_LeftForeArm"]?.eulerAngles.y = deg(90)
+    }
+
+    func applyArabesque() {
+        // Arabesque: One leg straight back, chest forward, arms out
+        nodes["mixamorig_Spine"]?.eulerAngles.x = deg(-20)
+        nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(45)
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(90)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-90)
+    }
+
+    func applyScale() {
+        // Scale: One leg to the side and up
+        nodes["mixamorig_RightUpLeg"]?.eulerAngles.z = deg(-90)
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(90)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-90)
     }
 }
