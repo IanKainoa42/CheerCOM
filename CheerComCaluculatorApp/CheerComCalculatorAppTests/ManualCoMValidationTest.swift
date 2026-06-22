@@ -28,6 +28,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Squat", setupClosure: applySquat)
         validatePose(name: "Pike", setupClosure: applyPike)
         validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
+        validatePose(name: "Layout", setupClosure: applyLayout)
         validatePose(name: "Handstand", setupClosure: applyHandstand)
         validatePose(name: "Lunge", setupClosure: applyLunge)
 
