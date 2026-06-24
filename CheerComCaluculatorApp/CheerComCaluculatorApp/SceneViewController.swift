@@ -147,6 +147,7 @@ class SceneViewController: UIViewController {
         clampWarningLabel.layer.masksToBounds = true
         clampWarningLabel.numberOfLines = 0
         clampWarningLabel.alpha = 0
+        clampWarningLabel.layer.zPosition = 1000 // Ensure it sits well above the SceneKit view
 
         // Add padding
         let paddingView = UIView()
@@ -183,6 +184,9 @@ class SceneViewController: UIViewController {
             guard let self = self else { return }
 
             self.clampWarningLabel.text = " ⚠️ Limit Reached: \(readableName) "
+
+            // Ensure the toast is brought to the front of the view hierarchy
+            self.view.bringSubviewToFront(self.clampWarningLabel)
 
             self.clampWarningTimer?.invalidate()
 
