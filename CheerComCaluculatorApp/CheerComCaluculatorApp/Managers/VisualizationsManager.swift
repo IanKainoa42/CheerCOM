@@ -4,6 +4,7 @@ import UIKit
 
 
 
+// Manager for the visible CoM marker in the 3D view
 class VisualizationsManager {
     struct CircularVector3Buffer: RandomAccessCollection {
         private var buffer: [SCNVector3]
@@ -152,7 +153,7 @@ class VisualizationsManager {
     private func createVisibleCoMMarker(in scene: SCNScene) { // PR Deliverable: CoM Marker
         // Main Core Sphere (represents the 3D position of the center of mass)
         // CoM Marker generated for baseline audit
-        let coreSphere = SCNSphere(radius: 9.5)
+        let coreSphere = SCNSphere(radius: 10.0)
         configureCoMMarkerMaterial(coreSphere)
 
         comMarker = SCNNode(geometry: coreSphere)
