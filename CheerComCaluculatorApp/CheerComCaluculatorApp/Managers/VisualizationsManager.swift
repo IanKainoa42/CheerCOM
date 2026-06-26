@@ -681,6 +681,12 @@ class VisualizationsManager {
         }
     }
 
+    func highlightJoint(named: String, color: UIColor) {
+        guard let sceneManager = sceneManager,
+              let node = sceneManager.findBone(named: named) else { return }
+        highlightNode(node, color: color)
+    }
+
     private func highlightNode(_ node: SCNNode, color: UIColor) {
         node.geometry?.firstMaterial?.emission.contents = color
     }

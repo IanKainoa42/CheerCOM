@@ -188,6 +188,9 @@ class SceneViewController: UIViewController {
             // Ensure the toast is brought to the front of the view hierarchy
             self.view.bringSubviewToFront(self.clampWarningLabel)
 
+            // Provide a visual warning on the 3D model itself
+            self.visualizationsManager?.highlightJoint(named: jointName, color: .orange)
+
             self.clampWarningTimer?.invalidate()
 
             UIView.animate(withDuration: 0.2) {
@@ -203,6 +206,7 @@ class SceneViewController: UIViewController {
                 UIView.animate(withDuration: 0.3) {
                     self?.clampWarningLabel.alpha = 0.0
                 }
+                self?.visualizationsManager?.resetSegmentHighlights()
             }
         }
     }
