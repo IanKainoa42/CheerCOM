@@ -90,6 +90,7 @@ class DiagnosticsOverlay: UIView {
     }
 }
 
+// Diagnostics output panel for CoM validation
 final class ValidationOverlayPanel: CheerGlassPanel {
     private let metricsLabel = UILabel()
 

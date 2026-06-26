@@ -33,6 +33,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Lunge", setupClosure: applyLunge)
         validatePose(name: "Liberty", setupClosure: applyLiberty)
         validatePose(name: "Prep Position", setupClosure: applyPrepPosition)
+        validatePose(name: "Test Pose 15", setupClosure: applyTestPose15)
         validatePose(name: "Arabesque", setupClosure: applyArabesque)
         validatePose(name: "Bridge", setupClosure: applyBridge)
         validatePose(name: "Scale", setupClosure: applyScale)
@@ -73,6 +74,28 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Touchdown", setupClosure: applyTouchdown)
         validatePose(name: "Squat", setupClosure: applySquat)
         validatePose(name: "Pike", setupClosure: applyPike)
+
+        // Explicitly format and output segment masses, segment COM points, and final CoM for baseline poses
+        let posesToTest = [
+            ("T-Pose", applyTPose),
+            ("Touchdown", applyTouchdown),
+            ("Squat", applySquat),
+            ("Pike", applyPike)
+        ]
+
+        for (poseName, setupFunc) in posesToTest {
+            print("\n--- VALIDATION HARNESS OUTPUT: \(poseName) ---")
+            applyTPose() // Reset
+            setupFunc()
+            let poseResult = calculator.calculateDetailedBodyCOM()
+            print(String(format: "FINAL CoM: [X: %.3f, Y: %.3f, Z: %.3f]", poseResult.totalCOM.x, poseResult.totalCOM.y, poseResult.totalCOM.z))
+            print("SEGMENT DATA:")
+            for segment in poseResult.segmentCOMs {
+                let paddedName = segment.name.padding(toLength: 15, withPad: " ", startingAt: 0)
+                print(String(format: "• %@ | Mass: %6.3f kg | COM: [%.3fm, %.3fm, %.3fm]", paddedName, segment.mass, segment.position.x, segment.position.y, segment.position.z))
+            }
+        }
+
         validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
         validatePose(name: "Layout", setupClosure: applyLayout)
 
@@ -359,6 +382,11 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-45)
         nodes["mixamorig_RightForeArm"]?.eulerAngles.y = deg(-90)
         nodes["mixamorig_LeftForeArm"]?.eulerAngles.y = deg(90)
+    }
+
+    func applyTestPose15() {
+        // Test Pose 15: Right leg raised slightly.
+        nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(-20)
     }
 
     func applyArabesque() {
