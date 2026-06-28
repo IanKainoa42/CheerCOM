@@ -37,6 +37,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Arabesque", setupClosure: applyArabesque)
         validatePose(name: "Bridge", setupClosure: applyBridge)
         validatePose(name: "Scale", setupClosure: applyScale)
+        validatePose(name: "Test Pose 16", setupClosure: applyTestPose16)
 
         print("\n==========================================")
         print("✅ AUDIT COMPLETE")
@@ -423,6 +424,11 @@ final class ManualCoMValidationTest: XCTestCase {
     func applyTestPose15() {
         // Test Pose 15: Right leg raised slightly.
         nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(-20)
+    }
+
+    func applyTestPose16() {
+        // Test Pose 16: Left leg raised slightly.
+        nodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(-20)
     }
 
     func applyArabesque() {

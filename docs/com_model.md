@@ -96,7 +96,7 @@ To verify the CoM calculation in the app:
     *   **Test Pose 13**: Right arm rotated back. CoM should shift slightly.
     *   **Test Pose 14**: Left arm rotated forward. CoM should shift slightly.
     *   **Test Pose 15**: Right leg raised slightly. CoM should shift slightly.
-    *   **Test Pose 16**: Left leg raised slightly. CoM should shift slightly.
+    *   **Test Pose 16**: Left leg raised slightly. CoM should shift slightly. The CoM Validation Harness ensures the CoM correctly registers this left-side asymmetry versus the T-Pose baseline.
 
     These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, combined vertical stresses, and asymmetry).
 4.  A detailed report is printed to the console and the on-screen overlay, explicitly verifying the total mass sum, individual segment masses, individual segment COM points, and the final CoM.
