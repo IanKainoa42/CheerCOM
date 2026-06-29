@@ -66,6 +66,27 @@ class VisualizationsManager {
     private var cachedBosNodes: [SCNNode] = []
     private var cachedSkeletonBoneNodes: [SCNNode] = []
 
+    private lazy var segmentTemplateNode: SCNNode = {
+        let sphere = SCNSphere(radius: 3) // Smaller than main COM
+        sphere.firstMaterial?.diffuse.contents = UIColor.cyan.withAlphaComponent(0.8)
+        sphere.firstMaterial?.lightingModel = .constant
+        return SCNNode(geometry: sphere)
+    }()
+
+    private lazy var boneTemplateNode: SCNNode = {
+        let cylinder = SCNCylinder(radius: 1.5, height: 1.0)
+        cylinder.firstMaterial?.diffuse.contents = UIColor.white.withAlphaComponent(0.6)
+        cylinder.firstMaterial?.lightingModel = .constant
+        return SCNNode(geometry: cylinder)
+    }()
+
+    private lazy var trailTemplateNode: SCNNode = {
+        let sphere = SCNSphere(radius: 2)
+        sphere.firstMaterial?.diffuse.contents = UIColor.cyan
+        sphere.firstMaterial?.lightingModel = .constant
+        return SCNNode(geometry: sphere)
+    }()
+
     var showAdvancedVisualizations = false {
         didSet {
             // Update visibility of nodes when property changes
@@ -363,10 +384,7 @@ class VisualizationsManager {
         // Ensure we have enough nodes for segment COMs
         if cachedSegmentNodes.count < segmentResults.count {
             for _ in cachedSegmentNodes.count..<segmentResults.count {
-                let sphere = SCNSphere(radius: 3) // Smaller than main COM
-                sphere.firstMaterial?.diffuse.contents = UIColor.cyan.withAlphaComponent(0.8)
-                sphere.firstMaterial?.lightingModel = .constant
-                let node = SCNNode(geometry: sphere)
+                let node = segmentTemplateNode.clone()
                 segmentCOMNodes.addChildNode(node)
                 cachedSegmentNodes.append(node)
             }
@@ -375,10 +393,8 @@ class VisualizationsManager {
         // Ensure we have enough nodes for skeleton lines
         if cachedSkeletonBoneNodes.count < segmentResults.count {
             for _ in cachedSkeletonBoneNodes.count..<segmentResults.count {
-                let cylinder = SCNCylinder(radius: 1.5, height: 1.0)
-                cylinder.firstMaterial?.diffuse.contents = UIColor.white.withAlphaComponent(0.6)
-                cylinder.firstMaterial?.lightingModel = .constant
-                let node = SCNNode(geometry: cylinder)
+                let node = boneTemplateNode.clone()
+                node.geometry = node.geometry?.copy() as? SCNGeometry
                 skeletonNodes.addChildNode(node)
                 cachedSkeletonBoneNodes.append(node)
             }
@@ -530,10 +546,14 @@ class VisualizationsManager {
         // Add new nodes if we need more
         if existing < needed {
             for _ in existing..<needed {
-                let sphere = SCNSphere(radius: 2)
-                sphere.firstMaterial?.diffuse.contents = UIColor.cyan
-                sphere.firstMaterial?.lightingModel = .constant
-                let node = SCNNode(geometry: sphere)
+                let node = trailTemplateNode.clone()
+                if let oldGeo = node.geometry {
+                    let newGeo = oldGeo.copy() as! SCNGeometry
+                    if let oldMat = newGeo.firstMaterial {
+                        newGeo.firstMaterial = oldMat.copy() as? SCNMaterial
+                    }
+                    node.geometry = newGeo
+                }
                 comTrailNode.addChildNode(node)
                 cachedTrailNodes.append(node)
             }
