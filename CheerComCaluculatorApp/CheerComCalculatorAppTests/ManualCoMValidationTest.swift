@@ -445,4 +445,17 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(90)
         nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-90)
     }
+
+    func testPoseValidatorJointLimits() {
+        // Explicitly test the Pose Validator clamp warning logic.
+        let kneeLimit = SCNVector3(x: deg(-160), y: 0, z: 0)
+        let outOfRangeKnee = SCNVector3(x: deg(-180), y: 0, z: 0)
+        let clampedKnee = JointLimits.clampAngles(for: "mixamorig_RightLeg", angles: outOfRangeKnee)
+        XCTAssertEqual(clampedKnee.x, kneeLimit.x, accuracy: 0.001, "Pose validator failed to clamp out-of-range knee angle")
+
+        let validShoulder = SCNVector3(x: deg(0), y: 0, z: 0)
+        let clampedShoulder = JointLimits.clampAngles(for: "mixamorig_RightArm", angles: validShoulder)
+        XCTAssertEqual(clampedShoulder.x, validShoulder.x, accuracy: 0.001, "Pose validator improperly clamped valid shoulder angle")
+    }
+
 }
