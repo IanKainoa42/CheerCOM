@@ -142,6 +142,7 @@ class COMCalculator {
     }
 
     /// Detailed calculation returning segment data.
+    /// CoM Formula: Σ(segmentMass * segmentCOMWorld) / Σ(segmentMass)
     /// - Parameter detailed: If false, segmentCOMs will be empty to save allocations.
     func calculateDetailedBodyCOM(detailed: Bool = true) -> CalculationResult {
         // Fallback or warning if not bound?

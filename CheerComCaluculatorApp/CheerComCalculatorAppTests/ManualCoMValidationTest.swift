@@ -469,4 +469,27 @@ final class ManualCoMValidationTest: XCTestCase {
         let touchdownDef = PosePresets.shared.getPose(.touchdown)
         XCTAssertEqual(touchdownDef.name, "Touchdown", "Touchdown pose should be available in PosePresets")
     }
+
+    // Deliverable: Explicitly verify coordinate space assumptions
+    func testCoordinateSpaceAssumptions() {
+        applyTPose() // Reset
+        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        // Test Y-up: Raise hips up along +Y
+        nodes["mixamorig_Hips"]?.position.y += 10
+        let raisedCoM = calculator.calculateDetailedBodyCOM().totalCOM
+        XCTAssertGreaterThan(raisedCoM.y, startCoM.y, "Coordinate Space: Y-axis should be vertical (Up). Gravity acts along -Y.")
+        applyTPose() // Reset
+
+        // Test X-right: Move hips right along +X
+        nodes["mixamorig_Hips"]?.position.x += 10
+        let rightCoM = calculator.calculateDetailedBodyCOM().totalCOM
+        XCTAssertGreaterThan(rightCoM.x, startCoM.x, "Coordinate Space: X-axis should be lateral (Right).")
+        applyTPose() // Reset
+
+        // Test Z-forward: Move hips forward along +Z
+        nodes["mixamorig_Hips"]?.position.z += 10
+        let forwardCoM = calculator.calculateDetailedBodyCOM().totalCOM
+        XCTAssertGreaterThan(forwardCoM.z, startCoM.z, "Coordinate Space: Z-axis should be anterior-posterior (Forward).")
+    }
 }
