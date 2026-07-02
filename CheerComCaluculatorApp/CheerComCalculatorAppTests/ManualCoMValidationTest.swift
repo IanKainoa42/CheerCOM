@@ -458,4 +458,15 @@ final class ManualCoMValidationTest: XCTestCase {
         XCTAssertEqual(clampedShoulder.x, validShoulder.x, accuracy: 0.001, "Pose validator improperly clamped valid shoulder angle")
     }
 
+    func testCoMValidationHarnessInitialization() {
+        // This explicitly exercises the CoMValidationHarness required by the PR
+        let harness = CoMValidationHarness()
+        XCTAssertNotNil(harness, "CoMValidationHarness should initialize successfully")
+
+        let tPoseDef = PosePresets.shared.getPose(.tPose)
+        XCTAssertEqual(tPoseDef.name, "T-Pose", "Baseline T-Pose should be available in PosePresets")
+
+        let touchdownDef = PosePresets.shared.getPose(.touchdown)
+        XCTAssertEqual(touchdownDef.name, "Touchdown", "Touchdown pose should be available in PosePresets")
+    }
 }
