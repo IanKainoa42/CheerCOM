@@ -81,7 +81,8 @@ final class ManualCoMValidationTest: XCTestCase {
             ("T-Pose", applyTPose),
             ("Touchdown", applyTouchdown),
             ("Squat", applySquat),
-            ("Pike", applyPike)
+            ("Pike", applyPike),
+            ("Layout", applyLayout)
         ]
 
         for (poseName, setupFunc) in posesToTest {
@@ -98,7 +99,6 @@ final class ManualCoMValidationTest: XCTestCase {
         }
 
         validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
-        validatePose(name: "Layout", setupClosure: applyLayout)
 
         print("\n==========================================")
         print("✅ HARNESS COMPLETE")
