@@ -289,6 +289,14 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(-45)
     }
 
+    func applyLowV() {
+        // Arms in Low V (diagonally down and out)
+        // Right arm: rotate -45 around Z
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(-45)
+        // Left arm: rotate +45 around Z
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(45)
+    }
+
     func applyTouchdown() {
         // Arms straight up.
         // Our arms are built along X axis.
