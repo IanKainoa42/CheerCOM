@@ -29,6 +29,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Pike", setupClosure: applyPike)
         validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
         validatePose(name: "Layout", setupClosure: applyLayout)
+        validatePose(name: "Bow and Arrow", setupClosure: applyBowAndArrow)
         validatePose(name: "Handstand", setupClosure: applyHandstand)
         validatePose(name: "Lunge", setupClosure: applyLunge)
         validatePose(name: "Liberty", setupClosure: applyLiberty)
@@ -295,6 +296,16 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(-45)
         // Left arm: rotate +45 around Z
         nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(45)
+    }
+
+    func applyBowAndArrow() {
+        // Bow and Arrow: Asymmetric arm extension.
+        // Right arm extended straight.
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(90)
+        // Left arm pulled back.
+        nodes["mixamorig_LeftArm"]?.eulerAngles.z = deg(90)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.y = deg(-90)
+        nodes["mixamorig_LeftForeArm"]?.eulerAngles.z = deg(-90)
     }
 
     func applyTouchdown() {
