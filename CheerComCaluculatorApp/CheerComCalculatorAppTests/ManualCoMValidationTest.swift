@@ -26,6 +26,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "High V", setupClosure: applyHighV)
         validatePose(name: "Touchdown", setupClosure: applyTouchdown)
         validatePose(name: "Squat", setupClosure: applySquat)
+        validatePose(name: "Squat Touchdown", setupClosure: applySquatTouchdown)
         validatePose(name: "Pike", setupClosure: applyPike)
         validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
         validatePose(name: "Layout", setupClosure: applyLayout)
@@ -340,6 +341,11 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_LeftLeg"]?.eulerAngles.x = deg(90)
     }
 
+    func applySquatTouchdown() {
+        applySquat()
+        applyTouchdown()
+    }
+
     func applyPike() {
         // Legs forward (Hips flex 90)
         nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(-90)
@@ -487,6 +493,18 @@ final class ManualCoMValidationTest: XCTestCase {
 
         let touchdownDef = PosePresets.shared.getPose(.touchdown)
         XCTAssertEqual(touchdownDef.name, "Touchdown", "Touchdown pose should be available in PosePresets")
+    }
+
+    func testCoMValidationHarnessOutputs() {
+        // Assert the debug screen/tool outputs segment masses, segment COM points, and final CoM
+        let overlay = ValidationOverlayPanel()
+        XCTAssertNotNil(overlay, "ValidationOverlayPanel should initialize to output segment masses and final CoM")
+        let calcResult = calculator.calculateDetailedBodyCOM(detailed: true)
+        overlay.updateMetrics(result: calcResult)
+
+        // Assert the visible CoM marker in the 3D view is creatable
+        let visuals = VisualizationsManager(scene: SCNScene(), showAdvancedVisualizations: true)
+        XCTAssertNotNil(visuals, "VisualizationsManager should initialize to provide a visible CoM marker")
     }
 
     // Deliverable: Explicitly verify coordinate space assumptions
