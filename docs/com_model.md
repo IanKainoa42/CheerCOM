@@ -13,7 +13,10 @@ Where:
 - $m_i$ is the mass of segment $i$.
 - $p_i$ is the position of the center of mass of segment $i$.
 
-## Coordinate System (PR Deliverable: Coordinate Space Rules)
+## Assumptions
+The model assumes the character is rigged with a standard Mixamo skeleton (`mixamorig_` prefix). It also relies on standard human joint limits and proportions. Segments are defined as straight lines between a proximal joint and a distal joint. All mathematical transforms inside the 3D body model must be applied in the explicit order of local -> parent -> world coordinates to ensure segment COM points correctly follow bones during motion.
+
+## Coordinate Space Rules
 
 - **Origin**: The world origin (0,0,0) is typically at the center of the floor plane (this serves as the baseline for all subsequent calculations).
 - **Y-Axis**: Vertical (Up). Gravity acts along -Y.
