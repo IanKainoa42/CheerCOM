@@ -529,4 +529,20 @@ final class ManualCoMValidationTest: XCTestCase {
         let forwardCoM = calculator.calculateDetailedBodyCOM().totalCOM
         XCTAssertGreaterThan(forwardCoM.z, startCoM.z, "Coordinate Space: Z-axis should be anterior-posterior (Forward).")
     }
+
+    // Deliverable: Add test for Liberty Pose CoM metrics explicitly
+    func testLibertyPose_CoMMetrics() {
+        applyTPose()
+        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        applyLiberty()
+        let libertyCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        // The Liberty pose raises the right leg and arms in High V, so CoM should be higher than T-Pose
+        XCTAssertGreaterThan(libertyCoM.y, startCoM.y, "Liberty pose should raise CoM since right leg and arms are raised")
+
+        // The right leg is raised, shifting mass, and depending on the exact build, X might shift slightly.
+        // We primarily check that it ran successfully and COM changed.
+        XCTAssertNotEqual(libertyCoM.x, startCoM.x, "Liberty pose is asymmetric, expect some lateral shift")
+    }
 }
