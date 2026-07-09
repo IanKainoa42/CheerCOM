@@ -179,6 +179,7 @@ class VisualizationsManager {
 
         comMarker = SCNNode(geometry: coreSphere)
         comMarker.name = "Total_CoM_Marker"
+        comMarker.opacity = 0.9 // Added slight transparency for better 3D scene integration
 
         // Add a secondary semi-transparent green halo sphere
         let haloSphere = SCNSphere(radius: 12.0)

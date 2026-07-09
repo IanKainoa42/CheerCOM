@@ -142,6 +142,7 @@ final class ValidationOverlayPanel: CheerGlassPanel {
         // Formats the output for total CoM, mass, and segment details
         metricsText += String(format: "FINAL CoM: [X: %.3f, Y: %.3f, Z: %.3f]\n", com.x, com.y, com.z)
         metricsText += String(format: "TOTAL MASS: %.2f kg\n", result.segmentCOMs.map { $0.mass }.reduce(0, +))
+        metricsText += String(format: "TOTAL SEGMENTS: %d\n", result.segmentCOMs.count)
         metricsText += "------------------------------------\n"
         metricsText += "INDIVIDUAL SEGMENT DATA:\n"
 
