@@ -20,6 +20,8 @@ class COMCalculator {
     // Based on anthropometric data from Winter (2009) and de Leva (1996)
     // Updated for Mixamo skeleton with mixamorig_ prefix
     // Note: Clavicle mass is assumed to be integrated into Thorax.
+    // The SegmentData struct strongly types the character model's skeletal representation
+    // and mass distribution, ensuring anthropometric mass distribution for CoM computation.
     let segments: [SegmentData] = SegmentData.standard
 
     // MARK: - Optimization
@@ -184,6 +186,8 @@ class COMCalculator {
         }
 
         // CoM Calculation: Sum(segMass * segCOM) / TotalMass
+        // This effectively normalizes the segment masses to the total body mass
+        // to compute the final anthropometrically correct center of mass.
         let totalCOM = totalMass > 0 ? (totalWeighted * Float(1.0 / totalMass)) : SCNVector3Zero
         return CalculationResult(totalCOM: totalCOM, segmentCOMs: segmentResults)
     }
