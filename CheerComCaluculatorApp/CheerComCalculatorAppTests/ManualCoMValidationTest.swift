@@ -40,6 +40,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Bridge", setupClosure: applyBridge)
         validatePose(name: "Scale", setupClosure: applyScale)
         validatePose(name: "Test Pose 16", setupClosure: applyTestPose16)
+        validatePose(name: "Test Pose 17", setupClosure: applyTestPose17)
         validatePose(name: "Arms Forward", setupClosure: applyArmsForward)
         validatePose(name: "Test Pose 18 (Scorpion)", setupClosure: applyTestPose18)
 
@@ -456,6 +457,11 @@ final class ManualCoMValidationTest: XCTestCase {
     func applyTestPose16() {
         // Test Pose 16: Left leg raised slightly.
         nodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(-20)
+    }
+
+    func applyTestPose17() {
+        // Test Pose 17: Right arm raised slightly, similar to Test Pose 15/16 but for arms.
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(20)
     }
 
     func applyArmsForward() {
