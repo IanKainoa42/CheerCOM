@@ -559,4 +559,17 @@ final class ManualCoMValidationTest: XCTestCase {
         // We primarily check that it ran successfully and COM changed.
         XCTAssertNotEqual(libertyCoM.x, startCoM.x, "Liberty pose is asymmetric, expect some lateral shift")
     }
+
+    // Deliverable: Verify prep position CoM metrics explicitly
+    func testPrepPosition_CoMMetrics() {
+        applyTPose()
+        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        applyPrepPosition()
+        let prepCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        // In prep position, knees are bent slightly so CoM should lower
+        XCTAssertLessThan(prepCoM.y, startCoM.y, "Prep position should lower CoM since knees are bent")
+    }
+
 }
