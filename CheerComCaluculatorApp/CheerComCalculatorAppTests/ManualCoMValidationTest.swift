@@ -29,6 +29,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Squat Touchdown", setupClosure: applySquatTouchdown)
         validatePose(name: "Pike", setupClosure: applyPike)
         validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
+        validatePose(name: "Test Pose 10 (Backward Lean)", setupClosure: applyTestPose10)
         validatePose(name: "Layout", setupClosure: applyLayout)
         validatePose(name: "Bow and Arrow", setupClosure: applyBowAndArrow)
         validatePose(name: "Handstand", setupClosure: applyHandstand)
@@ -385,6 +386,13 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_Spine"]?.eulerAngles.x = deg(-20)
         nodes["mixamorig_Spine1"]?.eulerAngles.x = deg(-15)
         nodes["mixamorig_Spine2"]?.eulerAngles.x = deg(-10)
+    }
+
+    func applyTestPose10() {
+        // Backward lean. Spine bends backward.
+        nodes["mixamorig_Spine"]?.eulerAngles.x = deg(20)
+        nodes["mixamorig_Spine1"]?.eulerAngles.x = deg(15)
+        nodes["mixamorig_Spine2"]?.eulerAngles.x = deg(10)
     }
 
     func applyBridge() {
