@@ -1,6 +1,6 @@
 # Center of Mass (CoM) Model
 
-This document describes the Center of Mass model used in the CheerCOM app.
+This document outlines the anthropometric 17-segment model used to accurately calculate the Center of Mass (CoM) of the 3D character in this application.
 
 ## Overview
 

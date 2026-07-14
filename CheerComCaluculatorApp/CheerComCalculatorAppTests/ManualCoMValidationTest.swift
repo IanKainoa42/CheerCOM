@@ -30,6 +30,8 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Pike", setupClosure: applyPike)
         validatePose(name: "Test Pose 9 (Forward Lean)", setupClosure: applyTestPose9)
         validatePose(name: "Test Pose 10 (Backward Lean)", setupClosure: applyTestPose10)
+        validatePose(name: "Test Pose 11 (Arms Forward, Leg Back)", setupClosure: applyTestPose11)
+        validatePose(name: "Test Pose 12 (Arms Crossed)", setupClosure: applyTestPose12)
         validatePose(name: "Layout", setupClosure: applyLayout)
         validatePose(name: "Bow and Arrow", setupClosure: applyBowAndArrow)
         validatePose(name: "Handstand", setupClosure: applyHandstand)
@@ -393,6 +395,21 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_Spine"]?.eulerAngles.x = deg(20)
         nodes["mixamorig_Spine1"]?.eulerAngles.x = deg(15)
         nodes["mixamorig_Spine2"]?.eulerAngles.x = deg(10)
+    }
+
+    func applyTestPose11() {
+        // Test Pose 11: Arms forward, leg back. Used to test combined forward/backward shifts.
+        nodes["mixamorig_RightArm"]?.eulerAngles.x = deg(-90)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.x = deg(-90)
+        nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(30)
+    }
+
+    func applyTestPose12() {
+        // Test Pose 12: Arms crossed. CoM should remain mostly centered.
+        nodes["mixamorig_RightArm"]?.eulerAngles.y = deg(-45)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.y = deg(45)
+        nodes["mixamorig_RightForeArm"]?.eulerAngles.y = deg(-90)
+        nodes["mixamorig_LeftForeArm"]?.eulerAngles.y = deg(90)
     }
 
     func applyBridge() {
