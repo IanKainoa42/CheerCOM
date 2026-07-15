@@ -586,4 +586,16 @@ final class ManualCoMValidationTest: XCTestCase {
         XCTAssertLessThan(prepCoM.y, startCoM.y, "Prep position should lower CoM since knees are bent")
     }
 
+    // Deliverable: Add test for Test Pose 9 (Forward Lean) CoM metrics explicitly
+    func testTestPose9_CoMMetrics() {
+        applyTPose()
+        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        applyTestPose9()
+        let pose9CoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        // In forward lean, CoM should shift forward (+Z) compared to baseline T-Pose
+        XCTAssertGreaterThan(pose9CoM.z, startCoM.z, "Forward lean should shift CoM forward along the Z axis")
+    }
+
 }
