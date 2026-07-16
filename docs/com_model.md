@@ -152,11 +152,11 @@ Realistic joint limits are enforced within the application to prevent impossible
 
 ## First PR Deliverables
 
-*   **Segment list**: 17 segments based on Winter (2009) and de Leva (1996) as listed above.
+*   **Segment list**: 17 segments based on Winter (2009) and de Leva (1996) as listed above. This 17-segment model ensures that anthropometric mass distribution applies accurately, allowing proper CoM calculation.
 *   **Coordinate space**: The world origin (0,0,0) is typically at the center of the floor plane. Y-Axis: Vertical (Up). Gravity acts along -Y. X-Axis: Lateral (Right). Z-Axis: Anterior-Posterior (Forward/Backward).
     *Coordinate Space Note: The validation harness uses a fixed Y-up, X-right, Z-forward coordinate system to ensure reproducibility across deterministic poses.*
 *   **Assumptions**: The model assumes the character is rigged with a standard Mixamo skeleton (`mixamorig_` prefix), operating in world coordinates to ensure absolute stability. Transforms in the 3D body model must be applied in the explicit order of local -> parent -> world coordinates to ensure segment COM points correctly follow bones during motion.
-*   **How to verify correctness**: Run the app and tap "Run Diagnostics" to see the console and on-screen overlay output, or run `python3 tests/verify_com_math.py`.
+*   **How to verify correctness**: Run the app and tap "Run Diagnostics" to see the console and on-screen overlay output, or run `python3 tests/verify_com_math.py`. This ensures proper verification of CoM logic for deterministic test poses.
 
 * Fully verified during baseline audit.
 * PR Deliverable Verification for CoM Model *
