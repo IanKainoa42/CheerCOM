@@ -634,4 +634,16 @@ final class ManualCoMValidationTest: XCTestCase {
         XCTAssertLessThan(pose10CoM.z, startCoM.z, "Backward lean should shift CoM backward along the Z axis")
     }
 
+    // Deliverable: Add test for Squat CoM metrics explicitly
+    func testSquat_CoMMetrics() {
+        applyTPose()
+        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        applySquat()
+        let squatCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        // In squat, CoM should lower significantly compared to baseline T-Pose
+        XCTAssertLessThan(squatCoM.y, startCoM.y, "Squat should lower CoM significantly")
+    }
+
 }
