@@ -646,4 +646,16 @@ final class ManualCoMValidationTest: XCTestCase {
         XCTAssertLessThan(squatCoM.y, startCoM.y, "Squat should lower CoM significantly")
     }
 
+    // Deliverable: Add test for High V CoM metrics explicitly
+    func testHighV_CoMMetrics() {
+        applyTPose()
+        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        applyHighV()
+        let highVCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        // In High V, CoM should rise compared to baseline T-Pose since arms are raised diagonally
+        XCTAssertGreaterThan(highVCoM.y, startCoM.y, "High V should raise CoM since arms are raised diagonally")
+    }
+
 }
