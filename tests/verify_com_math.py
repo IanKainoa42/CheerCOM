@@ -675,6 +675,8 @@ class JointLimitsMock:
     limits = {
         "mixamorig_RightLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
         "mixamorig_LeftLeg": {"min": SCNVector3(-160, -360, -360), "max": SCNVector3(0, 360, 360)},
+        "mixamorig_RightShoulder": {"min": SCNVector3(-20, -20, -20), "max": SCNVector3(20, 20, 20)},
+        "mixamorig_LeftShoulder": {"min": SCNVector3(-20, -20, -20), "max": SCNVector3(20, 20, 20)},
         "mixamorig_RightForeArm": {"min": SCNVector3(-360, -360, 0), "max": SCNVector3(360, 360, 160)},
         "mixamorig_LeftForeArm": {"min": SCNVector3(-360, -360, -160), "max": SCNVector3(360, 360, 0)},
         "mixamorig_RightArm": {"min": SCNVector3(-180, -90, -180), "max": SCNVector3(90, 90, 0)},
@@ -945,6 +947,23 @@ def test_joint_limits():
         print("✅ PASS: Left Elbow Z clamped to -160 degrees")
     else:
         print(f"❌ FAIL: Left Elbow Z not clamped. Got {math.degrees(clamped_l_elbow.z)}")
+        return False
+
+    # Test Clavicle (Shoulder Girdle) limits
+    r_clavicle = SCNVector3(math.radians(-30), math.radians(40), math.radians(-10))
+    clamped_r_clavicle = JointLimitsMock.clamp_angles("mixamorig_RightShoulder", r_clavicle)
+    if abs(clamped_r_clavicle.x - math.radians(-20)) < 0.001 and abs(clamped_r_clavicle.y - math.radians(20)) < 0.001 and abs(clamped_r_clavicle.z - math.radians(-10)) < 0.001:
+        print("✅ PASS: Right Clavicle clamped properly")
+    else:
+        print(f"❌ FAIL: Right Clavicle not clamped. Got X: {math.degrees(clamped_r_clavicle.x)}, Y: {math.degrees(clamped_r_clavicle.y)}, Z: {math.degrees(clamped_r_clavicle.z)}")
+        return False
+
+    l_clavicle = SCNVector3(math.radians(50), math.radians(-30), math.radians(10))
+    clamped_l_clavicle = JointLimitsMock.clamp_angles("mixamorig_LeftShoulder", l_clavicle)
+    if abs(clamped_l_clavicle.x - math.radians(20)) < 0.001 and abs(clamped_l_clavicle.y - math.radians(-20)) < 0.001 and abs(clamped_l_clavicle.z - math.radians(10)) < 0.001:
+        print("✅ PASS: Left Clavicle clamped properly")
+    else:
+        print(f"❌ FAIL: Left Clavicle not clamped. Got X: {math.degrees(clamped_l_clavicle.x)}, Y: {math.degrees(clamped_l_clavicle.y)}, Z: {math.degrees(clamped_l_clavicle.z)}")
         return False
 
     # Test Shoulder limits
