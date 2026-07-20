@@ -138,7 +138,7 @@ final class ValidationOverlayPanel: CheerGlassPanel {
     // Outputs segment masses, COM points, and final CoM for PR validation
     func updateMetrics(result: CalculationResult) {
         let com = result.totalCOM
-        var metricsText = "=== CoM VALIDATION METRICS ===\n"
+        var metricsText = "=== DIAGNOSTICS: CoM VALIDATION METRICS ===\n"
         // Formats the output for total CoM, mass, and segment details
         metricsText += String(format: "FINAL CoM: [X: %.3f, Y: %.3f, Z: %.3f]\n", com.x, com.y, com.z)
         metricsText += String(format: "TOTAL MASS: %.2f kg\n", result.segmentCOMs.map { $0.mass }.reduce(0, +))

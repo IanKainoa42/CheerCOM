@@ -37,6 +37,7 @@ class CoMValidationHarness {
         .testPose9,
         .testPose10,
         .testPose11,
+        .testPose17,
         .testPose18,
         .armsForward
     ]
@@ -528,6 +529,8 @@ class CoMValidationHarness {
             return (true, "CoM modified by testPose15")
         case .testPose16:
             return (true, "CoM modified by testPose16")
+        case .testPose17:
+            return (true, "CoM modified by testPose17")
         case .testPose18:
             return (true, "CoM modified by Scorpion test pose")
 

@@ -541,6 +541,14 @@ class PosePresets {
                 description: "Test 16",
                 affectedJoints: Set(["mixamorig_LeftLeg"])
             )
+        case .testPose17:
+            return PoseDefinition(
+                name: "Test Pose 17",
+                category: .fullBody,
+                jointAngles: ["mixamorig_RightArm": SCNVector3(deg(0), deg(0), deg(20))],
+                description: "Test 17",
+                affectedJoints: Set(["mixamorig_RightArm"])
+            )
 
         case .armsForward:
             return PoseDefinition(
@@ -820,7 +828,7 @@ class PosePresets {
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
             .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand,
-            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12, .testPose13, .testPose14, .testPose15, .testPose16, .testPose18, .armsForward,
+            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12, .testPose13, .testPose14, .testPose15, .testPose16, .testPose17, .testPose18, .armsForward,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
