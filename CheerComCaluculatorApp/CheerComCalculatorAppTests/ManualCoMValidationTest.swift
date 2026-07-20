@@ -47,10 +47,20 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Arms Forward", setupClosure: applyArmsForward)
         validatePose(name: "Test Pose 18 (Scorpion)", setupClosure: applyTestPose18)
         validatePose(name: "Straddle", setupClosure: applyStraddle)
+        validatePose(name: "Clavicle Limits Test", setupClosure: applyClavicleLimits)
 
         print("\n==========================================")
         print("✅ AUDIT COMPLETE")
         print("==========================================\n")
+    }
+
+    func applyClavicleLimits() {
+        // Apply extreme angles to clavicles to trigger limit clamping.
+        let outOfRangeRight = SCNVector3(x: deg(-40), y: deg(50), z: deg(-30))
+        let outOfRangeLeft = SCNVector3(x: deg(40), y: deg(-50), z: deg(30))
+
+        nodes["mixamorig_RightShoulder"]?.eulerAngles = JointLimits.clampAngles(for: "mixamorig_RightShoulder", angles: outOfRangeRight)
+        nodes["mixamorig_LeftShoulder"]?.eulerAngles = JointLimits.clampAngles(for: "mixamorig_LeftShoulder", angles: outOfRangeLeft)
     }
 
     // PR Deliverable: Create the CoM Validation Harness (Minimal setup)
@@ -533,6 +543,13 @@ final class ManualCoMValidationTest: XCTestCase {
         let validShoulder = SCNVector3(x: deg(0), y: 0, z: 0)
         let clampedShoulder = JointLimits.clampAngles(for: "mixamorig_RightArm", angles: validShoulder)
         XCTAssertEqual(clampedShoulder.x, validShoulder.x, accuracy: 0.001, "Pose validator improperly clamped valid shoulder angle")
+
+        let clavicleLimit = SCNVector3(x: deg(-20), y: deg(20), z: deg(-10))
+        let outOfRangeClavicle = SCNVector3(x: deg(-30), y: deg(40), z: deg(-10))
+        let clampedClavicle = JointLimits.clampAngles(for: "mixamorig_RightShoulder", angles: outOfRangeClavicle)
+        XCTAssertEqual(clampedClavicle.x, clavicleLimit.x, accuracy: 0.001, "Pose validator failed to clamp out-of-range clavicle X angle")
+        XCTAssertEqual(clampedClavicle.y, clavicleLimit.y, accuracy: 0.001, "Pose validator failed to clamp out-of-range clavicle Y angle")
+        XCTAssertEqual(clampedClavicle.z, clavicleLimit.z, accuracy: 0.001, "Pose validator failed to clamp out-of-range clavicle Z angle")
     }
 
     func testCoMValidationHarnessInitialization() {

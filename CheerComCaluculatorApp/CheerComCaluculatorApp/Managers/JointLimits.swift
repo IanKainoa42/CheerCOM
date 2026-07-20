@@ -26,6 +26,10 @@ class JointLimits {
         "mixamorig_RightLeg": JointLimit(minX: -160, maxX: 0, minY: -360, maxY: 360, minZ: -360, maxZ: 360),
         "mixamorig_LeftLeg": JointLimit(minX: -160, maxX: 0, minY: -360, maxY: 360, minZ: -360, maxZ: 360),
 
+        // Clavicles (Shoulder Girdle)
+        "mixamorig_RightShoulder": JointLimit(minX: -20, maxX: 20, minY: -20, maxY: 20, minZ: -20, maxZ: 20),
+        "mixamorig_LeftShoulder": JointLimit(minX: -20, maxX: 20, minY: -20, maxY: 20, minZ: -20, maxZ: 20),
+
         // Elbows
         "mixamorig_RightForeArm": JointLimit(minX: -360, maxX: 360, minY: -360, maxY: 360, minZ: 0, maxZ: 160),
         "mixamorig_LeftForeArm": JointLimit(minX: -360, maxX: 360, minY: -360, maxY: 360, minZ: -160, maxZ: 0),
