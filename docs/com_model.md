@@ -4,7 +4,7 @@ This document outlines the anthropometric 17-segment model used to accurately ca
 
 ## Overview
 
-The CoM calculator uses a **17-segment model** based on anthropometric data from Winter (2009) and de Leva (1996). It calculates the total body center of mass as the mass-weighted average of the individual segment centers of mass. This document serves as the baseline reference for the 17-segment model and its underlying assumptions. This ensures accurate biomechanical analysis across deterministic poses.
+The CoM calculator uses a **17-segment model** based on anthropometric data from Winter (2009) and de Leva (1996). It calculates the total body center of mass as the mass-weighted average of the individual segment centers of mass. This document serves as the primary baseline reference outlining the 17-segment model and its core underlying assumptions. This ensures accurate biomechanical analysis across deterministic poses.
 
 Formula:
 $$ CoM_{total} = \frac{\sum (m_i \times p_i)}{\sum m_i} $$
