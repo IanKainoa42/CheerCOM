@@ -199,7 +199,7 @@ class VisualizationsManager {
         comMarker.runAction(pulse)
 
         // Add 3D Text Label to clearly identify CoM
-        let text = SCNText(string: "Center of Mass", extrusionDepth: 1.0)
+        let text = SCNText(string: "Center of Mass (CoM)", extrusionDepth: 1.0)
         text.font = UIFont.systemFont(ofSize: 10)
         text.firstMaterial?.diffuse.contents = UIColor.white
         text.firstMaterial?.emission.contents = UIColor.white

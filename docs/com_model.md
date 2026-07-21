@@ -4,7 +4,7 @@ This document outlines the anthropometric 17-segment model used to accurately ca
 
 ## Overview
 
-The CoM calculator uses a **17-segment model** based on anthropometric data from Winter (2009) and de Leva (1996). It calculates the total body center of mass as the mass-weighted average of the individual segment centers of mass. This document serves as the baseline reference for the 17-segment model and its underlying assumptions.
+The CoM calculator uses a **17-segment model** based on anthropometric data from Winter (2009) and de Leva (1996). It calculates the total body center of mass as the mass-weighted average of the individual segment centers of mass. This document serves as the baseline reference for the 17-segment model and its underlying assumptions. This ensures accurate biomechanical analysis across deterministic poses.
 
 Formula:
 $$ CoM_{total} = \frac{\sum (m_i \times p_i)}{\sum m_i} $$
@@ -163,6 +163,17 @@ Realistic joint limits are enforced within the application to prevent impossible
 
 ### Baseline Audit Note
 The 17-segment CoM model has been fully audited against baseline deterministic poses.
+
+## Architecture Summary
+
+### Model Representation
+The 3D character is represented using a SceneKit mesh rigged to a Mixamo skeleton (`mixamorig_` prefix). The body is divided into 17 segments, defined as straight lines between a proximal and distal joint, using anthropometric mass ratios.
+
+### Pose Definition
+A "pose" is defined by specific joint transforms, applying Euler angles (`SCNVector3` in radians/degrees) to bone nodes relative to their parent coordinate spaces. The animation system uses `SCNTransaction` to animate/apply these presets (e.g., T-Pose, Squat).
+
+### CoM Computation
+CoM is computed using a mass-weighted average of the 17 segments: `Σ(segmentMass * segmentCOMWorld) / Σ(segmentMass)`. It assumes known anthropometric segment weights (Winter/de Leva) and operates in a world coordinate space (Y-up, X-right, Z-forward).
 
 <!-- Baseline audit verified: Documentation correctly outlines segment list, coordinate space, and how to verify correctness -->
 
