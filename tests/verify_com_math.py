@@ -363,6 +363,37 @@ def test_layout(calculator, t_pose_com):
         print("❌ FAIL: CoM not higher than T-Pose")
         return False
 
+def test_low_v(calculator, t_pose_com):
+    print("\nTest: Low V Pose (Arms Diagonally Down)")
+    nodes = create_t_pose_nodes()
+
+    # Arms in Low V (diagonally down and out)
+    # Right Arm Low V
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 110, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(35, 90, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(50, 70, 0)
+
+    # Left Arm Low V
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 110, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-35, 90, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-50, 70, 0)
+    nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-55, 65, 0)
+
+    calculator.bind(nodes)
+    lowv_com, _ = calculator.calculate_detailed_body_com()
+
+    print(f"   Low V CoM: {lowv_com}")
+
+    diff = t_pose_com.y - lowv_com.y
+    print(f"   Drop from T-Pose: {diff:.2f}")
+
+    if diff > 0.5:
+        print("✅ PASS: CoM lowered")
+        return True
+    else:
+        print("❌ FAIL: CoM did not lower as expected")
+        return False
+
 def test_high_v(calculator, t_pose_com):
     print("\nTest: High V Pose (Arms Diagonally Up)")
     nodes = create_t_pose_nodes()
@@ -1051,6 +1082,9 @@ def run_verification():
         sys.exit(1)
 
     t_pose_com = test_t_pose(calculator)
+
+    if not test_low_v(calculator, t_pose_com):
+        sys.exit(1)
 
     if not test_high_v(calculator, t_pose_com):
         sys.exit(1)

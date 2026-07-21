@@ -24,6 +24,7 @@ final class ManualCoMValidationTest: XCTestCase {
 
         validatePose(name: "T-Pose", setupClosure: applyTPose)
         validatePose(name: "High V", setupClosure: applyHighV)
+        validatePose(name: "Low V", setupClosure: applyLowV)
         validatePose(name: "Touchdown", setupClosure: applyTouchdown)
         validatePose(name: "Squat", setupClosure: applySquat)
         validatePose(name: "Squat Touchdown", setupClosure: applySquatTouchdown)
@@ -673,6 +674,18 @@ final class ManualCoMValidationTest: XCTestCase {
 
         // In High V, CoM should rise compared to baseline T-Pose since arms are raised diagonally
         XCTAssertGreaterThan(highVCoM.y, startCoM.y, "High V should raise CoM since arms are raised diagonally")
+    }
+
+    // Deliverable: Add test for Low V CoM metrics explicitly
+    func testLowV_CoMMetrics() {
+        applyTPose()
+        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        applyLowV()
+        let lowVCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        // In Low V, CoM should lower compared to baseline T-Pose since arms are pointed diagonally down
+        XCTAssertLessThan(lowVCoM.y, startCoM.y, "Low V should lower CoM since arms are pointed diagonally down")
     }
 
 }
