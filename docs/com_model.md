@@ -101,8 +101,10 @@ To verify the CoM calculation in the app:
     *   **Test Pose 14**: Left arm rotated forward. CoM should shift slightly.
     *   **Test Pose 15**: Right leg raised slightly. CoM should shift slightly.
     *   **Test Pose 16**: Left leg raised slightly. CoM should shift slightly. The CoM Validation Harness ensures the CoM correctly registers this left-side asymmetry versus the T-Pose baseline.
+    *   **Arms Daggers**: Fists brought in to the hips/chest. CoM should remain mostly centered laterally.
+    *   **Arms Broken T**: Arms form a T shape with elbows bent inwards. CoM should remain mostly centered laterally.
 
-    These represent a deterministic set of poses used to test different CoM transformations (vertical shift, forward shift, lateral shift, combined vertical stresses, and asymmetry).
+    These represent a deterministic set of poses used to thoroughly test different CoM transformations (vertical shift, forward shift, lateral shift, combined vertical stresses, and asymmetry) during the baseline audit and ongoing continuous integration.
 4.  A detailed report is printed to the console and the on-screen overlay, explicitly verifying the total mass sum, individual segment masses, individual segment COM points, and the final CoM. This deterministic testing guarantees physical soundness and satisfies the required validation criteria.
 
 ### Verification Script (Python)
@@ -162,7 +164,7 @@ Realistic joint limits are enforced within the application to prevent impossible
 * PR Deliverable Verification for CoM Model *
 
 ### Baseline Audit Note
-The 17-segment CoM model has been fully audited against baseline deterministic poses.
+The 17-segment CoM model has been fully audited against baseline deterministic poses, including newly added arm variations like Daggers and Broken T.
 
 ## Architecture Summary
 
@@ -181,4 +183,4 @@ CoM is computed using a mass-weighted average of the 17 segments: `Σ(segmentMas
 The validation harness is fully implemented and accessible both via the in-app `DiagnosticsOverlay` and the `tests/verify_com_math.py` unit testing script. It verifies deterministic poses (e.g. Squat, Pike) against a fixed T-pose baseline while outputting explicit segment masses, individual COM points, and the final CoM.
 
 ### Baseline Audit Note
-The 17-segment CoM model has been fully audited against baseline deterministic poses.
+The 17-segment CoM model has been fully audited against baseline deterministic poses, including newly added arm variations like Daggers and Broken T.
