@@ -943,6 +943,62 @@ def test_test_pose_12(calculator, baseline_com):
         print("❌ FAIL: CoM shifted too much for Test Pose 12")
         return False
 
+def test_arms_daggers(calculator, baseline_com):
+    print("\nTest: Arms Daggers")
+    nodes = create_t_pose_nodes()
+
+    # Right Arm: Shoulder is at (20, 130). Upper arm (30 length) points down and in -> Elbow (15, 100).
+    # Forearm (30 length) points up -> Hand (15, 130).
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(15, 100, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(15, 130, 0)
+
+    # Left Arm
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-15, 100, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-15, 130, 0)
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    print(f"   Arms Daggers CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+
+    if abs(com.x - baseline_com.x) < 2.0:
+        print("✅ PASS: CoM remained stable laterally for Arms Daggers")
+        return True
+    else:
+        print("❌ FAIL: CoM shifted too much laterally for Arms Daggers")
+        return False
+
+def test_arms_broken_t(calculator, baseline_com):
+    print("\nTest: Arms Broken T")
+    nodes = create_t_pose_nodes()
+
+    # Right Arm: Shoulder at (20, 130). Upper arm (30 length) points laterally -> Elbow (50, 130).
+    # Forearm (30 length) points in to chest -> Hand (20, 130).
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(50, 130, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 130, 0)
+
+    # Left Arm
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-50, 130, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 130, 0)
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    print(f"   Arms Broken T CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+
+    if abs(com.x - baseline_com.x) < 2.0:
+        print("✅ PASS: CoM remained stable laterally for Arms Broken T")
+        return True
+    else:
+        print("❌ FAIL: CoM shifted too much laterally for Arms Broken T")
+        return False
+
 def test_joint_limits():
     print("\nTest: Joint Limits")
 
@@ -1135,6 +1191,12 @@ def run_verification():
         sys.exit(1)
 
     if not test_test_pose_12(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_arms_daggers(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_arms_broken_t(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_joint_limits():

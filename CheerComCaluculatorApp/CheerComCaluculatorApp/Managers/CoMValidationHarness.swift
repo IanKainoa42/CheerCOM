@@ -39,7 +39,9 @@ class CoMValidationHarness {
         .testPose11,
         .testPose17,
         .testPose18,
-        .armsForward
+        .armsForward,
+        .armsDaggers,
+        .armsBrokenT
     ]
 
     private struct ValidationOutcome {
@@ -540,6 +542,20 @@ class CoMValidationHarness {
                 return (true, "CoM shifted forward in Z by \(String(format: "%.1f", zShift)) units (Expected > 1.0)")
             }
             return (false, "CoM failed to shift forward for Arms Forward pose (Z-Shift: \(String(format: "%.1f", zShift)))")
+
+        case .armsDaggers:
+            let xShift = abs(com.x - baseline.x)
+            if xShift < 1.0 {
+                return (true, "CoM remained stable laterally for Daggers pose")
+            }
+            return (false, "CoM shifted unexpectedly for Daggers pose (X-Shift: \(String(format: "%.1f", xShift)))")
+
+        case .armsBrokenT:
+            let xShift = abs(com.x - baseline.x)
+            if xShift < 1.0 {
+                return (true, "CoM remained stable laterally for Broken T pose")
+            }
+            return (false, "CoM shifted unexpectedly for Broken T pose (X-Shift: \(String(format: "%.1f", xShift)))")
 
         default:
             return (true, "No specific criteria")
