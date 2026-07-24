@@ -101,6 +101,10 @@ To verify the CoM calculation in the app:
     *   **Test Pose 14**: Left arm rotated forward. CoM should shift slightly.
     *   **Test Pose 15**: Right leg raised slightly. CoM should shift slightly.
     *   **Test Pose 16**: Left leg raised slightly. CoM should shift slightly. The CoM Validation Harness ensures the CoM correctly registers this left-side asymmetry versus the T-Pose baseline.
+    *   **Test Pose 17**: Right arm raised slightly, similar to Test Pose 15/16 but for arms.
+    *   **Test Pose 18**: Extreme leg bend back (Scorpion).
+    *   **Test Pose 19**: Right arm forward.
+    *   **Test Pose 20**: Left arm forward.
     *   **Arms Daggers**: Fists brought in to the hips/chest. CoM should remain mostly centered laterally.
     *   **Arms Broken T**: Arms form a T shape with elbows bent inwards. CoM should remain mostly centered laterally.
 
