@@ -47,6 +47,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Test Pose 17", setupClosure: applyTestPose17)
         validatePose(name: "Arms Forward", setupClosure: applyArmsForward)
         validatePose(name: "Test Pose 18 (Scorpion)", setupClosure: applyTestPose18)
+        validatePose(name: "Test Pose 19", setupClosure: applyTestPose19)
         validatePose(name: "Straddle", setupClosure: applyStraddle)
         validatePose(name: "Arms Daggers", setupClosure: applyArmsDaggers)
         validatePose(name: "Arms Broken T", setupClosure: applyArmsBrokenT)
@@ -529,6 +530,10 @@ final class ManualCoMValidationTest: XCTestCase {
         // Test Pose 18 (Scorpion): Extreme leg bend back.
         nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(90)
         nodes["mixamorig_RightLeg"]?.eulerAngles.x = deg(-120)
+    }
+
+    func applyTestPose19() {
+        nodes["mixamorig_RightArm"]?.eulerAngles.x = deg(-90)
     }
 
     func applyStraddle() {
