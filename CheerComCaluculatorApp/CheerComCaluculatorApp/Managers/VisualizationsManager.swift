@@ -183,8 +183,8 @@ class VisualizationsManager {
 
         // Add a secondary semi-transparent green halo sphere
         let haloSphere = SCNSphere(radius: 12.0)
-        haloSphere.firstMaterial?.diffuse.contents = UIColor(red: 0.2, green: 1.0, blue: 0.2, alpha: 0.3)
-        haloSphere.firstMaterial?.emission.contents = UIColor(red: 0.2, green: 1.0, blue: 0.2, alpha: 0.3)
+        haloSphere.firstMaterial?.diffuse.contents = UIColor(red: 0.2, green: 1.0, blue: 0.2, alpha: 0.25) // Adjusted visibility for first PR deliverable
+        haloSphere.firstMaterial?.emission.contents = UIColor(red: 0.2, green: 1.0, blue: 0.2, alpha: 0.25)
         haloSphere.firstMaterial?.isDoubleSided = true
         haloSphere.firstMaterial?.blendMode = .add
         let haloNode = SCNNode(geometry: haloSphere)

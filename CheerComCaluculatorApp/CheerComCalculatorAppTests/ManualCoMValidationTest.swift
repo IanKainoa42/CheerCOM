@@ -49,6 +49,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Test Pose 18 (Scorpion)", setupClosure: applyTestPose18)
         validatePose(name: "Test Pose 19", setupClosure: applyTestPose19)
         validatePose(name: "Test Pose 20", setupClosure: applyTestPose20)
+        validatePose(name: "Test Pose 21", setupClosure: applyTestPose21)
         validatePose(name: "Straddle", setupClosure: applyStraddle)
         validatePose(name: "Arms Daggers", setupClosure: applyArmsDaggers)
         validatePose(name: "Arms Broken T", setupClosure: applyArmsBrokenT)
@@ -538,6 +539,11 @@ final class ManualCoMValidationTest: XCTestCase {
     }
 
     func applyTestPose20() {
+        nodes["mixamorig_LeftArm"]?.eulerAngles.x = deg(-90)
+    }
+
+    func applyTestPose21() {
+        nodes["mixamorig_RightArm"]?.eulerAngles.x = deg(-90)
         nodes["mixamorig_LeftArm"]?.eulerAngles.x = deg(-90)
     }
 

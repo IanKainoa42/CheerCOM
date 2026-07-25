@@ -973,6 +973,28 @@ def test_test_pose_20(calculator, baseline_com):
     print(f"   Test Pose 20 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
     return True
 
+def test_test_pose_21(calculator, baseline_com):
+    print("\nTest: Test Pose 21 (Both Arms Forward)")
+    nodes = create_t_pose_nodes()
+    # Rotate Right Arm and Left Arm -90 around X (forward)
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(20, 130, 30) # +30 Z
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 130, 60) # +30 Z
+    if "mixamorig_RightHandMiddle1" in nodes:
+        nodes["mixamorig_RightHandMiddle1"].position = SCNVector3(20, 130, 70) # +10 Z
+
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 130, 30) # +30 Z
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 130, 60) # +30 Z
+    if "mixamorig_LeftHandMiddle1" in nodes:
+        nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-20, 130, 70) # +10 Z
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+    print(f"   Test Pose 21 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+    return True
+
 def test_arms_daggers(calculator, baseline_com):
     print("\nTest: Arms Daggers")
     nodes = create_t_pose_nodes()
@@ -1227,6 +1249,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_test_pose_20(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_test_pose_21(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_arms_daggers(calculator, t_pose_com):
