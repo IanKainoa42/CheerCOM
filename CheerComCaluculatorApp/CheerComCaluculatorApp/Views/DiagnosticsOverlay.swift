@@ -88,6 +88,11 @@ class DiagnosticsOverlay: UIView {
             self?.textView.text = ""
         }
     }
+
+    /// Clears the validation logs specifically for resetting the debug output state
+    func clearLogs() {
+        clear()
+    }
 }
 
 // Diagnostics output panel for CoM validation

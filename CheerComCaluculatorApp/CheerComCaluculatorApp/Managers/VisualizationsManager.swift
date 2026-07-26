@@ -47,6 +47,11 @@ class VisualizationsManager {
         func index(before i: Int) -> Int {
             return i - 1
         }
+
+        mutating func removeAll() {
+            buffer.removeAll(keepingCapacity: true)
+            head = 0
+        }
     }
 
     var comMarker: SCNNode!
@@ -467,6 +472,15 @@ class VisualizationsManager {
     // Toggles advanced visuals like CoM segment markers
     func toggleVisualizations() {
         showAdvancedVisualizations.toggle()
+    }
+
+    /// Clears the recorded CoM trail positions and visualization nodes.
+    func clearTrail() {
+        trailPositions.removeAll()
+        for node in cachedTrailNodes {
+            node.removeFromParentNode()
+        }
+        cachedTrailNodes.removeAll()
     }
 
     private func updateGravityLine() {
