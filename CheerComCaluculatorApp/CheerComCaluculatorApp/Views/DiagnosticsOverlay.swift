@@ -19,7 +19,7 @@ class DiagnosticsOverlay: UIView {
     }
 
     private func setupUI() {
-        backgroundColor = CheerPalette.midnight.withAlphaComponent(0.42)
+        backgroundColor = CheerPalette.midnight.withAlphaComponent(0.85) // Improved readability for first PR deliverable
         addSubview(panel)
         closeButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
 
