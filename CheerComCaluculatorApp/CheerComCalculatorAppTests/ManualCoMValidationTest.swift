@@ -51,6 +51,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Test Pose 20", setupClosure: applyTestPose20)
         validatePose(name: "Test Pose 21", setupClosure: applyTestPose21)
         validatePose(name: "Test Pose 22 (Both Arms Backward)", setupClosure: applyTestPose22)
+        validatePose(name: "Test Pose 23 (Forward Reach)", setupClosure: applyTestPose23)
         validatePose(name: "Straddle", setupClosure: applyStraddle)
         validatePose(name: "Arms Daggers", setupClosure: applyArmsDaggers)
         validatePose(name: "Arms Broken T", setupClosure: applyArmsBrokenT)
@@ -553,6 +554,11 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_LeftArm"]?.eulerAngles.x = deg(90)
     }
 
+    func applyTestPose23() {
+        nodes["mixamorig_RightArm"]?.eulerAngles.x = deg(-90)
+        nodes["mixamorig_LeftArm"]?.eulerAngles.x = deg(-90)
+    }
+
     func applyStraddle() {
         // Straddle: Legs apart
         nodes["mixamorig_RightUpLeg"]?.eulerAngles.z = deg(45)
@@ -615,6 +621,14 @@ final class ManualCoMValidationTest: XCTestCase {
         // Assert the visible CoM marker in the 3D view is creatable
         let visuals = VisualizationsManager(scene: SCNScene(), showAdvancedVisualizations: true)
         XCTAssertNotNil(visuals, "VisualizationsManager should initialize to provide a visible CoM marker")
+    }
+
+    func testUIDebugHarness() {
+        let overlay = ValidationOverlayPanel()
+        XCTAssertNotNil(overlay, "ValidationOverlayPanel (Debug Screen) should initialize successfully")
+
+        let manager = VisualizationsManager(scene: SCNScene(), showAdvancedVisualizations: true)
+        XCTAssertNotNil(manager, "VisualizationsManager (Visible CoM Marker) should initialize successfully")
     }
 
     // Deliverable: Explicitly verify coordinate space assumptions
@@ -770,6 +784,18 @@ final class ManualCoMValidationTest: XCTestCase {
 
         // Both arms backward should shift CoM backward (-Z) compared to baseline T-Pose
         XCTAssertLessThan(pose22CoM.z, startCoM.z, "Both arms backward should shift CoM backward along the Z axis")
+    }
+
+    // Deliverable: Add test for Test Pose 23 (Forward Reach) CoM metrics explicitly
+    func testTestPose23_CoMMetrics() {
+        applyTPose()
+        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        applyTestPose23()
+        let pose23CoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        // Both arms forward should shift CoM forward (+Z) compared to baseline T-Pose
+        XCTAssertGreaterThan(pose23CoM.z, startCoM.z, "Both arms forward should shift CoM forward along the Z axis")
     }
 
 }
