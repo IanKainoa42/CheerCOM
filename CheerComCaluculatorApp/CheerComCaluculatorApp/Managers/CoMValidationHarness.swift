@@ -535,6 +535,8 @@ class CoMValidationHarness {
             return (true, "CoM modified by testPose17")
         case .testPose18:
             return (true, "CoM modified by Scorpion test pose")
+        case .testPose24:
+            return (true, "CoM modified by Right Arm Up test pose")
 
         case .armsForward:
             let zShift = com.z - baseline.z

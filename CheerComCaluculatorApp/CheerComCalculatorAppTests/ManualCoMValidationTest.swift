@@ -52,6 +52,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Test Pose 21", setupClosure: applyTestPose21)
         validatePose(name: "Test Pose 22 (Both Arms Backward)", setupClosure: applyTestPose22)
         validatePose(name: "Test Pose 23 (Forward Reach)", setupClosure: applyTestPose23)
+        validatePose(name: "Test Pose 24 (Right Arm Up)", setupClosure: applyTestPose24)
         validatePose(name: "Straddle", setupClosure: applyStraddle)
         validatePose(name: "Arms Daggers", setupClosure: applyArmsDaggers)
         validatePose(name: "Arms Broken T", setupClosure: applyArmsBrokenT)
@@ -554,6 +555,11 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_LeftArm"]?.eulerAngles.x = deg(90)
     }
 
+
+    func applyTestPose24() {
+        nodes["mixamorig_RightArm"]?.eulerAngles.z = deg(180)
+    }
+
     func applyTestPose23() {
         nodes["mixamorig_RightArm"]?.eulerAngles.x = deg(-90)
         nodes["mixamorig_LeftArm"]?.eulerAngles.x = deg(-90)
@@ -784,6 +790,19 @@ final class ManualCoMValidationTest: XCTestCase {
 
         // Both arms backward should shift CoM backward (-Z) compared to baseline T-Pose
         XCTAssertLessThan(pose22CoM.z, startCoM.z, "Both arms backward should shift CoM backward along the Z axis")
+    }
+
+
+    // Deliverable: Add test for Test Pose 24 (Right Arm Up) CoM metrics explicitly
+    func testTestPose24_CoMMetrics() {
+        applyTPose()
+        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        applyTestPose24()
+        let pose24CoM = calculator.calculateDetailedBodyCOM().totalCOM
+
+        // Right arm up should shift CoM up (+Y) compared to baseline T-Pose
+        XCTAssertGreaterThan(pose24CoM.y, startCoM.y, "Right arm up should shift CoM up along the Y axis")
     }
 
     // Deliverable: Add test for Test Pose 23 (Forward Reach) CoM metrics explicitly
