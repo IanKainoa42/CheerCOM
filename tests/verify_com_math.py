@@ -427,6 +427,35 @@ def test_high_v(calculator, t_pose_com):
         print("❌ FAIL: CoM did not rise")
         return False
 
+def test_test_pose_25(calculator, baseline_com):
+    print("\nTest: Test Pose 25 (Left Arm Up)")
+    nodes = create_t_pose_nodes()
+    # Raise Left Arm: Rotate -180 deg around shoulder to point UP
+    # Shoulder height is 130
+    # Arm length approx 30 (-20->-50), Forearm 30 (-50->-80)
+
+    # Left Arm UP
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 160, 0) # +30 Y
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 190, 0) # +30 Y
+    if "mixamorig_LeftHandMiddle1" in nodes:
+        nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-20, 200, 0) # +10 Y
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    y_shift = com.y - baseline_com.y
+    print(f"   Test Pose 25 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+    print(f"   Y Shift from T-Pose: {y_shift:.2f}")
+
+    if y_shift > 0.1:
+        print("✅ PASS: Test Pose 25 shifted CoM UP (+Y)")
+        return True
+    else:
+        print("❌ FAIL: Test Pose 25 did not shift CoM UP")
+        return False
+
 def test_squat(calculator, t_pose_com):
     print("\nTest: Squat Pose (Hips Lowered)")
     nodes = create_t_pose_nodes()
@@ -1355,6 +1384,9 @@ def run_verification():
 
 
     if not test_test_pose_24(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_test_pose_25(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_arms_daggers(calculator, t_pose_com):

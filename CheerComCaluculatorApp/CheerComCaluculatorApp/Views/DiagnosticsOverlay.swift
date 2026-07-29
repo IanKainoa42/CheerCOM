@@ -24,7 +24,7 @@ class DiagnosticsOverlay: UIView {
         closeButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
 
         let titleLabel = UILabel()
-        titleLabel.text = "Validation Diagnostics"
+        titleLabel.text = "Validation Diagnostics (CoM)"
         titleLabel.textColor = CheerPalette.textPrimary
         titleLabel.font = cheerRoundedFont(.title3, weight: .bold)
 
