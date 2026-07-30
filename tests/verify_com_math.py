@@ -427,6 +427,34 @@ def test_high_v(calculator, t_pose_com):
         print("❌ FAIL: CoM did not rise")
         return False
 
+def test_test_pose_26(calculator, baseline_com):
+    print("\nTest: Test Pose 26 (Left Arm Backward)")
+    nodes = create_t_pose_nodes()
+    # Left Arm BACKWARD
+    # Shoulder height is 130
+    # Arm length approx 30, Forearm 30
+
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 130, -30) # -30 Z
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 130, -60) # -30 Z
+    if "mixamorig_LeftHandMiddle1" in nodes:
+        nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-20, 130, -70) # -10 Z
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    z_shift = com.z - baseline_com.z
+    print(f"   Test Pose 26 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+    print(f"   Z Shift from T-Pose: {z_shift:.2f}")
+
+    if z_shift < -0.1:
+        print("✅ PASS: Test Pose 26 shifted CoM BACKWARD (-Z)")
+        return True
+    else:
+        print("❌ FAIL: CoM did not shift backward")
+        return False
+
 def test_test_pose_25(calculator, baseline_com):
     print("\nTest: Test Pose 25 (Left Arm Up)")
     nodes = create_t_pose_nodes()
@@ -1387,6 +1415,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_test_pose_25(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_test_pose_26(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_arms_daggers(calculator, t_pose_com):
