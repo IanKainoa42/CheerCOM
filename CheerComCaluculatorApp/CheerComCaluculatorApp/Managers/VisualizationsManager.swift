@@ -5,6 +5,7 @@ import UIKit
 
 
 // Manager for the visible CoM marker in the 3D view
+// This class manages the 3D representation of the Center of Mass (CoM).
 class VisualizationsManager {
     struct CircularVector3Buffer: RandomAccessCollection {
         private var buffer: [SCNVector3]
