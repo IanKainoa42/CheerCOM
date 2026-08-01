@@ -2,6 +2,7 @@
 import SceneKit
 import UIKit
 
+// Displays detailed validation data for the CoM Validation Harness
 class DiagnosticsOverlay: UIView {
     private let panel = CheerGlassPanel(padding: .init(top: 20, leading: 20, bottom: 20, trailing: 20))
     private let textView = UITextView()

@@ -1173,6 +1173,41 @@ def test_test_pose_24(calculator, baseline_com):
         print("❌ FAIL: CoM failed to shift up for Test Pose 24")
         return False
 
+
+def test_test_pose_28(calculator, baseline_com):
+    print("\nTest: Test Pose 28 (Both Arms Up)")
+    nodes = create_t_pose_nodes()
+    # Raise Both Arms
+
+    # Right Arm UP
+    nodes["mixamorig_RightArm"].position = SCNVector3(20, 130, 0)
+    nodes["mixamorig_RightForeArm"].position = SCNVector3(20, 160, 0)
+    nodes["mixamorig_RightHand"].position = SCNVector3(20, 190, 0)
+    if "mixamorig_RightHandMiddle1" in nodes:
+        nodes["mixamorig_RightHandMiddle1"].position = SCNVector3(20, 200, 0)
+
+    # Left Arm UP
+    nodes["mixamorig_LeftArm"].position = SCNVector3(-20, 130, 0)
+    nodes["mixamorig_LeftForeArm"].position = SCNVector3(-20, 160, 0)
+    nodes["mixamorig_LeftHand"].position = SCNVector3(-20, 190, 0)
+    if "mixamorig_LeftHandMiddle1" in nodes:
+        nodes["mixamorig_LeftHandMiddle1"].position = SCNVector3(-20, 200, 0)
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    y_shift = com.y - baseline_com.y
+    print(f"   Test Pose 28 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+    print(f"   Y Shift from T-Pose: {y_shift:.2f}")
+
+    if y_shift <= 0.05:
+        print("   ❌ FAILED: CoM should shift UP (+Y) significantly.")
+        return False
+
+    print("   ✅ PASSED: CoM shifted up correctly.")
+    return True
+
 def test_arms_daggers(calculator, baseline_com):
     print("\nTest: Arms Daggers")
     nodes = create_t_pose_nodes()
@@ -1449,6 +1484,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_test_pose_27(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_test_pose_28(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_arms_daggers(calculator, t_pose_com):
