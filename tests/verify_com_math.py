@@ -1208,6 +1208,34 @@ def test_test_pose_28(calculator, baseline_com):
     print("   ✅ PASSED: CoM shifted up correctly.")
     return True
 
+def test_test_pose_29(calculator, baseline_com):
+    print("\nTest: Test Pose 29 (Right Leg Forward)")
+    nodes = create_t_pose_nodes()
+    # Right Leg Forward
+    # Shift Right Up Leg, Leg, Foot, and Toe Base forward in Z
+
+    nodes["mixamorig_RightUpLeg"].position = SCNVector3(10, 95, 0)
+    nodes["mixamorig_RightLeg"].position = SCNVector3(10, 95, 30)
+    nodes["mixamorig_RightFoot"].position = SCNVector3(10, 95, 60)
+    if "mixamorig_RightToeBase" in nodes:
+        nodes["mixamorig_RightToeBase"].position = SCNVector3(10, 95, 70)
+
+    calculator.bind(nodes)
+    result = calculator.calculate_detailed_body_com()
+    com = result[0]
+
+    z_shift = com.z - baseline_com.z
+    print(f"   Test Pose 29 CoM: SCNVector3({com.x:.3f}, {com.y:.3f}, {com.z:.3f})")
+    print(f"   Z Shift from T-Pose: {z_shift:.2f}")
+
+    if z_shift <= 0.05:
+        print("   ❌ FAILED: CoM should shift FORWARD (+Z) significantly.")
+        return False
+
+    print("   ✅ PASS: Test Pose 29 shifted CoM FORWARD (+Z)")
+    return True
+
+
 def test_arms_daggers(calculator, baseline_com):
     print("\nTest: Arms Daggers")
     nodes = create_t_pose_nodes()
@@ -1487,6 +1515,9 @@ def run_verification():
         sys.exit(1)
 
     if not test_test_pose_28(calculator, t_pose_com):
+        sys.exit(1)
+
+    if not test_test_pose_29(calculator, t_pose_com):
         sys.exit(1)
 
     if not test_arms_daggers(calculator, t_pose_com):
