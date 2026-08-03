@@ -282,6 +282,13 @@ class PosePresets {
                     "mixamorig_LeftArm": SCNVector3(deg(90), 0, 0)
                 ]
             )
+        case .testPose30:
+            return PoseDefinition(
+                type: type,
+                jointAngles: [
+                    "mixamorig_LeftUpLeg": SCNVector3(deg(-45), 0, 0)
+                ]
+            )
         case .testPose18:
             return PoseDefinition(
                 name: "Scorpion",
@@ -849,7 +856,7 @@ class PosePresets {
             // Full Body
             .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque,
             .bridge, .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand,
-            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12, .testPose13, .testPose14, .testPose15, .testPose16, .testPose17, .testPose18, .testPose24, .testPose25, .testPose26, .armsForward,
+            .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12, .testPose13, .testPose14, .testPose15, .testPose16, .testPose17, .testPose18, .testPose24, .testPose25, .testPose26, .testPose30, .armsForward,
             // Arms
             .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow,
             .armsDaggers, .armsBrokenT, .armsHalfHighVHalfT,
