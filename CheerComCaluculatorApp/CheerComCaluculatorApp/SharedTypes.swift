@@ -103,7 +103,7 @@ enum PoseType {
     var category: PoseCategory {
         switch self {
         case .tPose, .highV, .lowV, .touchdown, .bowAndArrow, .liberty, .scale, .arabesque, .bridge,
-            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand, .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12, .testPose13, .testPose14, .testPose15, .testPose16, .testPose17, .testPose18, .testPose24, .testPose25, .testPose26, .armsForward:
+            .backbend, .standingSplit, .prepPosition, .squat, .pike, .layout, .sideLean, .lungePose, .handstand, .testPose1, .testPose2, .testPose3, .testPose4, .testPose5, .testPose6, .testPose7, .testPose8, .testPose9, .testPose10, .testPose11, .testPose12, .testPose13, .testPose14, .testPose15, .testPose16, .testPose17, .testPose18, .testPose24, .testPose25, .testPose26, .testPose30, .armsForward:
             return .fullBody
         case .armsHighV, .armsLowV, .armsT, .armsTouchdown, .armsBowAndArrow, .armsDaggers,
             .armsBrokenT, .armsHalfHighVHalfT:
