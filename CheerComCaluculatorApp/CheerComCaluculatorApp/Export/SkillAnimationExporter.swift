@@ -1,5 +1,6 @@
 import Foundation
 import SceneKit
+import ModelRigKit
 
 
 /// Exports a SkillAnimation to JSON files — one per camera sample in the orbital grid.

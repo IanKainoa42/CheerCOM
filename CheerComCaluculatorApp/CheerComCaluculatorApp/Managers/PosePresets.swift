@@ -263,31 +263,39 @@ class PosePresets {
 
         case .testPose24:
             return PoseDefinition(
-                type: type,
+                name: type.displayName,
+                category: type.category,
                 jointAngles: [
                     "mixamorig_RightArm": SCNVector3(0, 0, deg(180))
-                ]
+                ],
+                description: "Right arm raised overhead"
             )
         case .testPose25:
             return PoseDefinition(
-                type: type,
+                name: type.displayName,
+                category: type.category,
                 jointAngles: [
                     "mixamorig_LeftArm": SCNVector3(0, 0, deg(-180))
-                ]
+                ],
+                description: "Left arm raised overhead"
             )
         case .testPose26:
             return PoseDefinition(
-                type: type,
+                name: type.displayName,
+                category: type.category,
                 jointAngles: [
                     "mixamorig_LeftArm": SCNVector3(deg(90), 0, 0)
-                ]
+                ],
+                description: "Left arm forward"
             )
         case .testPose30:
             return PoseDefinition(
-                type: type,
+                name: type.displayName,
+                category: type.category,
                 jointAngles: [
                     "mixamorig_LeftUpLeg": SCNVector3(deg(-45), 0, 0)
-                ]
+                ],
+                description: "Left leg forward"
             )
         case .testPose18:
             return PoseDefinition(

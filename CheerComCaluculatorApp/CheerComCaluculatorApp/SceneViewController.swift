@@ -64,7 +64,7 @@ class SceneViewController: UIViewController {
 
     // Joint Control State
     var selectedJoint: SCNNode?
-    var jointControlMode: JointAxis = .x
+    var jointControlMode: JointAxis = .xAxis
     private var selectedJointMarkerNode: SCNNode?
     private weak var highlightedJointMaterial: SCNMaterial?
     private var highlightedJointOriginalEmission: Any?
@@ -139,7 +139,7 @@ class SceneViewController: UIViewController {
     private func setupClampWarningToast() {
         clampWarningLabel = UILabel()
         clampWarningLabel.translatesAutoresizingMaskIntoConstraints = false
-        clampWarningLabel.backgroundColor = CheerPalette.danger.withAlphaComponent(0.85)
+        clampWarningLabel.backgroundColor = CheerPalette.accentRose.withAlphaComponent(0.85)
         clampWarningLabel.textColor = .white
         clampWarningLabel.font = cheerRoundedFont(.subheadline, weight: .bold)
         clampWarningLabel.textAlignment = .center

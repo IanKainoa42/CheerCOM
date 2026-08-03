@@ -1,5 +1,6 @@
 import Foundation
 import SceneKit
+import ModelRigKit
 
 
 /// Projects a rigged Mixamo character's joint world positions to 2D COCO keypoint
