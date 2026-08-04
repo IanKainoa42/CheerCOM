@@ -19,3 +19,16 @@
 - **Also — do not blanket-restore the ModelRigKit imports.** ModelRigKit publicly exports `JointAxis`, `COMCalculator`, **and** `PoseDefinition`, all three of which CheerCOM shadows with local declarations. That name collision is what provoked a8150fb in the first place. Add `import ModelRigKit` only to files needing ModelRigKit-only types (`COCOKeypoint`, `COCOKeypointIndex`, `KinematicFeatures`) that do not reference the shadowed names — currently `Export/MixamoCOCOProjector.swift` and `Export/SkillAnimationExporter.swift`. Grep for `JointAxis|COMCalculator|PoseDefinition` in a file before adding the import.
 - **Also — adding a `PoseType` case requires 5 edit sites, not 4.** PR #190 covered `displayName`, `emoji`, `PosePresets.getPose`, and `CoMValidationHarness` but missed `PoseType.category` (`SharedTypes.swift:103`), an exhaustive switch with no `default`. To enumerate every site for a new case, grep an existing sibling (`grep -rn '\.testPose26' CheerComCaluculatorApp/`) and match the hit list. Fast isolated check: `xcrun swiftc -typecheck CheerComCaluculatorApp/CheerComCaluculatorApp/SharedTypes.swift`.
 - **Also — there is no runnable test target in this repo at all.** `CheerComCalculatorAppTests/ManualCoMValidationTest.swift` (the XCTest file Jules PRs keep editing — #190 added `applyTestPose30` to it) appears **zero times** in `CheerComCaluculatorApp.xcodeproj/project.pbxproj`, and the `CheerComCaluculatorApp` scheme has no test action (`xcodebuild test` → "Scheme is not currently configured for the test action"). The parallel `CheerComCaluculatorApp/Package.swift` does declare a `CheerComCalculatorAppTests` test target, but `swift build`/`swift test` cannot build it — SPM targets macOS and `Base.lproj/LaunchScreen.storyboard` fails with "iOS storyboards do not support target device type mac". So that XCTest file is dead code that has never executed. The only two things that actually run are `python3 tests/verify_com_math.py` and an `xcodebuild -scheme` app build. Treat edits to `ManualCoMValidationTest.swift` as documentation, not test coverage.
+
+## 2026-08-04 — Merged a PR the repo's own AGENTS.md HARD STOPs on
+
+- **Category:** correction
+- **What happened:** /sync merged PR #191 "Add Test Pose 31" after verifying it thoroughly —
+  no duplicate on main, `tests/verify_com_math.py` all-pass on the branch, `xcodebuild`
+  BUILD SUCCEEDED. All true, none relevant: AGENTS.md (committed `e6934c5` 4h45m earlier)
+  HARD STOPs on exactly "Add Test Pose N". Reverted `cd6a649`.
+- **Rule:** Read AGENTS.md/CLAUDE.md HARD STOPs BEFORE building. A green build answers
+  "is this diff safe"; the guardrail answers "is this task allowed here."
+- **Also:** `CheerComCaluculatorApp.xcodeproj` has ONE target and NO test target.
+  `CheerComCalculatorAppTests/ManualCoMValidationTest.swift` is never compiled or run —
+  the Swift half of every pose PR is dead code. Only the Python mirror actually executes.
