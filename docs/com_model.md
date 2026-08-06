@@ -115,6 +115,7 @@ To verify the CoM calculation in the app:
     * **Test Pose 28**: Both Arms Up. Tests vertical shift. CoM should shift up (+Y direction).
     * **Test Pose 29**: Right Leg Forward. Tests one-leg forward Z-axis shift on the right side. CoM should shift forward (+Z direction).
     * **Test Pose 30**: Left Leg Forward. Tests one-leg forward Z-axis shift on the left side. CoM should shift forward (+Z direction).
+    * **Test Pose 31**: Right Leg Backward. Tests one-leg backward Z-axis shift on the right side. CoM should shift backward (-Z direction).
     *   **Arms Daggers**: Fists brought in to the hips/chest. CoM should remain mostly centered laterally.
     *   **Arms Broken T**: Arms form a T shape with elbows bent inwards. CoM should remain mostly centered laterally.
 
