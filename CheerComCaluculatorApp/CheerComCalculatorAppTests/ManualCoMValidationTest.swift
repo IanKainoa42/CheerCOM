@@ -59,6 +59,7 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Test Pose 28 (Both Arms Up)", setupClosure: applyTestPose28)
         validatePose(name: "Test Pose 29 (Right Leg Forward)", setupClosure: applyTestPose29)
         validatePose(name: "Test Pose 30 (Left Leg Forward)", setupClosure: applyTestPose30)
+        validatePose(name: "Test Pose 31 (Right Leg Backward)", setupClosure: applyTestPose31)
         validatePose(name: "Straddle", setupClosure: applyStraddle)
         validatePose(name: "Arms Daggers", setupClosure: applyArmsDaggers)
         validatePose(name: "Arms Broken T", setupClosure: applyArmsBrokenT)
@@ -485,6 +486,11 @@ final class ManualCoMValidationTest: XCTestCase {
     func applyTestPose30() {
         // Test Pose 30: Left Leg Forward
         nodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(-45)
+    }
+
+    func applyTestPose31() {
+        // Test Pose 31: Right Leg Backward
+        nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(45)
     }
 
     func applyHandstand() {
