@@ -29,8 +29,9 @@ verified the diff and a Python mirror build but never checked this file. Reverte
 PRs #192–195 (Aug 5–8) repeated the same violation and are still **open with `mergeStateStatus:
 CLEAN` as of 2026-08-13 — do not merge them; clean status carries no build signal here** (see
 below). #196 (Aug 10) and #197 (Aug 12) are the first compliant rejections — the guardrail took
-6 days and 4 violations to take effect. If you encounter #192–195: close them per this file,
-do not merge on the strength of a clean diff.
+6 days and 4 violations to take effect. If you encounter #192–195: **do not merge them** —
+leave them open and flagged pending the recurring "Mission" session's cancellation (IAN-398).
+Do not merge on the strength of a clean diff.
 
 **No CI, no build signal:** `ManualCoMValidationTest.swift` — the file this entire PR train
 edits — is confirmed **not present in any Xcode target** (0 references in
