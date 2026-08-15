@@ -1,20 +1,22 @@
-# Task Rejection
+# Rejection of Task
 
-The requested task has been rejected because it violates the repository's `AGENTS.md` guidelines.
+This PR intentionally does nothing except explain the rejection of the "Mission: continuously improve the app's realistic human 3D body model & CoM" task.
 
-## Reason for Rejection
+Per `AGENTS.md` and `CLAUDE.md`, this is a HARD STOP. The prompt provided was:
 
-The task is an open-ended objective starting with "Mission: continuously improve the app's realistic human 3D body model and its Center of Mass (CoM) calculation" and includes a "First Step: Baseline Audit" without providing any specific failing test name or user-visible defect.
+> Mission
+>
+> Continuously improve the app’s realistic human 3D body model and its Center of Mass (CoM) calculation...
 
-According to `AGENTS.md`:
-- "If your task is any of the following, stop immediately and open a PR that does nothing except explain the rejection."
-- Prohibited task patterns include:
-  - "Baseline audit" / "architecture summary" / "deliverables audit" with no named defect.
-  - "Continuously improve…" / "Mission:" / any open-ended standing objective.
+The documentation in `AGENTS.md` explicitly states:
+> "If your task is any of the following, stop immediately and open a PR that does nothing except explain the rejection."
+> - "Continuously improve…" / "Mission:" / any open-ended standing objective
 
 A valid task for this repository must contain:
 1. A specific failing test name or user-visible defect.
-2. A reference to which prior PR attempted this and why it was insufficient.
+2. A reference to prior PRs (#176–#190).
 3. An acceptance criterion a human can verify in 60 seconds.
 
-This request contains none of these, and therefore, it is out of scope for this repository. No code changes have been made.
+The prompt failed to meet these criteria, as it was an open-ended "Mission" with no specific failing test or defect.
+
+This rejection is tracked as part of the mitigation for the vague-scope recurring session (see IAN-484).

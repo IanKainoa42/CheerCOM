@@ -21,6 +21,24 @@ sibling ScoreBin repo has PRs #92–#95 titled "Reject … Optimization Task per
 - "Continuously improve…" / "Mission:" / any open-ended standing objective
 - "Optimize", "refactor", "consolidate", "clean up", or "improve" without a failing assertion
 
+## Post-guardrail status (updated 2026-08-13)
+
+This guardrail landed 2026-08-04 16:10 UTC. It was **not immediately effective**: PR #191
+("Test Pose 31") was opened 4h45m later and merged the same day — an automated `/sync` pass
+verified the diff and a Python mirror build but never checked this file. Reverted in `cd6a649`.
+PRs #192–195 (Aug 5–8) repeated the same violation and are still **open with `mergeStateStatus:
+CLEAN` as of 2026-08-13 — do not merge them; clean status carries no build signal here** (see
+below). #196 (Aug 10) and #197 (Aug 12) are the first compliant rejections — the guardrail took
+6 days and 4 violations to take effect. If you encounter #192–195: **do not merge them** —
+leave them open and flagged pending the recurring "Mission" session's cancellation (IAN-398).
+Do not merge on the strength of a clean diff.
+
+**No CI, no build signal:** `ManualCoMValidationTest.swift` — the file this entire PR train
+edits — is confirmed **not present in any Xcode target** (0 references in
+`CheerComCaluculatorApp.xcodeproj/project.pbxproj`). It has never compiled or run. A green
+`gh pr view --json mergeStateStatus` or a passing Python mirror check proves nothing about
+these PRs.
+
 ## What a valid CheerCOM task looks like
 
 A task targeting this repo must contain **all three**:
