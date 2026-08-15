@@ -1,12 +1,22 @@
-# Task Rejected
+# Rejection of Task
 
-This task has been rejected in accordance with the instructions in `AGENTS.md` and `CLAUDE.md`.
+This PR intentionally does nothing except explain the rejection of the "Mission: continuously improve the app's realistic human 3D body model & CoM" task.
 
-The requested task is an open-ended "Mission: continuously improve..." and requests a "Baseline Audit" without providing:
+Per `AGENTS.md` and `CLAUDE.md`, this is a HARD STOP. The prompt provided was:
+
+> Mission
+>
+> Continuously improve the app’s realistic human 3D body model and its Center of Mass (CoM) calculation...
+
+The documentation in `AGENTS.md` explicitly states:
+> "If your task is any of the following, stop immediately and open a PR that does nothing except explain the rejection."
+> - "Continuously improve…" / "Mission:" / any open-ended standing objective
+
+A valid task for this repository must contain:
 1. A specific failing test name or user-visible defect.
-2. A reference to prior PRs.
+2. A reference to prior PRs (#176–#190).
 3. An acceptance criterion a human can verify in 60 seconds.
 
-Per the HARD STOP rules for this repository, tasks of this nature must be immediately stopped and rejected to prevent the generation of near-duplicate PRs that add no substantive value.
+The prompt failed to meet these criteria, as it was an open-ended "Mission" with no specific failing test or defect.
 
-Please cancel the recurring "Mission" session in the Jules web UI (see IAN-398).
+This rejection is tracked as part of the mitigation for the vague-scope recurring session (see IAN-484).
