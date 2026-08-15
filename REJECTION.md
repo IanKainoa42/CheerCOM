@@ -1,15 +1,22 @@
-# Task Rejection
+# Rejection of Task
 
-This task has been rejected in accordance with the guidelines set forth in `AGENTS.md` and `CLAUDE.md`.
+This PR intentionally does nothing except explain the rejection of the "Mission: continuously improve the app's realistic human 3D body model & CoM" task.
 
-## Reason for Rejection
+Per `AGENTS.md` and `CLAUDE.md`, this is a HARD STOP. The prompt provided was:
 
-The requested task is a recurring, open-ended objective ("Mission: continuously improve the app's realistic human 3D body model and its Center of Mass (CoM) calculation").
+> Mission
+>
+> Continuously improve the app’s realistic human 3D body model and its Center of Mass (CoM) calculation...
 
-As explicitly stated in `AGENTS.md` under the "HARD STOP" section, tasks matching this pattern must be rejected immediately. Specifically, a valid task must contain all of the following, which this task lacks:
+The documentation in `AGENTS.md` explicitly states:
+> "If your task is any of the following, stop immediately and open a PR that does nothing except explain the rejection."
+> - "Continuously improve…" / "Mission:" / any open-ended standing objective
 
-1. **A specific failing test name or user-visible defect** (The task provides a general "Baseline Audit" and open-ended "Realism Goals" rather than a specific defect).
-2. **A reference to which prior PR attempted this and why it was insufficient** (No prior PRs are referenced).
-3. **An acceptance criterion a human can verify in 60 seconds** (The acceptance criteria provided are open-ended and cannot be verified quickly).
+A valid task for this repository must contain:
+1. A specific failing test name or user-visible defect.
+2. A reference to prior PRs (#176–#190).
+3. An acceptance criterion a human can verify in 60 seconds.
 
-Therefore, this PR intentionally contains no code changes to the app itself and only serves to document the rejection of the invalid task.
+The prompt failed to meet these criteria, as it was an open-ended "Mission" with no specific failing test or defect.
+
+This rejection is tracked as part of the mitigation for the vague-scope recurring session (see IAN-484).
