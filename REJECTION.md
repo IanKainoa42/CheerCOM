@@ -17,7 +17,7 @@ A valid task for this repository must contain:
 2. A reference to prior PRs (#176–#190).
 3. An acceptance criterion a human can verify in 60 seconds.
 
-The prompt failed to meet these criteria, as it was an open-ended "Mission" with no specific failing test or defect and no measurable acceptance criteria.
+The prompt failed to meet these criteria because it was an open-ended "Mission" with no specific failing test or defect and no measurable acceptance criteria.
 
 **Action Required:** Please cancel the recurring 'Mission' session in the Jules web UI (tracked as IAN-398) to prevent these tasks from being automatically generated daily.
 
