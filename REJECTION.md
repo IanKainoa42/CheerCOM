@@ -9,7 +9,7 @@ Per `AGENTS.md` and `CLAUDE.md`, this is a HARD STOP. The prompt provided was:
 > Continuously improve the app’s realistic human 3D body model and its Center of Mass (CoM) calculation...
 
 The documentation in `AGENTS.md` explicitly states:
-> "If your task is any of the following, stop immediately and open a PR that does nothing except explain the rejection."
+> "If your task is any of the following, stop immediately and open a PR that does nothing except explain the rejection." (This is a HARD STOP).
 > - "Continuously improve…" / "Mission:" / any open-ended standing objective
 
 A valid task for this repository must contain:
