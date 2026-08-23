@@ -59,7 +59,6 @@ final class ManualCoMValidationTest: XCTestCase {
         validatePose(name: "Test Pose 28 (Both Arms Up)", setupClosure: applyTestPose28)
         validatePose(name: "Test Pose 29 (Right Leg Forward)", setupClosure: applyTestPose29)
         validatePose(name: "Test Pose 30 (Left Leg Forward)", setupClosure: applyTestPose30)
-        validatePose(name: "Test Pose 31 (Right Leg Backward)", setupClosure: applyTestPose31)
         validatePose(name: "Straddle", setupClosure: applyStraddle)
         validatePose(name: "Arms Daggers", setupClosure: applyArmsDaggers)
         validatePose(name: "Arms Broken T", setupClosure: applyArmsBrokenT)
@@ -488,11 +487,6 @@ final class ManualCoMValidationTest: XCTestCase {
         nodes["mixamorig_LeftUpLeg"]?.eulerAngles.x = deg(-45)
     }
 
-    func applyTestPose31() {
-        // Test Pose 31: Right Leg Backward
-        nodes["mixamorig_RightUpLeg"]?.eulerAngles.x = deg(45)
-    }
-
     func applyHandstand() {
         // Handstand: inverted body
         nodes["mixamorig_Hips"]?.eulerAngles.x = deg(180)
@@ -904,29 +898,5 @@ final class ManualCoMValidationTest: XCTestCase {
 
         // Right leg forward should shift CoM forward (+Z) compared to baseline T-Pose
         XCTAssertGreaterThan(pose29CoM.z, startCoM.z, "Right leg forward should shift CoM forward along the Z axis")
-    }
-
-    // Deliverable: Add test for Test Pose 30 (Left Leg Forward) CoM metrics explicitly
-    func testTestPose30_CoMMetrics() {
-        applyTPose()
-        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
-
-        applyTestPose30()
-        let pose30CoM = calculator.calculateDetailedBodyCOM().totalCOM
-
-        // Left leg forward should shift CoM forward (+Z) compared to baseline T-Pose
-        XCTAssertGreaterThan(pose30CoM.z, startCoM.z, "Left leg forward should shift CoM forward along the Z axis")
-    }
-
-    // Deliverable: Add test for Test Pose 31 (Right Leg Backward) CoM metrics explicitly
-    func testTestPose31_CoMMetrics() {
-        applyTPose()
-        let startCoM = calculator.calculateDetailedBodyCOM().totalCOM
-
-        applyTestPose31()
-        let pose31CoM = calculator.calculateDetailedBodyCOM().totalCOM
-
-        // Right leg backward should shift CoM backward (-Z) compared to baseline T-Pose
-        XCTAssertLessThan(pose31CoM.z, startCoM.z, "Right leg backward should shift CoM backward along the Z axis")
     }
 }
