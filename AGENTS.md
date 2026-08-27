@@ -21,25 +21,30 @@ sibling ScoreBin repo has PRs #92–#95 titled "Reject … Optimization Task per
 - "Continuously improve…" / "Mission:" / any open-ended standing objective
 - "Optimize", "refactor", "consolidate", "clean up", or "improve" without a failing assertion
 
-## Post-guardrail status (updated 2026-08-20)
+## Post-guardrail status (updated 2026-08-27)
 
 This guardrail landed 2026-08-04 16:10 UTC. It was **not immediately effective**: PR #191
 ("Test Pose 31") was opened 4h45m later and merged the same day — an automated `/sync` pass
 verified the diff and a Python mirror build but never checked this file. Reverted in `cd6a649`.
-PRs #192–195 (Aug 5–8) repeated the same violation and are still **open, unmerged, with
-`mergeStateStatus: CLEAN` as of 2026-08-20 — do not merge them; clean status carries no build
-signal here** (see below).
+PRs #192–195 (Aug 5–8, plus re-attempts of the same shape closed 2026-08-23: "Baseline Audit &
+Validation Harness Expansion", "Add CoM Validation Harness", "Add Test Pose 31 for CoM
+Validation") repeated the same violation. **Resolved 2026-08-23: all of #192–195 are now closed
+unmerged** — the "remain open, do not merge" warning from 08-20 no longer applies; no action
+needed on them.
 
-**Self-reject PRs are ALSO forbidden to merge — this rule was violated 9 times in a row.**
-Starting with #196 (Aug 10), the recurring session began producing self-rejecting PRs whose
-entire diff is a single `REJECTION.md` stub explaining the refusal — that is the correct
-*agent* response to a HARD STOP task. But an automated `/sync` merge pass does not distinguish
+**Self-reject PRs are ALSO forbidden to merge — this rule was violated 9 times in a row, then
+fixed.** Starting with #196 (Aug 10), the recurring session began producing self-rejecting PRs
+whose entire diff is a single `REJECTION.md` stub explaining the refusal — that is the correct
+*agent* response to a HARD STOP task. But an automated `/sync` merge pass did not distinguish
 "clean self-reject stub" from "safe to merge": it merged **#196 through #204 (9 for 9,
 Aug 10–20)** anyway, landing `REJECTION.md` on `main` — a repo-root **artifact file prohibited
-by global CLAUDE.md's artifact-file rule**. It has sat there unreverted since 2026-08-15.
+by global CLAUDE.md's artifact-file rule**. It is still unreverted on `main` as of 2026-08-27
+(nobody has removed the file itself — only stopped re-merging it).
+**The fix held: #205–#211 (Aug 20–26) were all correctly closed unmerged, zero further
+mis-merges.** Treat "9 for 9" as a historical count, not an ongoing streak.
 **Never merge a PR whose diff is `REJECTION.md` — close it unmerged instead**, the same
-handling as #192–195. A self-reject PR existing and being reviewable is the goal; merging it
-is not, and `mergeStateStatus: CLEAN` is not authorization here any more than it was for #191.
+handling as #192–195. `mergeStateStatus: CLEAN` is not authorization here any more than it was
+for #191.
 
 **No CI, no build signal:** `ManualCoMValidationTest.swift` — the file this entire PR train
 edits — is confirmed **not present in any Xcode target** (0 references in
@@ -48,11 +53,14 @@ edits — is confirmed **not present in any Xcode target** (0 references in
 these PRs.
 
 **IAN-398 (cancel the recurring "Mission" session) auto-closed itself 2026-08-20 — this is
-NOT a real fix.** Linear's GitHub integration matched PR #204's branch name (which happened to
-contain the string "ian-398") and auto-transitioned the issue to Done. The underlying session
-was never cancelled at jules.google.com; it fired again the same morning. Do not treat
-`IAN-398: Done` as evidence this is resolved — verify directly with
-`gh pr list --repo IanKainoa42/CheerCOM --state all`.
+NOT a real fix, and the underlying session is still unresolved.** Linear's GitHub integration
+matched PR #204's branch name (which happened to contain the string "ian-398") and
+auto-transitioned the issue to Done. The session was never cancelled at jules.google.com and
+kept firing daily through at least #211 (Aug 26 — which was itself just the agent editing its
+own `REJECTION.md` template text to sharpen this exact warning, not a new task shape). **This
+is blocked on a human action (cancelling the session at jules.google.com) — no prompt or config
+change here can fix it.** Do not treat `IAN-398: Done` as evidence this is resolved — verify
+directly with `gh pr list --repo IanKainoa42/CheerCOM --state all`.
 
 ## What a valid CheerCOM task looks like
 
