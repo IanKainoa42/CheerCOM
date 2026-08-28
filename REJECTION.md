@@ -21,4 +21,6 @@ The prompt failed to meet these criteria because it was an open-ended "Mission" 
 
 **Action Required:** Please cancel the recurring 'Mission' session in the Jules web UI (tracked as IAN-398) to prevent these tasks from being automatically generated daily.
 
+Note that auto-closing the issue via branch-name coincidence is not a real fix to prevent daily generation. The underlying session must be cancelled directly at jules.google.com.
+
 This rejection is tracked as part of the mitigation for the vague-scope recurring session (see IAN-484).
