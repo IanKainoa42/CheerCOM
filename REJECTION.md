@@ -2,7 +2,7 @@
 
 This PR intentionally does nothing except explain the rejection of the "Mission: continuously improve the app's realistic human 3D body model & CoM" task.
 
-Per `AGENTS.md` and `CLAUDE.md`, this is a HARD STOP. The prompt provided was:
+Per `AGENTS.md` and `CLAUDE.md`, tasks of this nature trigger a HARD STOP. The prompt provided was:
 
 > Mission
 >
