@@ -19,6 +19,6 @@ A valid task for this repository must contain:
 
 The prompt failed to meet these criteria because it was an open-ended "Mission" with no specific failing test or defect and no measurable acceptance criteria.
 
-**Action Required:** Please cancel the recurring 'Mission' session in the Jules web UI (tracked as IAN-398) to prevent these tasks from being automatically generated daily.
+**Action Required:** Please cancel the recurring 'Mission' session in the Jules web UI (tracked as IAN-398) to prevent these tasks from being automatically generated daily. Auto-closing via branch-name coincidence is not a real fix to prevent daily generation.
 
 This rejection is tracked as part of the mitigation for the vague-scope recurring session (see IAN-484).
