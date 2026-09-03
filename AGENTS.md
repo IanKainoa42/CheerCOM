@@ -21,7 +21,7 @@ sibling ScoreBin repo has PRs #92–#95 titled "Reject … Optimization Task per
 - "Continuously improve…" / "Mission:" / any open-ended standing objective
 - "Optimize", "refactor", "consolidate", "clean up", or "improve" without a failing assertion
 
-## Post-guardrail status (updated 2026-08-27)
+## Post-guardrail status (updated 2026-09-03)
 
 This guardrail landed 2026-08-04 16:10 UTC. It was **not immediately effective**: PR #191
 ("Test Pose 31") was opened 4h45m later and merged the same day — an automated `/sync` pass
@@ -38,10 +38,10 @@ whose entire diff is a single `REJECTION.md` stub explaining the refusal — tha
 *agent* response to a HARD STOP task. But an automated `/sync` merge pass did not distinguish
 "clean self-reject stub" from "safe to merge": it merged **#196 through #204 (9 for 9,
 Aug 10–20)** anyway, landing `REJECTION.md` on `main` — a repo-root **artifact file prohibited
-by global CLAUDE.md's artifact-file rule**. It is still unreverted on `main` as of 2026-08-27
+by global CLAUDE.md's artifact-file rule**. It is still unreverted on `main` as of 2026-09-03
 (nobody has removed the file itself — only stopped re-merging it).
-**The fix held: #205–#211 (Aug 20–26) were all correctly closed unmerged, zero further
-mis-merges.** Treat "9 for 9" as a historical count, not an ongoing streak.
+**The fix held: #205–#218 (Aug 20–Sep 2) were all correctly closed unmerged, zero further
+mis-merges — 14 consecutive clean days.** Treat "9 for 9" as a historical count, not an ongoing streak.
 **Never merge a PR whose diff is `REJECTION.md` — close it unmerged instead**, the same
 handling as #192–195. `mergeStateStatus: CLEAN` is not authorization here any more than it was
 for #191.
@@ -56,8 +56,8 @@ these PRs.
 NOT a real fix, and the underlying session is still unresolved.** Linear's GitHub integration
 matched PR #204's branch name (which happened to contain the string "ian-398") and
 auto-transitioned the issue to Done. The session was never cancelled at jules.google.com and
-kept firing daily through at least #211 (Aug 26 — which was itself just the agent editing its
-own `REJECTION.md` template text to sharpen this exact warning, not a new task shape). **This
+kept firing daily through at least #218 (Sep 2 — including a Codex review bot now commenting
+on the self-reject stubs too, not a new task shape). **This
 is blocked on a human action (cancelling the session at jules.google.com) — no prompt or config
 change here can fix it.** Do not treat `IAN-398: Done` as evidence this is resolved — verify
 directly with `gh pr list --repo IanKainoa42/CheerCOM --state all`.
