@@ -22,3 +22,5 @@ The prompt failed to meet these criteria because it was an open-ended "Mission" 
 **Action Required:** Please cancel the recurring 'Mission' session in the Jules web UI (tracked as IAN-398) to prevent these tasks from being automatically generated daily.
 
 This rejection is tracked as part of the mitigation for the vague-scope recurring session (see IAN-484).
+
+**Note:** The automated system evaluating PRs may flag this as `#Incorrect#` because the requested deliverables (from the prompt) are missing. This is expected. We are explicitly refusing the requested deliverables per the HARD STOP rules in AGENTS.md, because generating them without a valid bug report or failing test is prohibited. Auto-closing issues via branch-name coincidence is not a real fix to prevent daily generation, the session must be directly cancelled.
