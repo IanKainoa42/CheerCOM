@@ -8,7 +8,7 @@ Per `AGENTS.md` and `CLAUDE.md`, this is a HARD STOP. The prompt provided was:
 >
 > Continuously improve the app’s realistic human 3D body model and its Center of Mass (CoM) calculation...
 
-The documentation in `AGENTS.md` explicitly states:
+The documentation in `AGENTS.md` explicitly mandates the following HARD STOP rules:
 > "If your task is any of the following, stop immediately and open a PR that does nothing except explain the rejection." (This is a HARD STOP).
 > - "Continuously improve…" / "Mission:" / any open-ended standing objective
 
