@@ -40,8 +40,8 @@ whose entire diff is a single `REJECTION.md` stub explaining the refusal — tha
 Aug 10–20)** anyway, landing `REJECTION.md` on `main` — a repo-root **artifact file prohibited
 by global CLAUDE.md's artifact-file rule**. It is still unreverted on `main` as of 2026-09-03
 (nobody has removed the file itself — only stopped re-merging it).
-**The fix held: #205–#246 (Aug 20–Sep 30) were all correctly closed unmerged, zero further
-mis-merges — 41 consecutive clean days (#205 closed 2026-08-20).** Treat "9 for 9" as a historical count, not an ongoing streak.
+**The fix held: #205–#249 (Aug 20–Oct 3; count is a snapshot, do not keep re-bumping it — verify with `gh pr list --state all`) were all correctly closed unmerged, zero further
+mis-merges — 46 consecutive clean days as of 2026-10-05 (#205 closed 2026-08-20).** Treat "9 for 9" as a historical count, not an ongoing streak.
 **Never merge a PR whose diff is `REJECTION.md` — close it unmerged instead**, the same
 handling as #192–195. `mergeStateStatus: CLEAN` is not authorization here any more than it was
 for #191.
@@ -56,7 +56,7 @@ these PRs.
 NOT a real fix, and the underlying session is still unresolved.** Linear's GitHub integration
 matched PR #204's branch name (which happened to contain the string "ian-398") and
 auto-transitioned the issue to Done. The session was never cancelled at jules.google.com and
-kept firing daily through at least #246 (Sep 30 — PR #246 itself explains why the branch-name
+kept firing daily through at least #250 (opened Oct 4; PR #246 itself explains why the branch-name
 auto-close of IAN-398 is not a real fix; a Codex review bot has also been observed commenting on
 the self-reject stubs, which is noise, not a new task shape). **This
 is blocked on a human action (cancelling the session at jules.google.com) — no prompt or config
