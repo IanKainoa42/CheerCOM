@@ -40,8 +40,7 @@ whose entire diff is a single `REJECTION.md` stub explaining the refusal — tha
 Aug 10–20)** anyway, landing `REJECTION.md` on `main` — a repo-root **artifact file prohibited
 by global CLAUDE.md's artifact-file rule**. It is still unreverted on `main` as of 2026-09-03
 (nobody has removed the file itself — only stopped re-merging it).
-**The fix held: #205–#249 (Aug 20–Oct 3; count is a snapshot, do not keep re-bumping it — verify with `gh pr list --state all`) were all correctly closed unmerged, zero further
-mis-merges — 46 consecutive clean days as of 2026-10-05 (#205 closed 2026-08-20).** Treat "9 for 9" as a historical count, not an ongoing streak.
+**The fix held for #205–#249 (Aug 20–Oct 3), all correctly closed unmerged — then it slipped once: #250 "Reject Mission" (REJECTION.md-only, 1-line edit) was MERGED 2026-10-06 via Ian's account (merge `e63cce4`).** Harmless content, but it is a mis-merge; the clean streak ended at #249. #251 was closed, #252/#253 open as of 2026-10-08 — close, don't merge. Count is a snapshot; verify with `gh pr list --state all`. Treat "9 for 9" as historical.
 **Never merge a PR whose diff is `REJECTION.md` — close it unmerged instead**, the same
 handling as #192–195. `mergeStateStatus: CLEAN` is not authorization here any more than it was
 for #191.
