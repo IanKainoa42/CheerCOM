@@ -1,6 +1,7 @@
 # Rejection of Task
 
 This PR intentionally does nothing except explain the rejection of the "Mission: continuously improve the app's realistic human 3D body model & CoM" task.
+This automated refusal is generated in compliance with the 2026-08-04 guardrail established to prevent unguided accumulation of identical test fixtures.
 
 Per `AGENTS.md` and `CLAUDE.md`, this is a HARD STOP. The prompt provided was:
 
