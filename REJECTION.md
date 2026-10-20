@@ -1,6 +1,6 @@
 # Rejection of Task
 
-This PR intentionally does nothing except explain the rejection of the "Mission: continuously improve the app's realistic human 3D body model & CoM" task.
+This PR intentionally does nothing except explain the explicit rejection of the "Mission: continuously improve the app's realistic human 3D body model & CoM" task due to repository HARD STOP rules.
 
 Per `AGENTS.md` and `CLAUDE.md`, this is a HARD STOP. The prompt provided was:
 
