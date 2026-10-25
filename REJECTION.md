@@ -12,7 +12,7 @@ The documentation in `AGENTS.md` explicitly states:
 > "If your task is any of the following, stop immediately and open a PR that does nothing except explain the rejection." (This is a HARD STOP).
 > - "Continuously improve…" / "Mission:" / any open-ended standing objective
 
-A valid task for this repository must contain:
+A valid task for this repository must contain the following three elements:
 1. A specific failing test name or user-visible defect.
 2. A reference to prior PRs (#176–#190).
 3. An acceptance criterion a human can verify in 60 seconds.
